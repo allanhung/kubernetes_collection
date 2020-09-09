@@ -1,0 +1,19 @@
+cluster_name: my-cluster
+
+dex:
+  issuer: https://my-issuer.my-domain.com
+  clientID: my-client-id
+  clientSecret: my-client-password
+  url: dex.my-domain.com
+
+gangway:
+  url: gangway.my-domain.com
+  secret: my-gangway-secret
+  sessionkey: rdL7y/zFrpT4Bhy8+mduepCsk4DRZnwWH7UhK0EXdgE= # openssl rand -base64 32
+
+grafana:
+  url: grafana.my-domain.com
+  secret: my-grafana-secret
+
+oidc:
+  url: kube-oidc-proxy.my-domain.com

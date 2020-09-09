@@ -1,0 +1,10 @@
+.DS_Store
+/dex-gangway-oidc/dex-config.yaml
+/dex-gangway-oidc/dex-ingress.yaml
+/dex-gangway-oidc/gangway-config.yaml
+/dex-gangway-oidc/gangway-deployment.yaml
+/dex-gangway-oidc/gangway-ingress.yaml
+/dex-gangway-oidc/oidc-deployment.yaml
+/dex-gangway-oidc/oidc-ingress.yaml
+/dex-gangway-oidc/kustomize/base/kustomization.yaml
+/dex-gangway-oidc/overlays

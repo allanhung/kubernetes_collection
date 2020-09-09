@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres
+spec:
+  replicas: 1
+  serviceName: postgres
+  updateStrategy:
+    type: RollingUpdate  
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      securityContext:
+        runAsUser: 999
+        fsGroup: 999     
+      containers:
+      - image: postgres
+        name: postgres
+        args: ["-c", "config_file=/etc/postgresql/postgres.conf"]
+        ports:
+        - containerPort: 5432
+          name: tcp-postgres
+        volumeMounts:
+        - name: postgres-config
+          mountPath: /etc/postgresql
+        - name: postgres-init
+          mountPath: /docker-entrypoint-initdb.d
+        - name: postgres-data
+          mountPath: /var/lib/postgresql
+        envFrom:
+        - secretRef:
+            name: postgres-secret
+      volumes:
+      - name: postgres-config
+        configMap:
+          name: postgres-config 
+          defaultMode: 0600
+      - name: postgres-init
+        secret:
+          secretName: postgres-init
+      - name: postgres-data
+        persistentVolumeClaim:
+          claimName: postgres-data
+  volumeClaimTemplates:
+  - metadata:
+      name: postgres-data
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      storageClassName: "longhorn"
+      resources:
+        requests:
+          storage: 2Gi

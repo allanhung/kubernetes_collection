@@ -1,0 +1,5 @@
+apiVersion: v3
+appVersion: 8.0.0
+description: centos-debug Helm chart for Kubernetes
+name: centos-debug
+version: 0.1.0

@@ -1,0 +1,84 @@
+defaultRules:
+  rules:
+    etcd: false
+kubeControllerManager:
+  enabled: false
+kubeEtcd:
+  enabled: false
+kubeScheduler:
+  enabled: false
+kubeProxy:
+  service:
+    selector:
+      k8s-app: kube-proxy-worker
+
+alertmanager:
+  ingress:
+    enabled: true
+    annotations:
+      kubernetes.io/ingress.class: my-ingress-class
+      kubernetes.io/tls-acme: "true"
+  alertmanagerSpec:
+    storage: 
+      volumeClaimTemplate:
+        spec:
+          storageClassName: my-storage-class
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 20Gi
+
+grafana:
+  persistence:
+    type: pvc
+    enabled: true
+    storageClassName: my-storage-class
+    accessModes:
+      - ReadWriteOnce
+    size: 20Gi
+  datasources:
+    datasources.yaml:
+      apiVersion: 1
+      datasources:
+        - name: LokiViaProm
+          type: prometheus
+          url: http://loki.logging.svc:3100/loki
+          isDefault: false
+        - name: Loki
+          type: loki
+          url: http://loki.logging.svc:3100
+          isDefault: false
+  notifiers:
+    notifiers.yaml:
+      notifiers:
+        - name: alertmanager
+          type: prometheus-alertmanager
+          uid: notifier-1
+          settings:
+            url: http://po-prometheus-operator-alertmanager:9093
+  ingress:
+    enabled: true
+    annotations: 
+      kubernetes.io/ingress.class: my-ingress-class
+      kubernetes.io/tls-acme: "true"
+
+prometheus:
+  thanosIngress:
+    enabled: true
+    annotations:
+      kubernetes.io/ingress.class: my-ingress-class
+      kubernetes.io/tls-acme: "true"
+  ingress:
+    enabled: true
+    annotations:
+      kubernetes.io/ingress.class: my-ingress-class
+      kubernetes.io/tls-acme: "true"
+  prometheusSpec:
+    storageSpec: 
+      volumeClaimTemplate:
+        spec:
+          storageClassName: my-storage-class
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 20Gi

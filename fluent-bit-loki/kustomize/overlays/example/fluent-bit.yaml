@@ -1,0 +1,20 @@
+apiVersion: extensions/v1beta1
+kind: DaemonSet
+metadata:
+  name: fluent-bit
+spec:
+  template:
+    spec:
+      imagePullSecrets:
+      - name: example-registry
+      containers:
+      - name: fluent-bit
+        image: example-registry/kubernetes/fluent-bit:1.4.5
+        command:
+          - /fluent-bit/bin/fluent-bit
+          - -c
+          - /fluent-bit/etc/fluent-bit.conf
+          - -e
+          - /usr/lib/x86_64-linux-gnu/out_loki.so
+          - -e
+          - /usr/lib/x86_64-linux-gnu/out_syslog.so        

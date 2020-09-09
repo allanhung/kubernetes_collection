@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: logging-debug
+spec:
+  nodeSelector:
+    kubernetes.io/hostname: debug_host
+  containers:
+  - args:
+    - sh
+    - -c
+    - 'while [ 1 ]; do D=`date -Iseconds`; echo "$D INFO test message"; sleep 3; done'
+    image: alpine
+    name: alpine

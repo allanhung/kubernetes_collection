@@ -1,0 +1,39 @@
+issuer: https://{{ (ds "values").dex.url }}
+storage:
+  type: kubernetes
+  config:
+    inCluster: true
+logger:
+  level: info
+web:
+  http: 0.0.0.0:5556
+telemetry:
+  http: 0.0.0.0:5558
+oauth2:
+  alwaysShowLoginScreen: false
+  skipApprovalScreen: true
+enablePasswordDB: false
+connectors:
+- type: oidc
+  id: oidc
+  name: Okta
+  config:
+    issuer: {{ (ds "values").dex.issuer }}
+    clientID: {{ (ds "values").dex.clientID }}
+    clientSecret: {{ (ds "values").dex.clientSecret }}
+    redirectURI: https://{{ (ds "values").dex.url }}/callback
+    insecureSkipEmailVerified: true
+oauth2:
+  skipApprovalScreen: true
+
+staticClients:
+- id: gangway
+  redirectURIs:
+  - https://{{ (ds "values").gangway.url }}/callback
+  name: 'Gangway'
+  secret: {{ (ds "values").gangway.secret }}
+- id: grafana
+  redirectURIs:
+  - https://{{ (ds "values").grafana.url }}/login/generic_oauth
+  name: 'Grafana'
+  secret: {{ (ds "values").grafana.secret }}

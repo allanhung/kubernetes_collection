@@ -1,0 +1,21 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-issuer
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "false"
+  labels:
+    app: dex
+  name: dex
+spec:
+  rules:
+    - host: {{ (ds "values").dex.url }}
+      http:
+        paths:
+          - backend:
+              serviceName: dex
+              servicePort: 80
+  tls:
+  - hosts:
+    - {{ (ds "values").dex.url }}
+    secretName: {{ (ds "values").dex.url }}-tls

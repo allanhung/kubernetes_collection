@@ -1,0 +1,23 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  annotations:
+    cert-manager.io/cluster-issuer: selfsigned-issuer 
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "false"
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+  labels:
+    app: kube-oidc-proxy
+  name: kube-oidc-proxy
+spec:
+  rules:
+    - host: {{ (ds "values").oidc.url }}
+      http:
+        paths:
+          - backend:
+              serviceName: kube-oidc-proxy
+              servicePort: 443
+  tls:
+  - hosts:
+    - {{ (ds "values").oidc.url }}
+    secretName: {{ (ds "values").oidc.url }}-tls

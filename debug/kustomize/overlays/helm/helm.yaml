@@ -1,0 +1,9 @@
+apiVersion: helm/v1
+kind: HelmTransformer
+metadata:
+  name: centos-debug
+ChartName: centos-debug
+ChartVersion: 0.1.0
+appVersion: 8.0.0
+Values:
+  nodeSelector: {}

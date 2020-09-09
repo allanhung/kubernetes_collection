@@ -1,0 +1,36 @@
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: selfsigned-issuer
+spec:
+  selfSigned: {}
+---
+apiVersion: cert-manager.io/v1alpha2
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-issuer
+spec:
+  acme:
+    server: https://acme-v02.api.letsencrypt.org/directory
+    email: human@personal.com
+    privateKeySecretRef:
+      name: letsencrypt-key
+    solvers:
+    - http01:
+        ingress:
+          class: nginx
+    - dns01:
+        webhook:
+          groupName: acme.alidns.com
+          solverName: alidns-solver
+          config:
+            region: "us-east-1"
+            accessTokenSecretRef:
+              name: alidns-secrets
+              key: access-token
+            secretKeySecretRef:
+              name: alidns-secrets
+              key: secret-key
+      selector:
+        dnsZones:
+        - example.domain.com 

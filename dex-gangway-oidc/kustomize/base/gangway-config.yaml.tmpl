@@ -1,0 +1,40 @@
+# The cluster name. Used in UI and kubectl config instructions.
+# Env var: GANGWAY_CLUSTER_NAME
+clusterName: {{ (ds "values").cluster_name }}
+
+# OAuth2 URL to start authorization flow.
+# Env var: GANGWAY_AUTHORIZE_URL
+authorizeURL: https://{{ (ds "values").dex.url }}/auth
+
+# OAuth2 URL to obtain access tokens.
+# Env var: GANGWAY_TOKEN_URL
+tokenURL: "http://dex/token"
+
+# Where to redirect back to. This should be a URL where gangway is reachable.
+# Typically this also needs to be registered as part of the oauth application
+# with the oAuth provider.
+# Env var: GANGWAY_REDIRECT_URL
+redirectURL: https://{{ (ds "values").gangway.url }}/callback
+
+# API client ID as indicated by the identity provider
+# Env var: GANGWAY_CLIENT_ID
+clientID: gangway
+
+# API client secret as indicated by the identity provider
+# Env var: GANGWAY_CLIENT_SECRET
+clientSecret: {{ (ds "values").gangway.secret }}
+
+# The JWT claim to use as the username. This is used in UI.
+# Default is "nickname".
+# Env var: GANGWAY_USERNAME_CLAIM
+usernameClaim: "email"
+
+# The API server endpoint used to configure kubectl
+# Env var: GANGWAY_APISERVER_URL
+apiServerURL: https://{{ (ds "values").oidc.url }}
+
+# The path to find the CA bundle for the API server. Used to configure kubectl.
+# This is typically mounted into the default location for workloads running on
+# a Kubernetes cluster and doesn't need to be set.
+# Env var: GANGWAY_CLUSTER_CA_PATH
+clusterCAPath: "/etc/trustca/ca.crt"

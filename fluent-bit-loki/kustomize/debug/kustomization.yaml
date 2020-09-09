@@ -1,0 +1,26 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: logging
+
+patches:
+- path: nodeSelector.yaml
+  target:
+    kind: Pod
+
+commonLabels:
+  app: fluent-bit-logging-debug
+
+generatorOptions:
+  disableNameSuffixHash: true
+
+resources:
+- fluent-bit.yaml
+- logging-debug.yaml
+
+configMapGenerator:
+- name: fluent-bit-config-debug
+  files:
+  - fluent-bit.conf
+  - parsers.conf
+  - kubernetes_metadata.lua

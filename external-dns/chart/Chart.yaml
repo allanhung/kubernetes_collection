@@ -1,0 +1,5 @@
+apiVersion: v3
+appVersion: 0.7.3
+description: external-dns Helm chart for Kubernetes
+name: external-dns
+version: 0.1.0

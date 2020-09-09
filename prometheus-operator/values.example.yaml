@@ -1,0 +1,71 @@
+alertmanager:
+  config:
+    global:
+      resolve_timeout: 5m
+    route:
+      group_by: ['job']
+      group_wait: 30s
+      group_interval: 5m
+      repeat_interval: 30m
+      receiver: 'my-alerts-channel'
+      routes:
+      - match:
+          alertname: Watchdog
+        receiver: 'null'
+    receivers:
+    - name: 'my-alerts-channel'
+      webhook_configs:
+        - send_resolved: true
+          url: 'http://my-webhook'
+    - name: 'null'
+  ingress:
+    hosts:
+      - alertmanager.my-domain.com
+    tls:
+    - secretName: alertmanager-tls
+      hosts:
+      - alertmanager.my-domain.com
+    externalUrl: http://alertmanager.my-domain.com
+
+grafana:
+  adminPassword: abrakadabra
+  grafana.ini:
+    server:
+      root_url: http://grafana.my-domain.com
+    users:
+      auto_assign_org_role: Editor
+    auth.generic_oauth:
+      name: okta
+      enabled: true
+      scopes: openid profile email groups
+      client_id: grafana-app
+      client_secret: my-secret
+      auth_url: https://dex.my-domain.com/auth
+      token_url: https://dex.my-domain.com/token
+      api_url: https://dex.my-domain.com/userinfo
+  ingress:
+    hosts:
+      - grafana.my-domain.com
+    tls:
+    - secretName: grafana-tls
+      hosts:
+      - grafana.my-domain.com
+
+prometheus:
+  thanosIngress:
+    hosts:
+      - thanos.my-domain.com
+    tls:
+    - secretName: thanos-tls
+      hosts:
+      - thanos.my-domain.com
+  ingress:
+    hosts:
+      - prometheus.my-domain.com
+    tls:
+    - secretName: prometheus-tls
+      hosts:
+      - prometheus.my-domain.com
+  prometheusSpec:
+    externalLabels:
+      prometheus: dev

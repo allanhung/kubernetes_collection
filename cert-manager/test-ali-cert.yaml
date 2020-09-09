@@ -1,0 +1,44 @@
+apiVersion: cert-manager.io/v1alpha2
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-staging
+spec:
+  acme:
+    # Change to your letsencrypt email
+    email: my-name@my-domain.com
+    server: https://acme-staging-v02.api.letsencrypt.org/directory
+    privateKeySecretRef:
+      name: letsencrypt-staging-key
+    solvers:
+    - dns01:
+        webhook:
+          groupName: acme.alidns.com
+          solverName: alidns-solver
+          config:
+            region: "us-east-1"
+            accessTokenSecretRef:
+              name: alidns-secrets
+              key: access-token
+            secretKeySecretRef:
+              name: alidns-secrets
+              key: secret-key
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  annotations:
+    kubernetes.io/tls-acme: "true"
+    cert-manager.io/issuer: letsencrypt-staging
+  name: test-ali
+spec:
+  rules:
+  - host: testali.my-domain
+    http:
+      paths:
+      - backend:
+          serviceName: testali
+          servicePort: 80
+  tls:
+  - hosts:
+    - testali.my-domain
+    secretName: testali.my-domain-tls
