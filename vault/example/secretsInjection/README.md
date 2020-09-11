@@ -34,7 +34,6 @@ vault kv put secret/helloworld username=foobaruser password=foobarbazpass
 ### create kubernetes app
 ```bash
 kubectl create ns demo
-kubectl create sa app -n demo
 kubectl apply -f demo_app.yaml -n demo
 ```
 
@@ -56,3 +55,4 @@ kubectl exec -ti centos-debug-${POD_POSTFIX} -n demo -- cat /vault/secrets/foo
 * [injecting-vault-secrets-into-kubernetes-pods](https://www.hashicorp.com/blog/injecting-vault-secrets-into-kubernetes-pods-via-a-sidecar)
 * [secrets-engines](https://www.vaultproject.io/intro/getting-started/secrets-engines)
 * [injector](https://www.vaultproject.io/docs/platform/k8s/injector)
+* [injector/annotations](https://github.com/hashicorp/vault/blob/master/website/pages/docs/platform/k8s/injector/annotations.mdx)
