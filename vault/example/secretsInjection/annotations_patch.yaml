@@ -1,0 +1,8 @@
+spec:
+  template:
+    metadata:
+      annotations:
+        vault.hashicorp.com/auth-path: "auth/dev"
+        vault.hashicorp.com/agent-inject: "true"
+        vault.hashicorp.com/agent-inject-secret-foo: "secret/helloworld"
+        vault.hashicorp.com/role: "myapp"
