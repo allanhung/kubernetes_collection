@@ -1,0 +1,21 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-issuer
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "false"
+  labels:
+    app: consul
+  name: consul
+spec:
+  rules:
+    - host: consul.my-domain.com
+      http:
+        paths:
+          - backend:
+              serviceName: consul-consul-ui
+              servicePort: 80
+  tls:
+  - hosts:
+    - consul.my-domain.com
+    secretName: consul.my-domain.com-tls

@@ -1,0 +1,21 @@
+global:
+  image: "consul:1.8.2"
+  datacenter: dev
+server:
+  enabled: true
+  replicas: 1
+  bootstrapExpect: 1  
+  storage: 10Gi
+  storageClass: null  
+  disruptionBudget:
+    enabled: false  
+client:
+  enabled: false
+syncCatalog:
+  enabled: true
+  toConsul: true
+  toK8s: true  
+  nodePortSyncType: InternalOnly 
+  syncClusterIPServices: false
+  addK8SNamespaceSuffix: false  
+  k8sTag: k8s-dev
