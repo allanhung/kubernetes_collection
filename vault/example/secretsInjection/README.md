@@ -1,6 +1,10 @@
-kubectl cp app-policy.hcl vault-0:/tmp/
-kubectl exec -ti vault-0 -n vault sh
+### copy app-policy.hcl to pod
 ```bash
+kubectl cp app-policy.hcl vault-0:/tmp/
+```
+### login to create auth, role in vault
+```bash
+kubectl exec -ti vault-0 -n vault sh
 vault login
 vault policy write app /tmp/app-policy.hcl
 vault policy list
@@ -43,7 +47,7 @@ export POD_POSTFIX=6b86866f5-j2mkg
 kubectl exec -ti centos-debug-${POD_POSTFIX} -n demo -- ls -l /vault/secrets
 ```
 
-### patch and check again
+### inject vault into pod  and check again
 ```bash
 kubectl patch deployment centos-debug --patch "$(cat annotations_patch.yaml)" -n demo
 export POD_POSTFIX=587c766785-99mv5
