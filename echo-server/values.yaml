@@ -1,0 +1,22 @@
+image:
+  repository: ealen/echo-server
+  tag: 0.4.2
+
+serviceAccount:
+  create: false  
+
+service:
+  type: ClusterIP
+
+ingress:
+  enabled: true
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-issuer  
+  hosts:
+    - host: echo-server.my-domain.com
+      paths: 
+        - /
+  tls:  
+    - hosts:
+        - echo-server.my-domain.com
+      secretName: echo-server.my-domain.com-tls
