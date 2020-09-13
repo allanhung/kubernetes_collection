@@ -1,0 +1,14 @@
+apiVersion: cert-manager.io/v1alpha2
+kind: Certificate
+metadata:
+  name: example-tls
+spec:
+  secretName: testali.my-domain-tls
+  commonName: testali.my-domain
+  duration: 2160h # 90 days
+  renewBefore: 360h # 15 days  
+  dnsNames:
+  - testali.my-domain
+  issuerRef:
+    name: selfsigned-issuer
+    kind: ClusterIssuer

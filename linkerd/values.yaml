@@ -1,0 +1,50 @@
+linkerd:
+  image: buoyantio/linkerd:1.7.4
+  httpPort: 9990
+  ingress:
+    enabled: true
+    annotations:
+      cert-manager.io/cluster-issuer: letsencrypt-issuer
+    hosts:
+      - linkerd.my-domain.com
+    tls:
+      - hosts:
+          - linkerd.my-domain.com
+        secretName: linkerd.my-domain.com-tls
+
+kubectl:
+  image: buoyantio/kubectl:latest
+
+config:
+  admin:
+    ip: 0.0.0.0
+    port: 9990
+
+  routers:
+  - protocol: http
+    label: incoming
+    servers:
+      - port: 4140
+        ip: 0.0.0.0    
+    dtab: |
+      /svc => /$/io.buoyant.http.subdomainOfPfx/my-domain/consul;
+      /consul => /#/consul/my-dc;
+  - protocol: http
+    label: outgoing
+    servers:
+      - port: 4141
+        ip: 0.0.0.0
+    dtab: |
+      /srv        => /ns/prod/router;
+      /svc        => /srv;
+
+  namers:
+  - kind: io.l5d.consul
+    host: consul-consul-server.consul.svc
+    port: 8500
+    prefix: /consul
+    useHealthCheck: true
+
+  # Don't send our secrets to Buoyant
+  usage:
+    enabled: false
