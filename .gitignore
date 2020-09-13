@@ -8,3 +8,5 @@
 /dex-gangway-oidc/oidc-ingress.yaml
 /dex-gangway-oidc/kustomize/base/kustomization.yaml
 /dex-gangway-oidc/overlays
+*/my-*
+*/*.swp
