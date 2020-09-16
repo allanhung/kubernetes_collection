@@ -1,0 +1,12 @@
+replicaCount: 1
+
+debug: false
+
+image:
+  repository: banzaicloud/vault-secrets-webhook
+
+env:
+  VAULT_IMAGE: vault:1.5.2
+
+podDisruptionBudget:
+  enabled: false  

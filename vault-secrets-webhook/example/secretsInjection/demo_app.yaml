@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: centos-debug
+  labels:
+    app: debug
+spec:
+  selector:
+    matchLabels:
+      app: debug
+  template:
+    metadata:
+      labels:
+        app: debug
+    spec:
+      containers:
+      - args:
+        - tail
+        - -f
+        - /dev/null
+        image: centos
+        name: debug
