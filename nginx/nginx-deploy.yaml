@@ -1,0 +1,82 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-server-conf
+data:
+  server.conf: |
+    server {
+      listen       80;
+      server_name  _;
+    
+      access_log  /dev/stdout main;
+      error_log   /dev/stdout info;
+    
+      location / {
+          root   /usr/share/nginx/html;
+          index  index.html index.htm;
+      }
+    
+      error_page   500 502 503 504  /50x.html;
+      location = /50x.html {
+          root   /usr/share/nginx/html;
+      }
+      location /echo1/ {
+        proxy_pass http://echo-server;
+      }
+      location /echo2/ {
+        proxy_pass http://echo-server;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header Proxied-from /echo2/;
+        proxy_set_header Host $host;
+        proxy_http_version 1.1;            
+      }
+      location /echo3/ {
+        proxy_pass http://l5d-linkerd.linkerd:4140;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header Proxied-from /echo3/;
+        proxy_set_header Host echo-server.my-domain;
+        proxy_http_version 1.1;            
+      }
+    }
+---
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: nginx
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - name: nginx
+        image: nginx
+        ports:
+        - containerPort: 80
+        volumeMounts:
+        - mountPath: /docker-entrypoint.d
+          name: docker-entrypoint
+        - mountPath: /etc/nginx/conf.d
+          readOnly: true
+          name: nginx-server-conf
+      volumes:
+      - name: docker-entrypoint
+        emptyDir: {}
+      - name: nginx-server-conf
+        configMap:
+          name: nginx-server-conf
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx
+spec:
+  type: NodePort
+  ports:
+  - port: 80
+    targetPort: 80
+  selector:
+    app: nginx
