@@ -1,0 +1,33 @@
+ingress:
+  hosts:
+    - dex.my-domain.com
+  tls:
+    - secretName: dex.my-domain.com-tls
+      hosts:
+        - dex.my-domain.com
+
+config:
+  issuer: https://dex.my-domain.com
+  logger:
+    level: info
+  connectors:
+  - type: oidc
+    id: oidc
+    name: Okta
+    config:
+      issuer: https://my-okta.okta.com
+      clientID: client-id
+      clientSecret: client-secret
+      redirectURI:  https://dex.my-domain.com/callback
+      insecureSkipEmailVerified: true      
+  staticClients:
+  - id: gangway-app
+    redirectURIs:
+    - https://gangway.my-domain.com/callback
+    name: 'Gangway'
+    secret: gangway-secret
+  - id: grafana-app
+    redirectURIs:
+    - https://grafana.my-domain.com/login/generic_oauth
+    name: 'Grafana'
+    secret: grafana-secret    

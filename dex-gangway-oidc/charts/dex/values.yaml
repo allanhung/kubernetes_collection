@@ -1,0 +1,38 @@
+image: quay.io/dexidp/dex
+imageTag: "v2.24.0"
+imagePullPolicy: "IfNotPresent"
+grpc: false
+https: false
+telemetry: true
+
+ports:
+  web:
+    servicePort: 80
+  telemetry:
+    servicePort: 5558
+
+ingress:
+  enabled: true
+  annotations:
+    kubernetes.io/tls-acme: "true"
+  path: /
+
+certs:
+  web:
+    create: false
+
+config:
+  storage:
+    type: kubernetes
+    config:
+      inCluster: true
+  logger:
+    level: info
+  web:
+    http: 0.0.0.0:5556
+  telemetry:
+    http: 0.0.0.0:5558    
+  oauth2:
+    alwaysShowLoginScreen: false
+    skipApprovalScreen: true
+  enablePasswordDB: false

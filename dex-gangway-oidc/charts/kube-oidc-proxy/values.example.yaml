@@ -1,0 +1,16 @@
+tls:
+  secretName: kube-oidc-proxy.my-domain.com-tls
+
+oidc:
+  clientId: gangway-app
+  issuerUrl: https://dex.my-domain.com
+
+ingress:
+  hosts:
+    - host: kube-oidc-proxy.my-domain.com
+      paths:
+      - /
+  tls:
+    - secretName: kube-oidc-proxy.my-domain.com-tls
+      hosts:
+        - kube-oidc-proxy.my-domain.com

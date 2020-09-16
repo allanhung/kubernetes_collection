@@ -1,0 +1,29 @@
+image:
+  repository: gcr.io/heptio-images/gangway
+  tag: v3.2.0
+
+gangway:
+  clusterName: "my-domain.com"
+  authorizeURL: "https://dex.my-domain.com/auth"
+  audience: "https://dex.my-domain.com/userinfo"
+  redirectURL: "https://gangway.my-domain.com/callback"
+  clientID: "${GANGWAY_CLIENT_ID}"
+  clientSecret: "${GANGWAY_CLIENT_SECRET}"
+  usernameClaim: "email"
+  apiServerURL: "https://kube-oidc-proxy.my-domain.com"
+
+ingress:
+  hosts:
+  - gangway.my-domain.com
+  tls:
+  - secretName: gangway.my-domain.com-tls
+    hosts:
+    - gangway.my-domain.com
+
+extraVolumes:
+- name: trustca
+  secret:
+    secretName: kube-oidc-proxy.my-domain.com-tls
+    items:
+    - key: ca.crt
+      path: ca.crt      
