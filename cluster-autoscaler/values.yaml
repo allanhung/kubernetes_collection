@@ -1,0 +1,30 @@
+autoscalingGroups:
+- name: asg1
+  maxSize: 2
+  minSize: 1    
+cloudProvider: aws
+extraArgs:
+  logtostderr: true
+  stderrthreshold: info
+  v: 5
+  leader-elect: false
+  scan-interval: 30s
+  skip-nodes-with-local-storage: false
+  skip-nodes-with-system-pods: false
+  ok-total-unready-count: 1000
+  max-empty-bulk-delete: 50
+  expander: least-waste
+  scale-down-utilization-threshold: 80
+  scale-down-gpu-utilization-threshold: 80
+  scale-down-delay-after-add: 600s
+  scale-down-delay-after-failure: 600s
+  scale-down-unneeded-time: 600s  
+image:
+  repository: us.gcr.io/k8s-artifacts-prod/autoscaling/cluster-autoscaler
+  tag: v1.18.1
+podAnnotations: {}  
+serviceMonitor:
+  enabled: true  
+  namespace: monitoring
+  selector:
+    release: prometheus-operator  
