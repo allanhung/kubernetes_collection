@@ -1,0 +1,13 @@
+image:
+  repository: oliver006/redis_exporter
+  tag: v1.11.1
+
+serviceMonitor:
+  enabled: true
+  interval: 30s
+  scrapeTimeout: 10s
+  labels:
+    release: po
+
+collectors:
+  info_schema.processlist: true

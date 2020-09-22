@@ -1,0 +1,17 @@
+serviceMonitor:
+  metricRelabelings:
+  - separator: ;
+    regex: (.*)
+    targetLabel: instance
+    replacement: exampledb
+    action: replace
+
+mysql:
+  db: ""
+  host: "exampledb"
+  param: ""
+  pass: "password"
+  port: 3306
+  protocol: ""
+  user: "exporter"
+  existingSecret: false

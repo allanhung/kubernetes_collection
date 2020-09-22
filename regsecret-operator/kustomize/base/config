@@ -1,0 +1,14 @@
+{
+  "secrets": [
+    {
+      "secretName": "my-secret",
+      "credentials": {
+        "my-docker.com": {
+          "username": "my-username",
+          "password": "my-password",
+          "email": "my-user@mydomain"
+        }
+      }
+    }
+  ]
+}

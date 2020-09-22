@@ -14,6 +14,7 @@ helm upgrade cert-manager jetstack/cert-manager --install \
   --set ingressShim.defaultIssuerKind=ClusterIssuer \
   --set prometheus.servicemonitor.enabled=true \
   --set prometheus.servicemonitor.prometheusInstance=prometheus-operator \
+  --set prometheus.servicemonitor.labels.release=po \
   --set extraArgs="{--dns01-recursive-nameservers=8.8.8.8:53,--dns01-recursive-nameservers-only=true}" \
   --set installCRDs=true
 ```
@@ -50,6 +51,9 @@ Append follow annotation in ingress resource.
     annotations:
         kubernetes.io/tls-acme: "true" 
 ```
+
+### Dashboard
+* [11001](https://grafana.com/grafana/dashboards/11001)
 
 ## References
   - [Securing Ingress Resources](https://cert-manager.io/docs/usage/ingress)

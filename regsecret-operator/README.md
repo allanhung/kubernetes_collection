@@ -1,12 +1,9 @@
 ### Installation
 ```bash
-helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
-
-helm upgrade --install po \
-    --namespace monitoring  \
-    -f values.yaml \
-    -f values.example.yaml \
-    prometheus-community/kube-prometheus-stack
+helm upgrade --install regsecret-operator \
+    --namespace infra  \
+    -f my-values.yaml \
+   chart/
 ```        
 
 ### rule patch
@@ -52,4 +49,4 @@ bash dashboard.sh 763 admin:admin http://grafana:3000 "Database" "DS_PROM"
 ```
 
 ### Reference
-* [alertmanager api](https://raw.githubusercontent.com/prometheus/alertmanager/master/api/v2/openapi.yaml)
+* [regsecret-operator](https://github.com/mcasimir/regsecret-operator)

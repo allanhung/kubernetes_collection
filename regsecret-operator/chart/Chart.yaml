@@ -1,0 +1,5 @@
+apiVersion: v3
+appVersion: 1.0.4
+description: regsecret-operator Helm chart for Kubernetes
+name: regsecret-operator
+version: 0.1.0

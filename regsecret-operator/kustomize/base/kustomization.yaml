@@ -1,0 +1,21 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: kube-system
+
+generatorOptions:
+  disableNameSuffixHash: true
+
+images:
+  - name: mcasimir/regsecret-operator:latest
+    newName: mcasimir/regsecret-operator
+    newTag: latest
+
+resources:
+- rbac.yaml
+- deployment.yaml
+
+secretGenerator:
+- name: regsecret-operator-config 
+  files:
+  - config

@@ -1,0 +1,9 @@
+serviceMonitor:
+  metricRelabelings:
+  - separator: ;
+    regex: (.*)
+    targetLabel: instance
+    replacement: exampledb
+    action: replace
+
+redisAddress: redis://my-example:6379

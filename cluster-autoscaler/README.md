@@ -7,10 +7,8 @@ helm upgrade cas autoscaler/cluster-autoscaler-chart --install \
     -f values.yaml
 ```
 
-### Create dashboard
-```bash
-bash dashboard.sh 10692 admin:admin http://grafana:3000 "Cluster AutoScaler"
-```
+### Dashboard
+* [10692](https://grafana.com/grafana/dashboards/10692)
 
 ### Reference
 * [cluster-autoscaler-chart](https://github.com/kubernetes/autoscaler/tree/master/charts/cluster-autoscaler-chart)

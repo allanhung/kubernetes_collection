@@ -1,0 +1,15 @@
+apiVersion: helm/v1
+kind: HelmTransformer
+metadata:
+  name: regsecret-operator
+ChartName: regsecret-operator
+ChartVersion: 0.1.0
+appVersion: 1.0.4
+Values:
+  secrets:
+  - secretName: my-secret
+    credentials:
+      my-docker.com:
+        username: my-user
+        password: my-password
+        email: my-email@my-domain.com 
