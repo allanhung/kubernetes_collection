@@ -1,0 +1,5 @@
+apiVersion: v3
+appVersion: 0.14.0
+description: jmx-exporter Helm chart for Kubernetes
+name: jmx-exporter
+version: 0.1.0

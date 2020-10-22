@@ -1,0 +1,44 @@
+vault:
+  address: http://vault-server
+
+serviceMonitor:
+  enabled: true
+  additionalLabels:
+    release: example
+  jobLabel: "example"
+
+prometheusRule:
+  enabled: true
+  additionalLabels:
+    app: kube-prometheus-stack
+    release: example
+  namespace: "monitoring"
+  rules: 
+  - alert: VaultUp
+    expr: vault_up{job="example"} != 1
+    for: 3m
+    labels:
+      severity: critical
+    annotations:
+      message: "Vault exporter for '{{ $labels.instance }}' cannot talk to Vault."
+  - alert: VaultUninitialized
+    expr: vault_initialized{job="example"} != 1
+    for: 3m
+    labels:
+      severity: critical
+    annotations:
+      message: "Vault '{{ $labels.instance }}' is uninitialized."
+  - alert: VaultSealed
+     expr: vault_sealed{job="example"} != 0
+    for: 3m
+    labels:
+      severity: critical
+    annotations:
+      message: "Vault '{{ $labels.instance }}' is sealed."
+  - alert: VaultStandby
+    expr: count(vault_standby{job="example"} == 0) != 1
+    for: 3m
+    labels:
+      severity: critical
+    annotations:
+      message: "There are {{ $value }} active Vault instance(s)."

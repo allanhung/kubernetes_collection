@@ -1,0 +1,14 @@
+image:
+  repository: docker.io/bitnami/jmx-exporter
+  tag: 0.14.0-debian-10-r15
+
+jmx:
+  config:
+    lowercaseOutputName: true
+    lowercaseOutputLabelNames: true
+    ssl: false
+
+serviceMonitor:
+  enabled: true
+  additionalLabels:
+    release: po

@@ -3,7 +3,7 @@ kind: PrometheusRule
 metadata:
   annotations:
   labels:
-    app: prometheus-operator
+    app: kube-prometheus-stack 
     release: po
   name: mysql.rules
 spec:

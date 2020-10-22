@@ -1,0 +1,6 @@
+controller:
+  electionID: ingress-controller-leader
+  service:
+    annotations:
+      service.beta.kubernetes.io/alibaba-cloud-loadbalancer-address-type: "intranet"
+      service.beta.kubernetes.io/alicloud-loadbalancer-force-override-listeners: "true"

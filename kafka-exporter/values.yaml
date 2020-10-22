@@ -1,0 +1,9 @@
+image:
+  repository: danielqsj/kafka-exporter
+  tag: latest
+
+prometheus:
+  serviceMonitor:
+    enabled: true
+    additionalLabels:
+      release: po

@@ -1,0 +1,67 @@
+image:
+  registry: docker.io
+  repository: bitnami/rabbitmq
+  tag: 3.8.9-debian-10-r0
+
+auth:
+  username: user
+  password: ChangeMe
+
+persistence:
+  enabled: false
+  storageClass: "-"
+  accessMode: ReadWriteOnce
+  size: 8Gi
+
+metrics:
+  enabled: false
+  plugins: "rabbitmq_prometheus"
+  podAnnotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "{{ .Values.service.metricsPort }}"
+  serviceMonitor:
+    enabled: false
+    interval: 30s
+    scrapeTimeout: 30s
+    honorLabels: false
+    namespace: "monitoring"
+    relabellings: {}
+    additionalLabels:
+      release: po
+  prometheusRule:
+    enabled: false
+    additionalLabels:
+      app: kube-prometheus-stack
+      release: po
+    namespace: "monitoring"
+    rules:
+      - alert: RabbitmqDown
+        expr: rabbitmq_up{service="{{ template "rabbitmq.fullname" . }}"} == 0
+        for: 5m
+        labels:
+          severity: error
+        annotations:
+          summary: Rabbitmq down (instance {{ "{{ $labels.instance }}" }})
+          description: RabbitMQ node down
+      - alert: ClusterDown
+        expr: |
+          sum(rabbitmq_running{service="{{ template "rabbitmq.fullname" . }}"})
+          < {{ .Values.replicaCount }}
+        for: 5m
+        labels:
+          severity: error
+        annotations:
+          summary: Cluster down (instance {{ "{{ $labels.instance }}" }})
+          description: |
+              Less than {{ .Values.replicaCount }} nodes running in RabbitMQ cluster
+              VALUE = {{ "{{ $value }}" }}
+      - alert: ClusterPartition
+        expr: rabbitmq_partitions{service="{{ template "rabbitmq.fullname" . }}"} > 0
+        for: 5m
+        labels:
+          severity: error
+        annotations:
+          summary: Cluster partition (instance {{ "{{ $labels.instance }}" }})
+          description: |
+              Cluster partition
+              VALUE = {{ "{{ $value }}" }}

@@ -1,0 +1,33 @@
+replicaCount: 1
+image:
+  repository: quay.io/prometheusmsteams/prometheus-msteams
+  tag: v1.4.1
+
+metrics:
+  serviceMonitor:
+    enabled: true
+    additionalLabels:
+      release: po
+    scrapeInterval: 30s
+
+connectors:
+# in alertmanager, this will be used as http://prometheus-msteams:2000/alerts-infra
+- alerts-infra: https://outlook.office.com/webhook/5ebc3e18-7106-431e-8b33-bdd8e97a1a82@77287fa5-1d4b-4908-8dc3-d9d20280f8be/IncomingWebhook/10314e42ed204eee97579c1be501e6de/bc8b13d4-69a6-4183-a4d5-69e812cfd818
+# in alertmanager, this will be used as http://prometheus-msteams:2000/alerts-checkit
+- alerts-checkit: https://outlook.office.com/webhook/5ebc3e18-7106-431e-8b33-bdd8e97a1a82@77287fa5-1d4b-4908-8dc3-d9d20280f8be/IncomingWebhook/c76ff0c5dd7043eba2d509b10fa31307/bc8b13d4-69a6-4183-a4d5-69e812cfd818
+# in alertmanager, this will be used as http://prometheus-msteams:2000/alerts-checkit-staging
+- alerts-checkit-staging: https://outlook.office.com/webhook/5ebc3e18-7106-431e-8b33-bdd8e97a1a82@77287fa5-1d4b-4908-8dc3-d9d20280f8be/IncomingWebhook/4af3b8e5bba848b48fd5599b790d8a16/bc8b13d4-69a6-4183-a4d5-69e812cfd818
+# in alertmanager, this will be used as http://prometheus-msteams:2000/alerts-data-platform
+- alerts-data-platform: https://outlook.office.com/webhook/5ebc3e18-7106-431e-8b33-bdd8e97a1a82@77287fa5-1d4b-4908-8dc3-d9d20280f8be/IncomingWebhook/0deb8f15a0c54836bae7abffca49a72a/bc8b13d4-69a6-4183-a4d5-69e812cfd818
+# in alertmanager, this will be used as http://prometheus-msteams:2000/alerts-platform
+- alerts-platform: https://outlook.office.com/webhook/5ebc3e18-7106-431e-8b33-bdd8e97a1a82@77287fa5-1d4b-4908-8dc3-d9d20280f8be/IncomingWebhook/52514c248ca949a18ccd40e79851185c/bc8b13d4-69a6-4183-a4d5-69e812cfd818
+# in alertmanager, this will be used as http://prometheus-msteams:2000/alerts-web
+- alerts-web: https://outlook.office.com/webhook/5ebc3e18-7106-431e-8b33-bdd8e97a1a82@77287fa5-1d4b-4908-8dc3-d9d20280f8be/IncomingWebhook/467a879042b64b43b5bb1ce7358322fa/bc8b13d4-69a6-4183-a4d5-69e812cfd818
+  # in alertmanager, this will be used as http://prometheus-msteams:2000/alerts-dev-k8s
+- alerts-dev-k8s: https://outlook.office.com/webhook/5ebc3e18-7106-431e-8b33-bdd8e97a1a82@77287fa5-1d4b-4908-8dc3-d9d20280f8be/IncomingWebhook/2f8091f24d934ffca250ba51c60d9e21/cf67ec5d-3fb2-491e-8eb4-4cfb92fed1ce
+  # in alertmanager, this will be used as http://prometheus-msteams:2000/alerts-shared-k8s
+- alerts-shared-k8s: https://outlook.office.com/webhook/5ebc3e18-7106-431e-8b33-bdd8e97a1a82@77287fa5-1d4b-4908-8dc3-d9d20280f8be/IncomingWebhook/91d699b2f7014592a16bdb1866309b58/cf67ec5d-3fb2-491e-8eb4-4cfb92fed1ce
+  # in alertmanager, this will be used as http://prometheus-msteams:2000/alerts-staging-k8s
+- alerts-staging-k8s: https://outlook.office.com/webhook/5ebc3e18-7106-431e-8b33-bdd8e97a1a82@77287fa5-1d4b-4908-8dc3-d9d20280f8be/IncomingWebhook/b96302c5aad6435191659dc5eb655817/cf67ec5d-3fb2-491e-8eb4-4cfb92fed1ce
+  # in alertmanager, this will be used as http://prometheus-msteams:2000/alerts-prod-k8s
+- alerts-prod-k8s: https://outlook.office.com/webhook/5ebc3e18-7106-431e-8b33-bdd8e97a1a82@77287fa5-1d4b-4908-8dc3-d9d20280f8be/IncomingWebhook/875bf1c051de4dd2837748f8ab8fb901/cf67ec5d-3fb2-491e-8eb4-4cfb92fed1ce

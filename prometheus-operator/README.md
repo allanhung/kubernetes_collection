@@ -11,7 +11,7 @@ helm upgrade --install po \
 
 ### rule patch
 ```
-kubectl -n infra patch prometheusrules po-prometheus-operator-kubernetes-resources --record --type='json' -p '[
+kubectl -n monitoring patch prometheusrules po-kube-prometheus-stack-kubernetes-resources --record --type='json' -p '[
   {
     "op": "replace",
     "path": "/spec/groups/0/rules/5/expr",

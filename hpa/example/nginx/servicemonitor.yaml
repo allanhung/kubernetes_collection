@@ -1,0 +1,19 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  labels:
+    release: po
+  name: nginx-vts
+  namespace: infra
+spec:
+  endpoints:
+  - interval: 30s
+    path: /metrics
+    port: metrics
+    scrapeTimeout: 10s
+  namespaceSelector:
+    matchNames:
+    - nginx
+  selector:
+    matchLabels:
+      app: nginx-vts

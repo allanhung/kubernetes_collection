@@ -1,0 +1,4 @@
+env:
+  ALIYUN_CLUSTERID: my-cluster-id
+  ECI_VSWITCH: "my-vsw-id-1,my-vsw-id-2"
+  ECI_SECURITY_GROUP: my-sg-id

@@ -1,0 +1,14 @@
+es:
+  uri: http://localhost:9200
+
+serviceMonitor:
+  namespace: monitoring
+  relabelings:
+  - separator: ;
+    regex: (.*)
+    targetLabel: instance
+    replacement: exampledb
+    action: replace  
+
+prometheusRule:
+  namespace: monitoring

@@ -1,0 +1,17 @@
+virtualNode:
+  image:
+    repository: registry-vpc.us-east-1.aliyuncs.com/acs/virtual-nodes-eci
+    tag: v1.0.0.7-aliyun
+
+affinityAdminssion:
+  enabled: true 
+  image:
+    repository: registry-vpc.us-east-1.aliyuncs.com/acs/virtual-node-affinity-admission-controller
+    tag: v1.0.0.1-aliyun
+
+env:
+  ALIYUN_CLUSTERID: my-cluster-id
+  ALIYUN_RESOURCEGROUP_ID: my-resourcegroup-id
+  ECI_REGION: us-east-1
+  ECI_ACCESS_KEY=my-access-key
+  ECI_SECRET_KEY=my-secret-key

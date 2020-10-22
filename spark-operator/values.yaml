@@ -1,0 +1,11 @@
+serviceAccounts:
+  spark:
+    name: spark
+sparkJobNamespace: spark
+
+enableWebhook: true
+
+leaderElection:
+  enable: true
+  lockName: "spark-operator-lock"
+replicas: 3

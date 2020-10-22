@@ -1,25 +1,16 @@
 ## Installation
 
-### Add helm repo
+### Install cert manager
 ```bash
 helm repo add jetstack https://charts.jetstack.io
 helm repo update
-```
-### Install cert manager
-```bash
+
 helm upgrade cert-manager jetstack/cert-manager --install \
   --namespace cert-manager \
-  --version v1.0.1 \
-  --set ingressShim.defaultIssuerName=letsencrypt-issuer \
-  --set ingressShim.defaultIssuerKind=ClusterIssuer \
-  --set prometheus.servicemonitor.enabled=true \
-  --set prometheus.servicemonitor.prometheusInstance=prometheus-operator \
-  --set prometheus.servicemonitor.labels.release=po \
-  --set extraArgs="{--dns01-recursive-nameservers=8.8.8.8:53,--dns01-recursive-nameservers-only=true}" \
-  --set installCRDs=true
+  -f values.yaml
 ```
 
-### Install webhook (AliDns for example)
+### Install webhook (AliDns)
 ```bash
 # build docker image
 git clone https://github.com/allanhung/cert-manager-alidns-webhook
@@ -40,6 +31,18 @@ helm upgrade cert-manager-webhook-alidns ./alidns-webhook --install \
    --set image.privateRegistry.dockerRegistrySecret: my-registry-secret
 ```
 
+### Install webhook (DNSimple)
+```bash
+helm repo add neoskop https://charts.neoskop.dev
+helm repo update
+helm upgrade cert-manager-webhook-dnsimple -install \
+  --namespace cert-manager \
+  --set dnsimple.account=my-dnsimple-account \
+  --set dnsimple.token=my-dnsimple-token \
+  --set certManager.namespace=cert-manager \
+  neoskop/cert-manager-webhook-dnsimple
+```
+
 ### Create Certificate Cluster Issuer
 ```bash  
 kubectl apply -f cert-issuer.yaml
@@ -56,6 +59,8 @@ Append follow annotation in ingress resource.
 * [11001](https://grafana.com/grafana/dashboards/11001)
 
 ## References
-  - [Securing Ingress Resources](https://cert-manager.io/docs/usage/ingress)
-  - [Installation](https://cert-manager.io/docs/installation/kubernetes)
-  - [Alidns-webhook](https://github.com/DEVmachine-fr/cert-manager-alidns-webhook)
+* [cert-manager helm chart](https://github.com/jetstack/cert-manager/tree/master/deploy)
+* [dnsimple webhook](https://github.com/neoskop/cert-manager-webhook-dnsimple)
+* [Securing Ingress Resources](https://cert-manager.io/docs/usage/ingress)
+* [Installation](https://cert-manager.io/docs/installation/kubernetes)
+* [Alidns-webhook](https://github.com/DEVmachine-fr/cert-manager-alidns-webhook)

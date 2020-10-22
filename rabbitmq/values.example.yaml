@@ -1,0 +1,13 @@
+auth:
+  username: user
+  password: ChangeMe
+
+persistence:
+  enabled: false
+  storageClass: "-"
+  accessMode: ReadWriteOnce
+  size: 8Gi
+
+metrics:
+  prometheusRule:
+    enabled: false

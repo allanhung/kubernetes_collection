@@ -1,0 +1,18 @@
+image:
+  repository: prom/blackbox-exporter
+  tag: v0.17.0
+
+serviceMonitor:
+  enabled: true
+  defaults:
+    labels:
+      release: po
+    interval: 30s
+    scrapeTimeout: 10s
+    module: http_2xx
+
+prometheusRule:
+  enabled: true
+  additionalLabels:
+    app: kube-prometheus-stack
+    release: po

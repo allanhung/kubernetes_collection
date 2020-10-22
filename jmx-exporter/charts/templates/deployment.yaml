@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app.kubernetes.io/instance: '{{ .Release.Name }}'
+    app.kubernetes.io/managed-by: '{{ .Release.Service }}'
+    app.kubernetes.io/name: '{{ .Chart.Name }}'
+    app.kubernetes.io/version: '{{ .Chart.Version }}'
+    helm.sh/chart: '{{ printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" }}'
+  name: '{{ .Release.Name }}-jmx-exporter'
+  namespace: '{{ .Release.Namespace }}'
+spec:
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-jmx-exporter
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-jmx-exporter
+    spec:
+      containers:
+      - name: jmx-exporter
+        image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+        imagePullPolicy: {{ .Values.image.pullPolicy | quote }}
+        command:
+          - java
+          - -XX:+UnlockExperimentalVMOptions
+          - -XX:+UseCGroupMemoryLimitForHeap
+          - -XX:MaxRAMFraction=1
+          - -XshowSettings:vm
+          - -jar
+          - jmx_prometheus_httpserver.jar
+          - "{{ .Values.listenerPort }}"
+          - /etc/jmx-config/jmx-prometheus.yml
+        ports:
+          - name: metrics
+            containerPort: {{ .Values.listenerPort }}
+        {{- if .Values.resources }}
+        resources: {{- toYaml .Values.resources | nindent 12 }}
+        {{- end }}
+        volumeMounts:
+          - name: jmx-config
+            mountPath: /etc/jmx-config
+      volumes:
+        - name: jmx-config
+          configMap:
+            name: {{ .Release.Name }}-jmx-configuration

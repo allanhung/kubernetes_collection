@@ -1,4 +1,6 @@
 serviceMonitor:
+  labels:
+    release: po
   metricRelabelings:
   - separator: ;
     regex: (.*)

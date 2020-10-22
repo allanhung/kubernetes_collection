@@ -1,0 +1,9 @@
+image:
+  repository: "allanhung/vault-exporter"
+  tag: "2.0.1"
+
+serviceMonitor:
+  enabled: true
+
+prometheusRule:
+  enabled: true

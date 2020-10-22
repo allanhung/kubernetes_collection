@@ -1,0 +1,45 @@
+--- a/helm-charts/charts/prometheus-rabbitmq-exporter/templates/prometheusrule.yaml
++++ b/helm-charts/charts/prometheus-rabbitmq-exporter/templates/prometheusrule.yaml
+@@ -11,37 +11,8 @@
+ {{ toYaml .Values.prometheus.rules.additionalLabels | indent 4 }}
+   {{- end }}
+ spec:
++{{- with .Values.prometheus.rules.rules }}
+   groups:
+-  - name: rabbitmq
+-    rules:
+-    - alert: RabbitmqDown
+-      expr: |
+-        absent(rabbitmq_up == 1)
+-      for: 1m
+-      labels:
+-        severity: critical
+-    - alert: RabbitmqNotRunning
+-      expr: |
+-        rabbitmq_running{self="1"} != 1
+-      for: 1m
+-      labels:
+-        severity: critical
+-    - alert: RabbitmqMessages
+-      expr: |
+-        rabbitmq_queue_messages > 250
+-      for: 10m
+-      labels:
+-        severity: warning
+-    - alert: RabbitmqMessages
+-      expr: |
+-        rabbitmq_queue_messages > 500
+-      for: 10m
+-      labels:
+-        severity: critical
+-    - alert: RabbitmqPartition
+-      expr: |
+-        rabbitmq_partitions{self="1"} != 0
+-      for: 1m
+-      labels:
+-        severity: critical
+-{{- end }}
+\ No newline at end of file
++    - name: {{ template "prometheus-rabbitmq-exporter.name" $ }}
++      rules: {{ tpl (toYaml .) $ | nindent 8 }}
++{{- end }}

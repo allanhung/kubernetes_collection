@@ -17,6 +17,18 @@ kubectl exec -ti vault-0 -n vault -- vault operator unseal
 kubectl exec -ti vault-0 -n vault -- vault operator unseal
 ```
 
+### Enable Telemetry
+#### copy telemetry.tcl to pod
+```bash
+kubectl cp telemetry.tcl vault-0:/tmp/
+```
+#### login to create server config
+```bash
+kubectl exec -ti vault-0 -n vault sh
+vault login
+vault server -config /tmp/telemetry.tcl
+```
+
 ### Check
 ```bash
 kubectl exec -ti vault-0 -n vault -- vault status -tls-skip-verify

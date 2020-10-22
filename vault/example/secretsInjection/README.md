@@ -47,6 +47,11 @@ export POD_POSTFIX=6b86866f5-j2mkg
 kubectl exec -ti centos-debug-${POD_POSTFIX} -n demo -- ls -l /vault/secrets
 ```
 
+### test login
+```bash
+curl -X POST --data '{"jwt": "$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)", "role": "myapp"}' http://vault:8200/v1/auth/dev/login
+```
+
 ### inject vault into pod  and check again
 ```bash
 kubectl patch deployment centos-debug --patch "$(cat annotations_patch.yaml)" -n demo

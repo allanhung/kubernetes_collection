@@ -1,0 +1,11 @@
+--- a/kafka_exporter/charts/kafka-exporter/templates/servicemonitor.yaml
++++ b/kafka_exporter/charts/kafka-exporter/templates/servicemonitor.yaml
+@@ -29,4 +29,8 @@
+     {{- if .Values.prometheus.serviceMonitor.scrapeTimeout }}
+     scrapeTimeout: {{ .Values.prometheus.serviceMonitor.scrapeTimeout }}
+     {{- end }}
++    {{- if .Values.prometheus.serviceMonitor.relabelings }}
++    relabelings:
++    {{- toYaml .Values.prometheus.serviceMonitor.relabelings | nindent 4 }}
++    {{- end }}    
+ {{- end }}

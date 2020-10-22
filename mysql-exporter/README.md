@@ -7,6 +7,8 @@ helm upgrade --install mysql-exporter \
     -f values.yaml \
     -f values.example.yaml \
     prometheus-community/prometheus-mysql-exporter
+
+kubectl apply -f alertvalue.yaml -n monitoring
 ```        
 
 ### Create monitor user

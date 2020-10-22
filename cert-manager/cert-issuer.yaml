@@ -33,4 +33,16 @@ spec:
               key: secret-key
       selector:
         dnsZones:
-        - example.domain.com 
+        - subdomain.example.com
+    - dns01:
+        webhook:
+          config:
+            account: my-dnsimple-account
+            tokenSecretRef:
+              key: token
+              name: cert-manager-webhook-dnsimple
+          groupName: acme.neoskop.de
+          solverName: dnsimple
+      selector:
+        dnsZones:
+        - example.com

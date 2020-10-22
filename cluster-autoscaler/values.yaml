@@ -27,4 +27,4 @@ serviceMonitor:
   enabled: true  
   namespace: monitoring
   selector:
-    release: prometheus-operator  
+    release: prometheus-operator

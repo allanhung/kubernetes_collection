@@ -1,0 +1,21 @@
+image:
+  repository: directxman12/k8s-prometheus-adapter-amd64
+  tag: v0.7.0
+
+logLevel: 4
+
+prometheus:
+  url: http://po-kube-prometheus-stack-prometheus
+  port: 9090
+
+rules:
+  default: false
+  custom:
+    - seriesQuery: '{namespace!="",service!="",__name__=~"^my-metrics.*"}'
+      seriesFilters: []
+      resources:
+        template: <<.Resource>>
+      name:
+        matches: ""
+        as: ""
+      metricsQuery: sum(<<.Series>>{<<.LabelMatchers>>}) by (<<.GroupBy>>)

@@ -1,0 +1,45 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: nginx
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  namespace: nginx
+  name: nginx-deployment
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: nginx-server
+    spec:
+      containers:
+      - name: nginx-demo
+        image: arquivei/nginx-vts:1.18
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 11050
+          name: http
+        - containerPort: 9913
+          name: metrics
+---
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: nginx
+  name: nginx-service
+  labels:
+    app: nginx-vts
+spec:
+  ports:
+  - port: 80
+    targetPort: 11050
+    name: http
+  - port: 9913
+    targetPort: 9913
+    name: metrics
+  selector:
+    app: nginx-server
+  type: ClusterIP

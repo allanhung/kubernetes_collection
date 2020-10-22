@@ -3,7 +3,7 @@ kind: PrometheusRule
 metadata:
   annotations:
   labels:
-    app: prometheus-operator
+    app: kube-prometheus-stack
     release: po
   name: cluster-autoscaler.rules
 spec:
@@ -11,7 +11,7 @@ spec:
   - name: cluster-autoscaler.alerts
     rules:
     - alert: ClusterAutoScalerScaleUp
-      expr: cluster_autoscaler_scaled_up_nodes_total > 0
+      expr: increase(cluster_autoscaler_scaled_up_nodes_total[1m]) > 0
       for: 1m
       labels:
         severity: warning
@@ -19,7 +19,7 @@ spec:
         description: Scaling up {{ $value }} node(s)
         summary: Kube Cluster Autoscaler is scaling up
     - alert: ClusterAutoScalerScaleDown
-      expr: cluster_autoscaler_scaled_down_nodes_total > 0
+      expr: increase(cluster_autoscaler_scaled_down_nodes_total[1m]) > 0
       for: 1m
       labels:
         severity: warning

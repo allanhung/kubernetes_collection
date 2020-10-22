@@ -1,0 +1,16 @@
+kafkaExporter:
+  kafka:
+    servers:
+    - kafka-server:9092
+    version: 0.9.0.1
+
+prometheus:
+  serviceMonitor:
+    enabled: true
+    namespace: monitoring
+    relabelings:
+    - separator: ;
+      regex: (.*)
+      targetLabel: instance
+      replacement: kafka.example.com
+      action: replace    

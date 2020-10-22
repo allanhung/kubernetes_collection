@@ -1,0 +1,25 @@
+global:
+  imagePullSecrets: []
+  logLevel: 2
+  leaderElection:
+    namespace: "kube-system"
+
+installCRDs: true
+
+image:
+  repository: quay.io/jetstack/cert-manager-controller
+  extraArgs:
+    - "--dns01-recursive-nameservers=8.8.8.8:53"
+    - "--dns01-recursive-nameservers-only=true"
+
+ingressShim: {}
+  defaultIssuerName: letsencrypt-issuer
+  defaultIssuerKind: ClusterIssuer
+
+prometheus:
+  enabled: true
+  servicemonitor:
+    enabled: true
+    prometheusInstance: kube-prometheus-stack
+    labels:
+      release: po

@@ -13,6 +13,8 @@ kubeProxy:
       k8s-app: kube-proxy-worker
 
 alertmanager:
+  servicePerReplica:
+    enabled: true
   ingress:
     enabled: true
     annotations:
@@ -42,12 +44,14 @@ grafana:
       datasources:
         - name: LokiViaProm
           type: prometheus
-          url: http://loki.logging.svc:3100/loki
+          url: http://loki:3100/loki
           isDefault: false
         - name: Loki
           type: loki
-          url: http://loki.logging.svc:3100
+          url: http://loki:3100
           isDefault: false
+          jsonData:
+            maxLines: "2000"
   notifiers:
     notifiers.yaml:
       notifiers:
@@ -55,7 +59,7 @@ grafana:
           type: prometheus-alertmanager
           uid: notifier-1
           settings:
-            url: http://po-prometheus-operator-alertmanager:9093
+            url: http://po-kube-prometheus-stack-alertmanager:9093
   ingress:
     enabled: true
     annotations: 
@@ -82,3 +86,14 @@ prometheus:
           resources:
             requests:
               storage: 20Gi
+
+prometheus-node-exporter:
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: type
+            operator: NotIn
+            values:
+            - virtual-kubelet

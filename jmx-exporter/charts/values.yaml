@@ -1,0 +1,20 @@
+image:
+  repository: docker.io/bitnami/jmx-exporter
+  tag: 0.14.0-debian-10-r15
+  pullPolicy: IfNotPresent
+
+resources:
+  limits: {}
+  requests: {}
+
+listenerPort: 9067
+
+jmx:
+  config: {}
+
+serviceMonitor:
+  enabled: false
+  interval: ""
+  additionalLabels: {}
+  annotations: {}
+  # scrapeTimeout: 10s
