@@ -23,6 +23,12 @@ connectors:
     clientSecret: {{ (ds "values").dex.clientSecret }}
     redirectURI: https://{{ (ds "values").dex.url }}/callback
     insecureSkipEmailVerified: true
+    insecureEnableGroups: true
+    getUserInfo: true
+    scopes:
+    - profile
+    - email
+    - groups
 
 staticClients:
 - id: gangway

@@ -20,6 +20,12 @@ config:
       clientSecret: client-secret
       redirectURI:  https://dex.my-domain.com/callback
       insecureSkipEmailVerified: true      
+      insecureEnableGroups: true
+      getUserInfo: true
+      scopes:
+      - profile
+      - email
+      - groups
   staticClients:
   - id: gangway-app
     redirectURIs:
