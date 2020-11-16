@@ -12,7 +12,15 @@ alertmanager:
       - match:
           alertname: Watchdog
         receiver: 'null'
+      - match:
+          severity: critical
+        continue: true
+        receiver: 'slack'
     receivers:
+    - name: slack
+      slack_configs:
+        - api_url: THE_WEBHOOK_URL
+          channel: '#general'
     - name: 'my-alerts-channel'
       webhook_configs:
         - send_resolved: true
