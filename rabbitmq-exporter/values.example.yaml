@@ -5,14 +5,10 @@ rabbitmq:
   existingPasswordSecret: ~
 
 prometheus:
-  rules:
-    enabled: false
-    additionalLabels:
-      app: kube-prometheus-stack
-      release: po
-    rules:
-    - record: messages_waiting_in_queue_name # The name of the metrics you want
-      expr: rabbitmq_queue_messages # Query to make to prometheus
-      labels:
-        namespace: infra
-        service: eventqueue # Name of the service you are going to configure your HPA with
+  monitor:
+    relabelings:
+    - separator: ;
+      regex: (.*)
+      targetLabel: instance
+      replacement: myrabbit-server
+      action: replace

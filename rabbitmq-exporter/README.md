@@ -63,4 +63,4 @@ curl -u exporter:my-password http://my-rabbitmq:15672/api/queues/{vhost}/{qname}
 
 ### Reference
 * [rabbitmq-exporter](https://github.com/prometheus-community/helm-charts/tree/main/charts/prometheus-rabbitmq-exporter)
-* [alertrule](https://awesome-prometheus-alerts.grep.to/rules#rabbitmq-(official-exporter)
+* [alertrule](https://awesome-prometheus-alerts.grep.to/rules#rabbitmq-\(official-exporter\))
