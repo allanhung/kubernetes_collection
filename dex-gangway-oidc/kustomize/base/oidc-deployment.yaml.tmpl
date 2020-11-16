@@ -35,6 +35,8 @@ spec:
           - "--oidc-issuer-url=$(OIDC_ISSUER_URL)"
           - "--oidc-username-prefix=$(OIDC_USERNAME_PREFIX)"
           - "--oidc-username-claim=$(OIDC_USERNAME_CLAIM)"
+          - "--oidc-groups-prefix=$(OIDC_GROUPS_PREFIX)"
+          - "--oidc-groups-claim=$(OIDC_GROUPS_CLAIM)"
         env:
         - name: OIDC_CLIENT_ID
           valueFrom:
@@ -56,6 +58,16 @@ spec:
             secretKeyRef:
               name: kube-oidc-proxy-config
               key: oidc.username-claim
+        - name: OIDC_GROUPS_PREFIX
+          valueFrom:
+            secretKeyRef:
+              name: kube-oidc-proxy-config
+              key: oidc.groups-prefix
+        - name: OIDC_GROUPS_CLAIM
+          valueFrom:
+            secretKeyRef:
+              name: kube-oidc-proxy-config
+              key: oidc.groups-claim
         volumeMounts:
         - name: kube-oidc-proxy-tls
           mountPath: /etc/oidc/tls

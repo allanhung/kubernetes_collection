@@ -58,3 +58,4 @@ loki:
   config:
     limits_config:
       max_entries_limit_per_query: 20000
+      ingestion_rate_mb: 15

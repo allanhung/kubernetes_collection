@@ -1,0 +1,116 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: es-elasticsearch-exporter
+  namespace: monitoring
+  labels:
+    app: kube-prometheus-stack
+    release: po
+spec:
+  groups:
+    - name: elasticsearch-exporter
+      rules:
+      - alert: ElasticsearchHeapUsageTooHigh
+        expr: (elasticsearch_jvm_memory_used_bytes{area="heap"} / elasticsearch_jvm_memory_max_bytes{area="heap"}) * 100 > 90
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "{{ $labels.instance }}: Elasticsearch Heap Usage Too High"
+          description: "The heap usage {{ $value }}% is over 90% for 5m"
+      - alert: ElasticsearchHeapUsageWarning
+        expr: (elasticsearch_jvm_memory_used_bytes{area="heap"} / elasticsearch_jvm_memory_max_bytes{area="heap"}) * 100 > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "{{ $labels.instance }}: Elasticsearch Heap Usage warning"
+          description: "The heap usage {{ $value }}% is over 80% for 5m"
+      - alert: ElasticsearchDiskSpaceLow
+        expr: elasticsearch_filesystem_data_available_bytes / elasticsearch_filesystem_data_size_bytes * 100 < 20
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "{{ $labels.instance }}: Elasticsearch disk space low"
+          description: "The disk usage {{ $value }}% is over 80%"
+      - alert: ElasticsearchDiskOutOfSpace
+        expr: elasticsearch_filesystem_data_available_bytes / elasticsearch_filesystem_data_size_bytes * 100 < 10
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "{{ $labels.instance }}: Elasticsearch disk out of space"
+          description: "The disk usage {{ $value }}% is over 90%"
+      - alert: ElasticsearchClusterRed
+        expr: elasticsearch_cluster_health_status{color="red"} == 1
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "{{ $labels.instance }}: Elasticsearch Cluster Red"
+          description: "Elastic Cluster Red status"
+      - alert: ElasticsearchClusterYellow
+        expr: elasticsearch_cluster_health_status{color="yellow"} == 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "{{ $labels.instance }}: Elasticsearch Cluster Yellow"
+          description: "Elastic Cluster Yellow status"
+      - alert: ElasticsearchHealthyNodes
+        expr: elasticsearch_cluster_health_number_of_nodes < number_of_nodes
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "{{ $labels.instance }}: Elasticsearch Healthy Nodes"
+          description: "{{ $value }} Number of Healthy Nodes less then number_of_nodes"
+      - alert: ElasticsearchHealthyDataNodes
+        expr: elasticsearch_cluster_health_number_of_data_nodes < number_of_data_nodes
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "{{ $labels.instance }}: Elasticsearch Healthy Data Nodes"
+          description: "{{ $value }} Healthy Data Nodes less then number_of_data_nodes"
+      - alert: ElasticsearchRelocationShards
+        expr: elasticsearch_cluster_health_relocating_shards > 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "{{ $labels.instance }}: Elasticsearch relocation shards"
+          description: "{{ $value }} Number relocation shards for 20 min"
+      - alert: ElasticsearchInitializingShards
+        expr: elasticsearch_cluster_health_initializing_shards > 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "{{ $labels.instance }}: Elasticsearch initializing shards"
+          description: "Number of initializing shards ({{ $value }}) for 10 min"
+      - alert: ElasticsearchUnassignedShards
+        expr: elasticsearch_cluster_health_unassigned_shards > 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "{{ $labels.instance }}: Elasticsearch unassigned shards"
+          description: "{{ $value }} unassigned shards for 2 min"
+      - alert: ElasticsearchPendingTasks
+        expr: elasticsearch_cluster_health_number_of_pending_tasks > 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "{{ $labels.instance }}: Elasticsearch pending tasks"
+          description: "{{ $value }} pending tasks for 10 min. Cluster works slowly."
+      - alert: ElasticsearchNoNewDocuments
+        expr: rate(elasticsearch_indices_docs{es_data_node="true"}[10m]) < 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "{{ $labels.instance }}: Elasticsearch no new documents"
+          description: "No new documents for 10 min!"

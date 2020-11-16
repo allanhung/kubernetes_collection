@@ -4,6 +4,8 @@ controller:
     tag: "v0.40.2"
   config:
     proxy-body-size: 100m
+    proxy-buffers-number: "4"
+    proxy-buffer-size: 16k
   electionID: ingress-controller-leader
   ingressClass: nginx-internal
   publishService:

@@ -1,0 +1,20 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  annotations:
+    kubernetes.io/ingress.class: nginx-internal
+    kubernetes.io/tls-acme: "true"
+  name: tracing
+spec:
+  rules:
+  - host: tracing.develop.in.quid.com
+    http:
+      paths:
+      - backend:
+          serviceName: jaeger-query
+          servicePort: 16686
+        path: /
+  tls:
+  - hosts:
+    - tracing.develop.in.quid.com
+    secretName: tracing.develop.in.quid.com-tls

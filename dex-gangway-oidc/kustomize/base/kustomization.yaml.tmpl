@@ -9,7 +9,7 @@ generatorOptions:
 images:
   - name: quay.io/dexidp/dex:v2.24.0
     newName: quay.io/dexidp/dex
-    newTag: v2.24.0
+    newTag: v2.25.0
   - name: gcr.io/heptio-images/gangway:v3.2.0
     newName: gcr.io/heptio-images/gangway
     newTag: v3.2.0
@@ -43,4 +43,6 @@ secretGenerator:
   - oidc.issuer-url=https://{{ (ds "values").dex.url }}
   - oidc.username-prefix="oidc:"
   - oidc.username-claim=email
+  - oidc.groups-prefix="oidc:"
+  - oidc.groups-claim=groups
   - oidc.client-id=gangway

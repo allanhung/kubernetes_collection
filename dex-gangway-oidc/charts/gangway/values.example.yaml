@@ -9,7 +9,6 @@ gangway:
   redirectURL: "https://gangway.my-domain.com/callback"
   clientID: "${GANGWAY_CLIENT_ID}"
   clientSecret: "${GANGWAY_CLIENT_SECRET}"
-  usernameClaim: "email"
   apiServerURL: "https://kube-oidc-proxy.my-domain.com"
 
 ingress:

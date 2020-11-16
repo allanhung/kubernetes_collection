@@ -5,6 +5,8 @@ image:
 oidc:
   usernameClaim: email
   usernamePrefix: "oidc:"
+  groupsClaim: groups
+  groupsPrefix: "oidc:"
 
 ingress:
   enabled: true

@@ -16,7 +16,7 @@ spec:
     spec:
       serviceAccountName: dex
       containers:
-      - image: quay.io/dexidp/dex:v2.24.0
+      - image: quay.io/dexidp/dex:v2.25.0
         name: dex
         command: 
         - /usr/local/bin/dex

@@ -8,5 +8,8 @@
 /dex-gangway-oidc/oidc-ingress.yaml
 /dex-gangway-oidc/kustomize/base/kustomization.yaml
 /dex-gangway-oidc/overlays
+/dex-gangway-oidc/dex-example-app/dex-example-app
+/istio/1.*
+/istio/download
 */my-*
 */*.swp

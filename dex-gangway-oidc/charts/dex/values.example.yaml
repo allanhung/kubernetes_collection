@@ -26,10 +26,12 @@ config:
       - profile
       - email
       - groups
+      - offline_access
   staticClients:
   - id: gangway-app
     redirectURIs:
     - https://gangway.my-domain.com/callback
+    - https://kiali.my-domain.com/kiali
     name: 'Gangway'
     secret: gangway-secret
   - id: grafana-app

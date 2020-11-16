@@ -11,6 +11,7 @@ telemetry:
   http: 0.0.0.0:5558
 oauth2:
   alwaysShowLoginScreen: false
+  responseTypes: ["code", "token", "id_token"]
   skipApprovalScreen: true
 enablePasswordDB: false
 connectors:
@@ -29,6 +30,7 @@ connectors:
     - profile
     - email
     - groups
+    - offline_access
 
 staticClients:
 - id: gangway

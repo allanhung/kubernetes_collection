@@ -1,0 +1,13 @@
+--- a/helm-charts/charts/prometheus-rabbitmq-exporter/templates/servicemonitor.yaml
++++ b/helm-charts/charts/prometheus-rabbitmq-exporter/templates/servicemonitor.yaml
+@@ -20,6 +20,10 @@
+   {{- if .Values.prometheus.monitor.interval }}
+       interval: {{ .Values.prometheus.monitor.interval }}
+   {{- end }}
++  {{- if .Values.prometheus.monitor.relabelings }}
++      relabelings:
++      {{- toYaml .Values.prometheus.monitor.relabelings | nindent 6 }}
++  {{- end }}  
+   {{- if .Values.prometheus.monitor.namespace }}
+   namespaceSelector:
+     matchNames:

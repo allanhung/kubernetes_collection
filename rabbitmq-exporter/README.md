@@ -1,24 +1,29 @@
 ### Installation
 ```bash
-if [ ! -d "./helm-charts" ]; then
-  git clone --depth 1 https://github.com/prometheus-community/helm-charts
-  patch -p1 < prometheusrule.patch
-fi
+git clone --depth 1 https://github.com/prometheus-community/helm-charts
+patch -p1 < servicemonitor.patch
 
 helm upgrade --install rabbitmq-exporter \
     --namespace monitoring  \
     -f values.yaml \
     -f values.example.yaml \
     prometheus-community/prometheus-rabbitmq-exporter
+
+rm -rf ./helm-charts
 ```        
 
 ### create monitoring user
 ```bash
 rabbitmqctl add_user exporter my-password
 rabbitmqctl set_user_tags exporter monitoring
+rabbitmqctl set_permissions --vhost / exporter "" "" ""
 ```
 
 ### check
+#### list user
+```bash
+rabbitmqctl list_users
+```
 #### test account
 ```bash
 curl -u exporter:my-password http://my-rabbitmq:15672/api/whoami
@@ -43,7 +48,14 @@ curl -u admin:my-password http://my-rabbitmq:15672/cli/rabbitmqadmin > rabbitmqa
 ```bash
 ./rabbitmqadmin.py -u user -p my-password -H my-rabbitmq get queue=test ackmode=ack_requeue_false
 ```
-
+#### test api
+```
+curl -u exporter:my-password http://my-rabbitmq:15672/api/exchange
+curl -u exporter:my-password http://my-rabbitmq:15672/api/overview
+curl -u exporter:my-password http://my-rabbitmq:15672/api/nodes
+curl -u exporter:my-password http://my-rabbitmq:15672/api/nodes/{node}
+curl -u exporter:my-password http://my-rabbitmq:15672/api/queues/{vhost}/{qname}
+```
 ### Dashboard
 * [4279](https://grafana.com/grafana/dashboards/4279)
 * [4371](https://grafana.com/grafana/dashboards/4371)

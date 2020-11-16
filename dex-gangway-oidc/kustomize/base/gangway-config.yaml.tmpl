@@ -9,6 +9,7 @@ authorizeURL: https://{{ (ds "values").dex.url }}/auth
 # OAuth2 URL to obtain access tokens.
 # Env var: GANGWAY_TOKEN_URL
 tokenURL: "http://dex/token"
+scopes: ["openid", "profile", "email", "groups", "offline_access"]
 
 # Where to redirect back to. This should be a URL where gangway is reachable.
 # Typically this also needs to be registered as part of the oauth application

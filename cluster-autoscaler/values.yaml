@@ -4,8 +4,8 @@ autoscalingGroups:
   minSize: 1    
 cloudProvider: aws
 extraArgs:
-  logtostderr: true
   stderrthreshold: info
+  logtostderr: true
   v: 5
   leader-elect: false
   scan-interval: 30s
@@ -14,11 +14,16 @@ extraArgs:
   ok-total-unready-count: 1000
   max-empty-bulk-delete: 50
   expander: least-waste
-  scale-down-utilization-threshold: 80
-  scale-down-gpu-utilization-threshold: 80
+  scale-down-utilization-threshold: 0.7
+  scale-down-gpu-utilization-threshold: 0.5
   scale-down-delay-after-add: 600s
-  scale-down-delay-after-failure: 600s
-  scale-down-unneeded-time: 600s  
+  scale-down-delay-after-failure: 60s
+  scale-down-unready-time: 60s
+  scale-down-unneeded-time: 600s
+  # 1M+64core*16
+  coresTotal: "0:1001024"
+  # 60000+256G*16
+  memoryTotal: "0:64096"
 image:
   repository: us.gcr.io/k8s-artifacts-prod/autoscaling/cluster-autoscaler
   tag: v1.18.1

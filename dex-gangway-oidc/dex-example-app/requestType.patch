@@ -1,0 +1,10 @@
+--- main.go
++++ main.go
+@@ -256,6 +256,7 @@
+ 		authCodeURL = authCodeURL + "&connector_id=" + connectorID
+ 	}
+ 
++  authCodeURL = authCodeURL + "&response_type=id_token&nonce=hellononce"
+ 	http.Redirect(w, r, authCodeURL, http.StatusSeeOther)
+ }
+ 

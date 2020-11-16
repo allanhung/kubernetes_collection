@@ -7,6 +7,8 @@ env:
 
 gangway:
   tokenURL: "http://dex/token"
+  usernameClaim: "email"
+  scopes: ["openid", "profile", "email", "groups", "offline_access"]
 
 ingress:
   enabled: true

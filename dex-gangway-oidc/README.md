@@ -70,9 +70,21 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
 ```
 
+### Test token
+```
+export TOKEN=my-token
+export API_SERVER=10.0.0.1:6443
+curl -H "Authorization: Bearer ${TOKEN} -k https://${API_SERVER}/api/v1/namespaces/default/pods
+```
+
 ## Reference
-  - [gomplate](https://github.com/hairyhenderson/gomplate)
-  - [cert-manager](https://github.com/jetstack/cert-manager)
-  - [dex](https://github.com/dexidp/dex)
-  - [gangway](https://github.com/heptiolabs/gangway)
-  - [kube-oidc-proxy](https://github.com/jetstack/kube-oidc-proxy)
+* [gomplate](https://github.com/hairyhenderson/gomplate)
+* [cert-manager](https://github.com/jetstack/cert-manager)
+* [dex](https://github.com/dexidp/dex)
+* [gangway](https://github.com/heptiolabs/gangway)
+* [kube-oidc-proxy](https://github.com/jetstack/kube-oidc-proxy)
+* [dex okta groups](https://harivemula.com/2020/07/02/enable-oidc-groups-based-access-to-tanzu-kubernetes-grid/)
+* [dex storage](https://blog.csdn.net/u014618114/article/details/104442808)
+* [refresh token](https://github.com/dexidp/dex/issues/973)
+* [Support multiple refresh tokens per user](https://github.com/dexidp/dex/pull/1829)
+* [Allow multiple refresh tokens for a client-user pair](https://github.com/dexidp/dex/issues/981)

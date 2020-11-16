@@ -34,5 +34,6 @@ config:
     http: 0.0.0.0:5558    
   oauth2:
     alwaysShowLoginScreen: false
+    responseTypes: ["code", "token", "id_token"]
     skipApprovalScreen: true
   enablePasswordDB: false

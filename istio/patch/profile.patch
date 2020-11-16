@@ -1,0 +1,40 @@
+--- a/config/istio-default-profile.yaml
++++ b/config/istio-default-profile.yaml
+@@ -89,6 +89,9 @@
+           - name: tls
+             port: 15443
+             targetPort: 15443
++        serviceAnnotations:
++          service.beta.kubernetes.io/alibaba-cloud-loadbalancer-address-type: intranet
++          service.beta.kubernetes.io/alicloud-loadbalancer-force-override-listeners: "true"
+         strategy:
+           rollingUpdate:
+             maxSurge: 100%
+@@ -183,6 +186,7 @@
+             maxUnavailable: 25%
+   hub: docker.io/istio
+   meshConfig:
++    accessLogFile: "/dev/stdout"
+     defaultConfig:
+       proxyMetadata: {}
+     enablePrometheusMerge: true
+@@ -233,8 +237,8 @@
+     global:
+       arch:
+         amd64: 2
+-        ppc64le: 2
+-        s390x: 2
++        ppc64le: 0
++        s390x: 0
+       configValidation: true
+       controlPlaneSecurityEnabled: true
+       defaultNodeSelector: {}
+@@ -249,7 +253,7 @@
+       istioNamespace: istio-system
+       istiod:
+         enableAnalysis: false
+-      jwtPolicy: third-party-jwt
++      jwtPolicy: first-party-jwt
+       logAsJson: false
+       logging:
+         level: default:info

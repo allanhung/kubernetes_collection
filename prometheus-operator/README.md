@@ -51,5 +51,11 @@ bash dashboard.sh 7362 admin:admin http://grafana:3000 "Database"
 bash dashboard.sh 763 admin:admin http://grafana:3000 "Database" "DS_PROM"
 ```
 
+### Enable disk metrics in alicloud
+```bash
+kubectl set env ds/flexvolume ENABLE_METRICS_DISK=true -n kube-system
+```
+
 ### Reference
 * [alertmanager api](https://raw.githubusercontent.com/prometheus/alertmanager/master/api/v2/openapi.yaml)
+* [missing kubelet_volume* volume metrics](https://github.com/rook/rook/issues/1659)
