@@ -1,0 +1,20 @@
+--- a/rootfs/opt/bitnami/scripts/rabbitmq/setup.sh
++++ b/rootfs/opt/bitnami/scripts/rabbitmq/setup.sh
+@@ -22,4 +22,16 @@
+ am_i_root && ensure_user_exists "$RABBITMQ_DAEMON_USER" "$RABBITMQ_DAEMON_GROUP"
+ # Ensure RabbitMQ is initialized
+ rabbitmq_initialize
+-
++rabbitmq_start_bg
++echo "Checking User"
++if ${RABBITMQ_BIN_DIR}/rabbitmqctl list_users | grep -q "$RABBITMQ_USERNAME"; then
++  echo "Application User found."
++else
++  echo "Application User not found! Create Application User."
++  ${RABBITMQ_BIN_DIR}/rabbitmqctl add_user "$RABBITMQ_USERNAME" "$RABBITMQ_PASSWORD"
++  ${RABBITMQ_BIN_DIR}/rabbitmqctl set_permissions "$RABBITMQ_USERNAME" ".*" ".*" ".*"
++  ${RABBITMQ_BIN_DIR}/rabbitmqctl set_user_tags "$RABBITMQ_USERNAME" administrator
++fi
++if ${RABBITMQ_BIN_DIR}/rabbitmqctl list_users | grep -q "^vault"; then
++  ${RABBITMQ_BIN_DIR}/rabbitmqctl delete_user $(${RABBITMQ_BIN_DIR}/rabbitmqctl list_users | grep ^vault | awk {'print $1'})
++fi

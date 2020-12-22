@@ -1,0 +1,16 @@
+orchestrator:
+  ingress:
+    enabled: true
+    annotations:
+      kubernetes.io/ingress.class: nginx-internal
+      kubernetes.io/tls-acme: "true"
+    hosts:
+    - host: mysql-operator.my-domain.com
+      paths: []
+    tls:
+    - secretName: mysql-operator.my-domain.com-tls
+      hosts:
+      - mysql-operator.my-domain.com
+  persistence:
+    enabled: true
+    storageClass: my-storageclass

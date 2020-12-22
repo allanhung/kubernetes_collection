@@ -1,0 +1,21 @@
+apiVersion: autoscaling/v2beta1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: nginx-custom-hpa
+  namespace: infra
+spec:
+  scaleTargetRef:
+    apiVersion: extensions/v1beta1
+    kind: Deployment
+    name: nginx-deployment
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+  - type: Object
+    object:
+      target:
+        apiVersion: v1
+        kind: Service
+        name: mqtest-rabbitmq
+      metricName: rabbitmq_queue_messages
+      averageValue: 3

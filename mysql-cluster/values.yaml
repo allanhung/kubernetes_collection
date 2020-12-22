@@ -1,0 +1,30 @@
+replicas: 2
+
+## MySQL connect credentials, those credentials will be provisioned in the cluster
+rootPassword: "my-password"
+appUser: "my-appuser"
+appPassword: "my-apppassword"
+appDatabase: "my-database"
+
+volumeSpec:
+  persistentVolumeClaim:
+    storageClassName: my-storageclass
+    accessModes: ["ReadWriteOnce"]
+    resources:
+      requests:
+        storage: 20Gi
+
+initBucketURL: s3://my-bucket/my-k8s/my-cluster/my-initBackup.tar.gz
+initBucketSecretName: my-backup-secret
+
+backupSchedule: "0 0 0 * * *"
+backupScheduleJobsHistoryLimit: 7
+backupURL: s3://my-bucket/my-k8s/my-cluster/
+backupSecretName: my-backup-secret
+backupRemoteDeletePolicy: delete
+backupCredentials:
+  AWS_ACCESS_KEY_ID: my-accesskey
+  AWS_SECRET_ACCESS_KEY: my-secretkey
+  AWS_ACL: private
+  S3_PROVIDER: Alibaba
+  S3_ENDPOINT: my-endpoint

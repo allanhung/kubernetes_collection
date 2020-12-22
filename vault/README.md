@@ -34,5 +34,13 @@ vault server -config /tmp/telemetry.tcl
 kubectl exec -ti vault-0 -n vault -- vault status -tls-skip-verify
 ```
 
+### Test login
+```bash
+vault auth list
+vault read -format=json auth/my-auth/config
+vault read auth/my-auth/role/my-app
+curl -X POST --data '{"jwt": "'$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)'", "role": "my-app"}' http://vault:8200/v1/auth/my-auth/login
+```
+
 ### Reference
 * [vault-helm](https://github.com/hashicorp/vault-helm)

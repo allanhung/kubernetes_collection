@@ -1,0 +1,11 @@
+serviceMonitor:
+  enabled: true
+  additionalLabels:
+    release: po
+
+orchestrator:
+  persistence:
+    enabled: true
+    storageClass: "-"
+    accessMode: "ReadWriteOnce"
+    size: 1Gi

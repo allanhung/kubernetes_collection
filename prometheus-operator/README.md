@@ -7,6 +7,8 @@ helm upgrade --install po \
     -f values.yaml \
     -f values.example.yaml \
     prometheus-community/kube-prometheus-stack
+
+kubectl apply -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/master/example/prometheus-operator-crd/monitoring.coreos.com_probes.yaml
 ```        
 
 ### rule patch
@@ -59,3 +61,4 @@ kubectl set env ds/flexvolume ENABLE_METRICS_DISK=true -n kube-system
 ### Reference
 * [alertmanager api](https://raw.githubusercontent.com/prometheus/alertmanager/master/api/v2/openapi.yaml)
 * [missing kubelet_volume* volume metrics](https://github.com/rook/rook/issues/1659)
+* [Failed to list](https://github.com/prometheus-operator/prometheus-operator/issues/3542)

@@ -10,6 +10,11 @@ helm upgrade --install rabbitmq \
     bitnami/rabbitmq
 ```
 
+### metrics
+```bash
+curl http://rabbitmq-rabbitmq:9419/metrics
+```
+
 ### Dashboard
 * [10991](https://grafana.com/grafana/dashboards/10991)
 
