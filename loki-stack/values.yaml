@@ -7,7 +7,7 @@ grafana:
 promtail:
   enabled: true
   image:
-    tag: 2.0.0
+    tag: 2.1.0
   serviceMonitor:
     enabled: true
     interval: ""
@@ -22,7 +22,7 @@ promtail:
 loki:
   enabled: true
   image:
-    tag: 2.0.0
+    tag: 2.1.0
   config:
     ingester:
       chunk_idle_period: 3m

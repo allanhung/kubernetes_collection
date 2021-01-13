@@ -3,9 +3,9 @@
 ```bash
 helm repo add ealenn https://ealenn.github.io/charts
 helm repo update
-kubectl create ns debug
 helm upgrade echo-server ealenn/echo-server --install \
   --namespace debug \
+  --create-namespace \
   -f values.yaml
 ```
 

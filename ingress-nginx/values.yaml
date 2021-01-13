@@ -1,7 +1,7 @@
 controller:
   image:
     repository: k8s.gcr.io/ingress-nginx/controller
-    tag: "v0.40.2"
+    tag: "v0.43.0"
   config:
     proxy-body-size: 100m
     proxy-buffers-number: "4"
@@ -10,9 +10,15 @@ controller:
   ingressClass: nginx-internal
   publishService:
     enabled: true
-  kind: Deployment
+  kind: DaemonSet
   service:
     externalTrafficPolicy: Local
+    ports:
+      http: 80
+      https: 443
+    targetPorts:
+      http: 80
+      https: 443
   metrics:
     port: 10254
     # if this port is changed, change healthz-port: in extraArgs: accordingly

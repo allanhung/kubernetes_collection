@@ -40,6 +40,18 @@ fake/170388d32de312:17649e95830:17649e95832:c5f425d4
 * Workaround: Removing fsGroup from the Pod template.
 * [issue](https://github.com/kubernetes/kubernetes/issues/67014)
 
+###
+* level=error ts=2020-12-31T14:50:28.748371754Z caller=flush.go:199 org_id=fake msg="failed to flush user" err="open /data/loki/chunks/ZmFrZS9iOWI4ZWM0MTIyYzI3ZmM5OjE3NmI5MmQ2OGUxOjE3NmI5MmQ2OGUyOjQ1OWIxNjVh: no space left on device"
+* grep 'Directory index full' /var/log/messages
+* Disabled dir_index on the ext4 volume
+```bash
+tune2fs -O "^dir_index" /dev/vdb
+```
+* check
+```bash
+tune2fs -l /dev/vdb
+```
+
 ### Reference
 * [loki](https://github.com/grafana/loki/tree/master/production/helm)
 * [loki configuration](https://grafana.com/docs/loki/latest/configuration/#configuring-loki)
@@ -53,3 +65,4 @@ fake/170388d32de312:17649e95830:17649e95832:c5f425d4
 * [bolter](https://github.com/hasit/bolter)
 * [storage](https://grafana.com/docs/loki/latest/operations/storage)
 * [Grafana loki source code](https://aleiwu.com/post/grafana-loki)
+* [Loki reports "no space left on device" but there's plenty of space/inodes](https://github.com/grafana/loki/issues/1502)

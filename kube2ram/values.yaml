@@ -1,0 +1,6 @@
+image:
+  repository: my-registry/kube2ram
+  tag: 1.0.0
+
+imagePullSecrets:
+  - name: my-pull-secrets

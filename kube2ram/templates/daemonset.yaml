@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  labels:
+    app.kubernetes.io/name: kube2ram
+  name: kube2ram
+  namespace: {{ .Release.Namespace }}
+spec:
+  selector:
+   matchLabels:
+    app.kubernetes.io/name: kube2ram
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: kube2ram
+    spec:
+    {{- if .Values.imagePullSecrets }}
+      imagePullSecrets: {{ toYaml .Values.imagePullSecrets | nindent 8 }}
+    {{- end }}
+      containers:
+      - name: kube2ram
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: Always
+        args:
+          - "--app-port=8181"
+          - "--iptables=true"
+          - "--host-ip=$(HOST_IP)"
+          - "--host-interface={{ .Values.host_interface }}"
+          - "--verbose"
+          - "--auto-discover-default-role"
+          - "--auto-discover-base-arn"
+        env:
+        - name: HOST_IP
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: status.podIP
+        - name: NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        ports:
+        - containerPort: 8181
+          protocol: TCP
+        securityContext:
+          privileged: true
+      hostNetwork: true
+      serviceAccountName: kube2ram
