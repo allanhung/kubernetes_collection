@@ -1,10 +1,25 @@
-export ISTIO_VER=1.7.4
+export ISTIO_TM_VER=1.7.6
+export ISTIO_VER=1.8.2
 export ISTIO_SRC_DIR=~/Downloads/git/kubernetes_collection
 export OS=osx
+mkdir -p ${ISTIO_SRC_DIR}/istio/charts
 mkdir -p ${ISTIO_SRC_DIR}/istio/download
+mkdir -p ${ISTIO_SRC_DIR}/istio/${ISTIO_TM_VER}
 mkdir -p ${ISTIO_SRC_DIR}/istio/${ISTIO_VER}/bin
 mkdir -p ${ISTIO_SRC_DIR}/istio/${ISTIO_VER}/config
 # Prepare
+## download istio-telemetry from istio 1.7.6
+```bash
+curl -L -o ${ISTIO_SRC_DIR}/istio/download/istio-${ISTIO_TM_VER}-linux-arm64.tar.gz https://github.com/istio/istio/releases/download/${ISTIO_TM_VER}/istio-${ISTIO_TM_VER}-linux-arm64.tar.gz
+tar -zxvf ${ISTIO_SRC_DIR}/istio/download/istio-${ISTIO_TM_VER}-linux-arm64.tar.gz -C ${ISTIO_SRC_DIR}/istio/${ISTIO_TM_VER}
+mv ${ISTIO_SRC_DIR}/istio/${ISTIO_TM_VER}/istio-${ISTIO_TM_VER} ${ISTIO_SRC_DIR}/istio/${ISTIO_TM_VER}/release
+rsync -avP ${ISTIO_SRC_DIR}/istio/${ISTIO_TM_VER}/release/manifests/charts/istio-telemetry/prometheusOperator ${ISTIO_SRC_DIR}/istio/charts/
+rsync -avP ${ISTIO_SRC_DIR}/istio/${ISTIO_TM_VER}/release/manifests/charts/istio-telemetry/kiali ${ISTIO_SRC_DIR}/istio/charts/
+rsync -avP ${ISTIO_SRC_DIR}/istio/${ISTIO_TM_VER}/release/manifests/charts/istio-telemetry/tracing ${ISTIO_SRC_DIR}/istio/charts/
+cd ${ISTIO_SRC_DIR}/istio && patch -p1 < ${ISTIO_SRC_DIR}/istio/patch/prometheusOperator.patch
+cd ${ISTIO_SRC_DIR}/istio && patch -p1 < ${ISTIO_SRC_DIR}/istio/patch/kiali.patch
+```
+
 ## insatll istioctl binary
 ```bash
 curl -L -o ${ISTIO_SRC_DIR}/istio/download/istioctl-${ISTIO_VER}-${OS}.tar.gz https://github.com/istio/istio/releases/download/${ISTIO_VER}/istioctl-${ISTIO_VER}-${OS}.tar.gz
@@ -15,8 +30,6 @@ tar -zxvf ${ISTIO_SRC_DIR}/istio/download/istioctl-${ISTIO_VER}-${OS}.tar.gz -C 
 curl -L -o ${ISTIO_SRC_DIR}/istio/download/istio-${ISTIO_VER}-linux-arm64.tar.gz https://github.com/istio/istio/releases/download/${ISTIO_VER}/istio-${ISTIO_VER}-linux-arm64.tar.gz
 tar -zxvf ${ISTIO_SRC_DIR}/istio/download/istio-${ISTIO_VER}-linux-arm64.tar.gz -C ${ISTIO_SRC_DIR}/istio/${ISTIO_VER}
 mv ${ISTIO_SRC_DIR}/istio/${ISTIO_VER}/istio-${ISTIO_VER} ${ISTIO_SRC_DIR}/istio/${ISTIO_VER}/release
-cd ${ISTIO_SRC_DIR}/istio/${ISTIO_VER} && patch -p1 < ${ISTIO_SRC_DIR}/istio/patch/prometheusOperator.patch
-cd ${ISTIO_SRC_DIR}/istio/${ISTIO_VER} && patch -p1 < ${ISTIO_SRC_DIR}/istio/patch/kiali.patch
 ```
 # Installation
 ## Install by Helm
@@ -40,7 +53,7 @@ helm upgrade --install istio-control \
     --set pilot.traceSampling=1 \
     ${ISTIO_SRC_DIR}/istio/${ISTIO_VER}/release/manifests/charts/istio-control/istio-discovery
 ```
-#### patch webhook caBundle after istio-control/istio-discovery installation
+#### if caBundle is missing, patch webhook caBundle after istio-control/istio-discovery installation
 ```bash
 export CABUNDLE=$(kubectl -n istio-system get secret istio-ca-secret -o jsonpath='{.data.ca-cert\.pem}')
 kubectl patch mutatingwebhookconfiguration istio-sidecar-injector --record --type='json' -p='
@@ -69,40 +82,31 @@ helm upgrade --install istio-ingress \
 ### Prometheus for istio (prometheusOperator or prometheus)
 #### istio-telemetry/prometheusOperator install serviceMonitor
 ```bash
-helm upgrade --install po \
+helm upgrade --install istio-servicemonitor \
     --namespace istio-system \
     --set global.telemetryNamespace=istio-system \
-    ${ISTIO_SRC_DIR}/istio/${ISTIO_VER}/release/manifests/charts/istio-telemetry/prometheusOperator
-```
-#### istio-telemetry/prometheus install prometheus for istio
-```bash
-helm upgrade --install istio-prometheus \
-    --namespace istio-system \
-    -f ${ISTIO_SRC_DIR}/istio/${ISTIO_VER}/release/manifests/charts/global.yaml \
-    ${ISTIO_SRC_DIR}/istio/${ISTIO_VER}/release/manifests/charts/istio-telemetry/prometheus
-kubectl apply -f ${ISTIO_SRC_DIR}/istio/ingress/prometheus-ingress.yaml -n istio-system
+    ${ISTIO_SRC_DIR}/istio/charts/prometheusOperator
 ```
 ### kiali
 ```bash
-kubectl delete secret kiali -n istio-system
-kubectl create secret generic kiali --from-literal=oidc-secret=dc0ea89660c026013623026ea9f9af7c -n istio-system
+kubectl create secret generic kiali --from-literal="oidc-secret=$CLIENT_SECRET" -n istio-system
 helm upgrade --install kiali \
     --namespace istio-system \
     -f ${ISTIO_SRC_DIR}/istio/${ISTIO_VER}/release/manifests/charts/global.yaml \
     --set kiali.hub=quay.io/kiali \
-    --set kiali.tag=v1.26 \
+    --set kiali.tag=v1.28.1 \
     --set kiali.image=kiali \
     --set global.grafanaNamespace=infra \
     --set kiali.dashboard.auth.strategy=openid \
     --set kiali.dashboard.signing_key=$(openssl rand -hex 16) \
-    --set kiali.dashboard.jaegerURL=https://tracing.develop.in.quid.com/jaeger \
+    --set kiali.dashboard.jaegerURL=https://tracing.my-domain.com/jaeger \
     --set kiali.dashboard.jaegerInClusterURL=http://tracing/jaeger \
-    --set kiali.dashboard.grafanaURL=https://grafana.develop.in.quid.com \
-    --set kiali.dashboard.grafanaInClusterURL=http://po-grafana.infra.svc \
+    --set kiali.dashboard.grafanaURL=https://grafana.my-domain.com \
+    --set kiali.dashboard.grafanaInClusterURL=http://po-grafana.monitoring.svc \
     --set kiali.prometheusAddr=http://po-kube-prometheus-stack-prometheus.infra.svc:9090 \
     --set kiali.createDemoSecret=false \
     -f ${ISTIO_SRC_DIR}/istio/values.kiali.yaml \
-    ${ISTIO_SRC_DIR}/istio/${ISTIO_VER}/release/manifests/charts/istio-telemetry/kiali
+    ${ISTIO_SRC_DIR}/istio/charts/kiali
 kubectl apply -f ${ISTIO_SRC_DIR}/istio/ingress/kiali-ingress.yaml -n istio-system
 ```
 ### tracing
@@ -110,7 +114,9 @@ kubectl apply -f ${ISTIO_SRC_DIR}/istio/ingress/kiali-ingress.yaml -n istio-syst
 helm upgrade --install tracing \
     --namespace istio-system \
     -f ${ISTIO_SRC_DIR}/istio/${ISTIO_VER}/release/manifests/charts/global.yaml \
-    ${ISTIO_SRC_DIR}/istio/${ISTIO_VER}/release/manifests/charts/istio-telemetry/tracing
+    --set tracing.jaeger.tag=1.21 \
+    --set tracing.zipkin.tag=2.22.1 \
+    ${ISTIO_SRC_DIR}/istio/charts/tracing
 kubectl apply -f ${ISTIO_SRC_DIR}/istio/ingress/tracing-ingress.yaml -n istio-system
 ```
 ## Install by Istioctl
@@ -159,4 +165,4 @@ ${ISTIO_SRC_DIR}/istio/${ISTIO_VER}/bin/istioctl profile dump --config-path valu
 * [7642 Istio Mixer Dashboard](https://grafana.com/grafana/dashboards/7642)
 
 # reference
-* [kiali_cr.yaml](https://github.com/kiali/kiali-operator/blob/master/deploy/kiali/kiali_cr.yaml)
+* [istio helm installation](https://istio.io/latest/docs/setup/install/helm/)

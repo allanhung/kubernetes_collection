@@ -256,6 +256,7 @@ func (a *app) handleLogin(w http.ResponseWriter, r *http.Request) {
 		authCodeURL = authCodeURL + "&connector_id=" + connectorID
 	}
 
+  authCodeURL = authCodeURL + "&response_type=code&nonce=hellononce"
 	http.Redirect(w, r, authCodeURL, http.StatusSeeOther)
 }
 

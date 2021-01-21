@@ -1,5 +1,5 @@
 tls:
-  secretName: kube-oidc-proxy.my-domain.com-tls
+  secretName: gangway-proxy.my-domain.com-tls
 
 oidc:
   clientId: gangway-app
@@ -7,10 +7,10 @@ oidc:
 
 ingress:
   hosts:
-    - host: kube-oidc-proxy.my-domain.com
+    - host: gangway-proxy.my-domain.com
       paths:
       - /
   tls:
-    - secretName: kube-oidc-proxy.my-domain.com-tls
+    - secretName: gangway-proxy.my-domain.com-tls
       hosts:
-        - kube-oidc-proxy.my-domain.com
+        - gangway-proxy.my-domain.com

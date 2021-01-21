@@ -2,6 +2,9 @@ image:
   repository: quay.io/jetstack/kube-oidc-proxy
   tag: v0.3.0
 
+extraArgs:
+  v: 5
+
 oidc:
   usernameClaim: email
   usernamePrefix: "oidc:"
@@ -11,5 +14,4 @@ oidc:
 ingress:
   enabled: true
   annotations:
-    cert-manager.io/cluster-issuer: selfsigned-issuer
     nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"

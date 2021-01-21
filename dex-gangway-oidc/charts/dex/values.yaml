@@ -1,5 +1,5 @@
-image: quay.io/dexidp/dex
-imageTag: "v2.24.0"
+image: dexidp/dex
+imageTag: "v2.27.0"
 imagePullPolicy: "IfNotPresent"
 grpc: false
 https: false

@@ -6,7 +6,7 @@ metadata:
   name: kiali
 spec:
   rules:
-  - host: kiali.my-domain.com
+  - host: kiali.dev-canary.in.quid.com
     http:
       paths:
       - backend:
@@ -15,5 +15,5 @@ spec:
         path: /
   tls:
   - hosts:
-    - kiali.my-domain.com
-    secretName: kiali.my-domain.com-tls
+    - kiali.dev-canary.in.quid.com
+    secretName: kiali.dev-canary.in.quid.com-tls

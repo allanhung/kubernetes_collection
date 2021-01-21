@@ -1,5 +1,5 @@
---- a/release/manifests/charts/istio-telemetry/prometheusOperator/templates/servicemonitors.yaml
-+++ b/release/manifests/charts/istio-telemetry/prometheusOperator/templates/servicemonitors.yaml
+--- a/charts/prometheusOperator/templates/servicemonitors.yaml
++++ b/charts/prometheusOperator/templates/servicemonitors.yaml
 @@ -70,252 +70,3 @@
      - sourceLabels: [__meta_kubernetes_pod_name]
        action: replace

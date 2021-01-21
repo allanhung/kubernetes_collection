@@ -1,0 +1,13 @@
+--- a/kube-oidc-proxy/deploy/charts/kube-oidc-proxy/templates/ingress.yaml
++++ b/kube-oidc-proxy/deploy/charts/kube-oidc-proxy/templates/ingress.yaml
+@@ -1,6 +1,10 @@
+ {{- if .Values.ingress.enabled -}}
+ {{- $fullName := include "kube-oidc-proxy.fullname" . -}}
++{{- if .Capabilities.APIVersions.Has "networking.k8s.io/v1beta1" }}
++apiVersion: networking.k8s.io/v1beta1
++{{- else }}
+ apiVersion: extensions/v1beta1
++{{- end }}
+ kind: Ingress
+ metadata:
+   name: {{ $fullName }}

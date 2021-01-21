@@ -6,7 +6,7 @@ metadata:
   name: tracing
 spec:
   rules:
-  - host: tracing.my-domain.com
+  - host: tracing.dev-canary.in.quid.com
     http:
       paths:
       - backend:
@@ -15,5 +15,5 @@ spec:
         path: /
   tls:
   - hosts:
-    - tracing.my-domain.com
-    secretName: tracing.my-domain.com-tls
+    - tracing.dev-canary.in.quid.com
+    secretName: tracing.dev-canary.in.quid.com-tls

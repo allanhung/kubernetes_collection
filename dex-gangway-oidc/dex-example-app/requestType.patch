@@ -4,7 +4,7 @@
  		authCodeURL = authCodeURL + "&connector_id=" + connectorID
  	}
  
-+  authCodeURL = authCodeURL + "&response_type=id_token&nonce=hellononce"
++  authCodeURL = authCodeURL + "&response_type=code&nonce=hellononce"
  	http.Redirect(w, r, authCodeURL, http.StatusSeeOther)
  }
  

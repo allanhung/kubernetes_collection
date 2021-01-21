@@ -2,11 +2,13 @@ image:
   repository: gcr.io/heptio-images/gangway
   tag: v3.2.0
 
+env:
+  GANGWAY_CLUSTER_CA_PATH: /etc/trustca/ca.crt
+
 gangway:
   tokenURL: "http://dex/token"
   usernameClaim: "email"
   scopes: ["openid", "profile", "email", "groups", "offline_access"]
-  customHTMLTemplatesDir: /etc/gangway/template
 
 ingress:
   enabled: true
@@ -14,11 +16,6 @@ ingress:
     kubernetes.io/tls-acme: "true"
   path: /
 
-extraVolumes:
-- name: gangway-template
-  configMap:
-    name: gangway-template
-
 extraVolumeMounts:
-- name: gangway-template
-  mountPath: /etc/gangway/template
+- name: trustca
+  mountPath: /etc/trustca/

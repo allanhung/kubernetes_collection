@@ -31,7 +31,6 @@ config:
   - id: gangway-app
     redirectURIs:
     - https://gangway.my-domain.com/callback
-    - https://kiali.my-domain.com/kiali
     name: 'Gangway'
     secret: gangway-secret
   - id: grafana-app
@@ -39,3 +38,8 @@ config:
     - https://grafana.my-domain.com/login/generic_oauth
     name: 'Grafana'
     secret: grafana-secret    
+  - id: kiali-app
+    redirectURIs:
+    - https://kiali.my-domain.com/kiali
+    name: 'Kiali'
+    secret: kiali-secret

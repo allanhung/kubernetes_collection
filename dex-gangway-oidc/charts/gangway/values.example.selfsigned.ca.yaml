@@ -9,7 +9,7 @@ gangway:
   redirectURL: "https://gangway.my-domain.com/callback"
   clientID: "${GANGWAY_CLIENT_ID}"
   clientSecret: "${GANGWAY_CLIENT_SECRET}"
-  apiServerURL: "https://gangway-proxy.my-domain.com"
+  apiServerURL: "https://kube-oidc-proxy.my-domain.com"
 
 ingress:
   hosts:
@@ -18,3 +18,11 @@ ingress:
   - secretName: gangway.my-domain.com-tls
     hosts:
     - gangway.my-domain.com
+
+extraVolumes:
+- name: trustca
+  secret:
+    secretName: kube-oidc-proxy.my-domain.com-tls
+    items:
+    - key: ca.crt
+      path: ca.crt      
