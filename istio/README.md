@@ -32,6 +32,21 @@ tar -zxvf ${ISTIO_SRC_DIR}/istio/download/istio-${ISTIO_VER}-linux-arm64.tar.gz 
 mv ${ISTIO_SRC_DIR}/istio/${ISTIO_VER}/istio-${ISTIO_VER} ${ISTIO_SRC_DIR}/istio/${ISTIO_VER}/release
 ```
 # Installation
+## Generate ca
+```bash
+mkdir -p ${ISTIO_SRC_DIR}/istio/certs && cd ${ISTIO_SRC_DIR}/istio/certs
+make -f ${ISTIO_SRC_DIR}/istio/${ISTIO_VER}/release/tools/certs/Makefile.selfsigned.mk root-ca
+make -f ${ISTIO_SRC_DIR}/istio/${ISTIO_VER}/release/tools/certs/Makefile.selfsigned.mk cluster1-us-east-1-cacerts
+make -f ${ISTIO_SRC_DIR}/istio/${ISTIO_VER}/release/tools/certs/Makefile.selfsigned.mk cluster1-us-west-1-cacerts
+
+kubectl get ns istio-system || kubectl create namespace istio-system
+kubectl get secret cacerts || kubectl create secret generic cacerts -n istio-system \
+      --from-file=cluster1-us-east-1/ca-cert.pem \
+      --from-file=cluster1-us-east-1/ca-key.pem \
+      --from-file=cluster1-us-east-1/root-cert.pem \
+      --from-file=cluster1-us-east-1/cert-chain.pem
+```
+
 ## Install by Helm
 ### base creates cluster-wide CRDs, cluster bindings, cluster resources and the istio-system namespace.
 ```bash
@@ -47,6 +62,9 @@ helm upgrade --install istio-control \
     -f ${ISTIO_SRC_DIR}/istio/${ISTIO_VER}/release/manifests/charts/global.yaml \
     --set global.hub=docker.io/istio \
     --set global.tag=${ISTIO_VER} \
+    --set global.meshID=vpc1-mesh \
+    --set global.multiCluster.clusterName=cluster1-us-east-1 \
+    --set global.network=vpc1.us-east-1 \
     --set global.jwtPolicy=first-party-jwt \
     --set global.arch.s390x=0 \
     --set global.arch.ppc64le=0 \
@@ -65,6 +83,11 @@ kubectl patch mutatingwebhookconfiguration istio-sidecar-injector --record --typ
   }
 ]'
 ```
+### create cluster context for mesh
+```bash
+${ISTIO_SRC_DIR}/istio/${ISTIO_VER}/bin/istioctl x create-remote-secret --context=my-context-in-kubeconfig --name=cluster1-us-west-1 | kubectl apply -f -
+```
+
 ### gateways/istio-ingress install a Gateway
 ```bash
 helm upgrade --install istio-ingress \
@@ -72,6 +95,9 @@ helm upgrade --install istio-ingress \
     -f ${ISTIO_SRC_DIR}/istio/${ISTIO_VER}/release/manifests/charts/global.yaml \
     --set global.hub=docker.io/istio \
     --set global.tag=${ISTIO_VER} \
+    --set global.meshID=vpc1-mesh \
+    --set global.multiCluster.clusterName=cluster1-us-east-1 \
+    --set global.network=vpc1.us-east-1 \
     --set global.jwtPolicy=first-party-jwt \
     --set global.arch.s390x=0 \
     --set global.arch.ppc64le=0 \

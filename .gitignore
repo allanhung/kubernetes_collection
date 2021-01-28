@@ -10,6 +10,7 @@
 /dex-gangway-oidc/overlays
 /dex-gangway-oidc/dex-example-app/dex-example-app
 /istio/1.*
+/istio/certs
 /istio/download
 */my-*
 */*.swp

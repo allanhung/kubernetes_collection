@@ -1,0 +1,36 @@
+global:
+  imageRegistry: myRegistryName
+  imagePullSecrets:
+    - myRegistryKeySecretName
+  storageClass: myStorageClass
+
+image:
+  repository: bitnami/etcd
+  tag: 3.4.14-debian-10-r44
+
+statefulset:
+  replicaCount: 3
+
+envVarsConfigMap: etcd-env-vars
+
+auth:
+  rbac:
+    enabled: false
+
+persistence:
+  enabled: true
+  size: 20Gi
+
+resources:
+  limits:
+     cpu: 2000m
+     memory: 4Gi
+  requests:
+     cpu: 100m
+     memory: 256Mi
+
+metrics:
+  serviceMonitor:
+    enabled: true
+    selector:
+      release: po
