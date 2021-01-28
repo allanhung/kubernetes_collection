@@ -1,3 +1,6 @@
+# Prepare
+## download istio-telemetry from istio 1.7.6
+```bash
 export ISTIO_TM_VER=1.7.6
 export ISTIO_VER=1.8.2
 export ISTIO_SRC_DIR=~/Downloads/git/kubernetes_collection
@@ -7,9 +10,6 @@ mkdir -p ${ISTIO_SRC_DIR}/istio/download
 mkdir -p ${ISTIO_SRC_DIR}/istio/${ISTIO_TM_VER}
 mkdir -p ${ISTIO_SRC_DIR}/istio/${ISTIO_VER}/bin
 mkdir -p ${ISTIO_SRC_DIR}/istio/${ISTIO_VER}/config
-# Prepare
-## download istio-telemetry from istio 1.7.6
-```bash
 curl -L -o ${ISTIO_SRC_DIR}/istio/download/istio-${ISTIO_TM_VER}-linux-arm64.tar.gz https://github.com/istio/istio/releases/download/${ISTIO_TM_VER}/istio-${ISTIO_TM_VER}-linux-arm64.tar.gz
 tar -zxvf ${ISTIO_SRC_DIR}/istio/download/istio-${ISTIO_TM_VER}-linux-arm64.tar.gz -C ${ISTIO_SRC_DIR}/istio/${ISTIO_TM_VER}
 mv ${ISTIO_SRC_DIR}/istio/${ISTIO_TM_VER}/istio-${ISTIO_TM_VER} ${ISTIO_SRC_DIR}/istio/${ISTIO_TM_VER}/release
