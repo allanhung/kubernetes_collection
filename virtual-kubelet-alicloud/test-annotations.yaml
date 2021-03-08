@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  annotations:
+    k8s.aliyun.com/eci-use-specs: '2-2Gi'
+  labels:
+    eci: "true"
+  name: centos
+spec:
+  containers:
+  - args:
+    - tail
+    - -f
+    - /dev/null
+    image: centos
+    imagePullPolicy: Always
+    name: centos

@@ -1,13 +1,13 @@
 virtualNode:
   image:
     repository: registry-vpc.us-east-1.aliyuncs.com/acs/virtual-nodes-eci
-    tag: v1.0.0.7-aliyun
+    tag: v2.0.0.80-f9a46a994-aliyun
 
-affinityAdminssion:
-  enabled: true 
-  image:
-    repository: registry-vpc.us-east-1.aliyuncs.com/acs/virtual-node-affinity-admission-controller
-    tag: v1.0.0.1-aliyun
+controller:
+  image: registry-vpc.us-east-1.aliyuncs.com/acs/virtual-node-affinity-admission-controller
+  imageTag: v1.0.0.1-aliyun
+  imagePullPolicy: Always
+  serviceAccount: vk-affinity-admission-controller
 
 env:
   ALIYUN_CLUSTERID: my-cluster-id

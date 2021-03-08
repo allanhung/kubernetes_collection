@@ -1,0 +1,59 @@
+--- a/vk-affinity-admission-controller/charts/vk-affinity-admission-controller/templates/admissionregistration.yaml
++++ b/vk-affinity-admission-controller/charts/vk-affinity-admission-controller/templates/admissionregistration.yaml
+@@ -20,17 +20,7 @@
+       namespace: {{ .Release.Namespace }}
+       path: /inject
+   failurePolicy: {{ .Values.admissionRegistration.failurePolicy }}
+-  namespaceSelector:
+-{{- if .Values.admissionRegistration.enableNamespacesByDefault }}
+-    matchExpressions:
+-    - key: vk-affinity-injection
+-      operator: NotIn
+-      values:
+-      - disabled
+-{{- else }}
+-    matchLabels:
+-      vk-affinity-injection: enabled
+-{{- end }}
++  namespaceSelector: {}
+   name: {{ template "fullname" . }}.k8s.io
+   rules:
+   - apiGroups:
+--- a/vk-affinity-admission-controller/charts/vk-affinity-admission-controller/templates/rbac.yaml
++++ b/vk-affinity-admission-controller/charts/vk-affinity-admission-controller/templates/rbac.yaml
+@@ -5,8 +5,7 @@
+   name: {{ template "fullname" . }}-role
+ rules:
+ - apiGroups: [""]
+-  resources: ["configmaps"]
+-  resourceNames: ["extension-apiserver-authentication"]
++  resources: ["configmaps", "namespaces"]
+   verbs: ["get", "list", "watch"]
+ ---
+ kind: ClusterRoleBinding
+@@ -21,5 +20,4 @@
+   kind: ClusterRole
+   name: {{ template "fullname" . }}-role
+   apiGroup: rbac.authorization.k8s.io
+-  namespace: {{ .Release.Namespace }}
+ {{- end -}}
+--- a/vk-affinity-admission-controller/charts/vk-affinity-admission-controller/templates/deployment.yaml
++++ b/vk-affinity-admission-controller/charts/vk-affinity-admission-controller/templates/deployment.yaml
+@@ -26,7 +26,7 @@
+       - name: webhook
+         image: {{ .Values.controller.image }}:{{ .Values.controller.imageTag }}
+         imagePullPolicy: {{ .Values.controller.imagePullPolicy }}
+-        command: ["/vk-affinity-admission-controller"]
++        command: ["/virtual-node-affinity-admission-controller"]
+         args:
+         - --logtostderr
+         - -v=4
+@@ -47,7 +47,7 @@
+         - containerPort: {{ .Values.controller.service.targetPort }}
+         volumeMounts:
+         - name: certs
+-          mountPath: /var/run/vk-affinity-admission-controller
++          mountPath: /var/run/virtual-node-affinity-admission-controller
+           readOnly: true
+       volumes:
+       - name: certs

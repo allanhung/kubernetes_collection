@@ -1,13 +1,28 @@
 #### Upgrade / Install
 ```bash
-helm repo add incubator https://aliacs-app-catalog.oss-cn-hangzhou.aliyuncs.com/charts-incubator/
+helm repo add ali-incubator https://aliacs-app-catalog.oss-cn-hangzhou.aliyuncs.com/charts-incubator/
 helm repo update
 
 helm upgrade --install vk \
     --namespace infra \
     -f ${DIR}/values.yaml \
     -f ${DIR}/values.example.yaml \
-    incubator/ack-virtual-node
+    ali-incubator/ack-virtual-node
+
+test -d ${DIR}/vk-affinity-admission-controller || git clone --depth 1 https://github.com/lachie83/vk-affinity-admission-controller
+patch -p1 < ali-vk-webhook.patch
+helm upgrade --install vk-webhook \
+    --namespace infra \
+    --create-namespace \
+    -f ${DIR}/values.yaml \
+    -f ${DIR}/values.example.yaml \
+    ${DIR}/vk-affinity-admission-controller/charts/vk-affinity-admission-controller
+rm -rf ${DIR}/vk-affinity-admission-controller
+```
+
+### Test
+```bash
+kubectl run nginx --image nginx -l eci=true
 ```
 
 ### Prevent daemonset schedule to Virtual Kubelet
@@ -28,6 +43,7 @@ helm upgrade --install vk \
 ```bash
 kubectl patch node virtual-node-eci-0 -p '{"spec":{"providerID":"us-east-1.virtual-node-eci-0"}}'
 ```
+
 #### max cpu cores and memory
 ```bash
 # default in virtual-kubelet
@@ -44,7 +60,7 @@ kubectl patch node virtual-node-eci-0 -p '{"spec":{"providerID":"us-east-1.virtu
 ### support tail -f
 * [806](https://github.com/virtual-kubelet/virtual-kubelet/pull/806)
 
-###
+### remove lable
 ```bash
 kubectl label node virtual-node-eci-0 failure-domain.beta.kubernetes.io/zone-
 ```
