@@ -1,25 +1,20 @@
-image: dexidp/dex
-imageTag: "v2.27.0"
-imagePullPolicy: "IfNotPresent"
-grpc: false
-https: false
-telemetry: true
+image:
+  repository: ghcr.io/dexidp/dex
+  pullPolicy: "IfNotPresent"
+  tag: master
 
-ports:
-  web:
-    servicePort: 80
-  telemetry:
-    servicePort: 5558
+grpc:
+  enabled: false
+
+service:
+  ports:
+    http:
+      port: 80
 
 ingress:
   enabled: true
   annotations:
     kubernetes.io/tls-acme: "true"
-  path: /
-
-certs:
-  web:
-    create: false
 
 config:
   storage:

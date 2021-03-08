@@ -1,6 +1,8 @@
 ingress:
   hosts:
-    - dex.my-domain.com
+    - host: dex.my-domain.com
+      paths:
+        - path: /
   tls:
     - secretName: dex.my-domain.com-tls
       hosts:

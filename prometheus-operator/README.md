@@ -60,5 +60,6 @@ kubectl set env ds/flexvolume ENABLE_METRICS_DISK=true -n kube-system
 
 ### Reference
 * [alertmanager api](https://raw.githubusercontent.com/prometheus/alertmanager/master/api/v2/openapi.yaml)
-* [missing kubelet_volume* volume metrics](https://github.com/rook/rook/issues/1659)
+* [missing kubelet_volume volume metrics](https://github.com/rook/rook/issues/1659)
 * [Failed to list](https://github.com/prometheus-operator/prometheus-operator/issues/3542)
+* [Prometheus Operator CRD](https://github.com/prometheus-operator/prometheus-operator/blob/master/example/prometheus-operator-crd/monitoring.coreos.com_alertmanagers.yaml)

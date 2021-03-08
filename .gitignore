@@ -12,5 +12,8 @@
 /istio/1.*
 /istio/certs
 /istio/download
+/istio/charts/istio-ingress.bak
+/istio/ingress/my-*
+*/*.lock
 */my-*
 */*.swp

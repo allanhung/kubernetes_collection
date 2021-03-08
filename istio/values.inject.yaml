@@ -1,0 +1,5 @@
+sidecarInjectorWebhook:
+  neverInjectSelector:
+  - matchExpressions:
+    - key: job-name
+      operator: Exists

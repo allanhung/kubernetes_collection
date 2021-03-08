@@ -9,5 +9,14 @@ docker run -d --name halyard --rm \
     us-docker.pkg.dev/spinnaker-community/docker/halyard:stable
 ```
 
+#### create kubernetes account
+```bash
+hal config provider kubernetes account add my-k8s-account --kubeconfig-file my-kube-config --context my-context
+hal config provider kubernetes account edit my-k8s-account --add-custom-resource SparkApplication
+# Set the deploy endpoint
+hal config deploy edit --type distributed --account-name my-k8s-account
+hal deploy apply
+```
+
 ### Reference
-* [lInstall and Configure Spinnake](https://spinnaker.io/setup/install/)
+* [Install and Configure Spinnaker](https://spinnaker.io/setup/install/)

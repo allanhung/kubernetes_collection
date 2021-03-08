@@ -55,6 +55,12 @@ EOF
 curl --request PUT --data @echo-server.json http://consul.my-domain.com:8500/v1/catalog/register
 ```
 
+### Alerts
+#### Log
+```bash
+{app="consul",component="server"} |= "failed to heartbeat"
+```
+
 ### Reference
 * [consul-helm](https://github.com/hashicorp/consul-helm)
 * [service-registration-external-services](https://learn.hashicorp.com/tutorials/consul/service-registration-external-services)

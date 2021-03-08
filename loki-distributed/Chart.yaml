@@ -1,0 +1,23 @@
+apiVersion: "v1"
+name: quid-loki-stack
+version: 0.1.0
+appVersion: v2.1.0
+description: "Loki: like Prometheus, but for logs."
+home: https://grafana.com/loki
+icon: https://raw.githubusercontent.com/grafana/loki/master/docs/sources/logo.png
+sources:
+- https://github.com/grafana/loki
+engine: gotpl
+dependencies:
+- name: "loki-distributed"
+  condition: loki-distributed.enabled
+  repository: "https://grafana.github.io/helm-charts"
+  version: "^0.22.0"
+- name: "promtail"
+  condition: promtail.enabled
+  repository: "https://grafana.github.io/helm-charts"
+  version: "^3.0.1"
+- name: "etcd"
+  condition: etcd.enabled
+  repository: "https://charts.bitnami.com/bitnami"
+  version: "^5.5.2"

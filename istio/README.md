@@ -1,8 +1,8 @@
 # Prepare
-## download istio-telemetry from istio 1.7.6
+## setup parameter
 ```bash
+export ISTIO_VER=1.9.0
 export ISTIO_TM_VER=1.7.6
-export ISTIO_VER=1.8.2
 export ISTIO_SRC_DIR=~/Downloads/git/kubernetes_collection
 export OS=osx
 mkdir -p ${ISTIO_SRC_DIR}/istio/charts
@@ -10,6 +10,9 @@ mkdir -p ${ISTIO_SRC_DIR}/istio/download
 mkdir -p ${ISTIO_SRC_DIR}/istio/${ISTIO_TM_VER}
 mkdir -p ${ISTIO_SRC_DIR}/istio/${ISTIO_VER}/bin
 mkdir -p ${ISTIO_SRC_DIR}/istio/${ISTIO_VER}/config
+```
+## download istio-telemetry from istio 1.7.6
+```bash
 curl -L -o ${ISTIO_SRC_DIR}/istio/download/istio-${ISTIO_TM_VER}-linux-arm64.tar.gz https://github.com/istio/istio/releases/download/${ISTIO_TM_VER}/istio-${ISTIO_TM_VER}-linux-arm64.tar.gz
 tar -zxvf ${ISTIO_SRC_DIR}/istio/download/istio-${ISTIO_TM_VER}-linux-arm64.tar.gz -C ${ISTIO_SRC_DIR}/istio/${ISTIO_TM_VER}
 mv ${ISTIO_SRC_DIR}/istio/${ISTIO_TM_VER}/istio-${ISTIO_TM_VER} ${ISTIO_SRC_DIR}/istio/${ISTIO_TM_VER}/release
@@ -30,6 +33,7 @@ tar -zxvf ${ISTIO_SRC_DIR}/istio/download/istioctl-${ISTIO_VER}-${OS}.tar.gz -C 
 curl -L -o ${ISTIO_SRC_DIR}/istio/download/istio-${ISTIO_VER}-linux-arm64.tar.gz https://github.com/istio/istio/releases/download/${ISTIO_VER}/istio-${ISTIO_VER}-linux-arm64.tar.gz
 tar -zxvf ${ISTIO_SRC_DIR}/istio/download/istio-${ISTIO_VER}-linux-arm64.tar.gz -C ${ISTIO_SRC_DIR}/istio/${ISTIO_VER}
 mv ${ISTIO_SRC_DIR}/istio/${ISTIO_VER}/istio-${ISTIO_VER} ${ISTIO_SRC_DIR}/istio/${ISTIO_VER}/release
+cd ${ISTIO_SRC_DIR}/istio/${ISTIO_VER} && patch -p1 < ${ISTIO_SRC_DIR}/istio/patch/istio-ingress.patch
 ```
 # Installation
 ## Generate ca
@@ -57,11 +61,9 @@ helm upgrade --install istio-base \
 ```
 ### istio-control/istio-discovery installs a revision of istiod.
 ```bash
-helm upgrade --install istio-control \
+helm upgrade --install istiod \
     --namespace istio-system \
-    -f ${ISTIO_SRC_DIR}/istio/${ISTIO_VER}/release/manifests/charts/global.yaml \
-    --set global.hub=docker.io/istio \
-    --set global.tag=${ISTIO_VER} \
+    -f ${ISTIO_SRC_DIR}/istio/values.inject.yaml \
     --set global.meshID=vpc1-mesh \
     --set global.multiCluster.clusterName=cluster1-us-east-1 \
     --set global.network=vpc1.us-east-1 \
@@ -90,18 +92,38 @@ ${ISTIO_SRC_DIR}/istio/${ISTIO_VER}/bin/istioctl x create-remote-secret --contex
 
 ### gateways/istio-ingress install a Gateway
 ```bash
-helm upgrade --install istio-ingress \
+helm upgrade --install istio-ingress-internal \
     --namespace istio-system \
-    -f ${ISTIO_SRC_DIR}/istio/${ISTIO_VER}/release/manifests/charts/global.yaml \
-    --set global.hub=docker.io/istio \
-    --set global.tag=${ISTIO_VER} \
     --set global.meshID=vpc1-mesh \
     --set global.multiCluster.clusterName=cluster1-us-east-1 \
     --set global.network=vpc1.us-east-1 \
     --set global.jwtPolicy=first-party-jwt \
     --set global.arch.s390x=0 \
     --set global.arch.ppc64le=0 \
+    --set global.defaultPodDisruptionBudget.enabled=false \
+    --set gateways.istio-ingressgateway.name=istio-ingress-internal \
+    --set gateways.istio-ingressgateway.labels.app=istio-ingress-internal \
+    --set gateways.istio-ingressgateway.labels.istio=ingress-internal \
+    --set gateways.istio-ingressgateway.daemonsetEnabled=true \
+    --set gateways.istio-ingressgateway.externalTrafficPolicy=Local \
     --set gateways.istio-ingressgateway.serviceAnnotations."service\.beta\.kubernetes\.io/alibaba-cloud-loadbalancer-address-type"=intranet \
+    --set gateways.istio-ingressgateway.serviceAnnotations."service\.beta\.kubernetes\.io/alicloud-loadbalancer-force-override-listeners"=true \
+    ${ISTIO_SRC_DIR}/istio/${ISTIO_VER}/release/manifests/charts/gateways/istio-ingress
+
+helm upgrade --install istio-ingress-external \
+    --namespace istio-system \
+    --set global.meshID=vpc1-mesh \
+    --set global.multiCluster.clusterName=cluster1-us-east-1 \
+    --set global.network=vpc1.us-east-1 \
+    --set global.jwtPolicy=first-party-jwt \
+    --set global.arch.s390x=0 \
+    --set global.arch.ppc64le=0 \
+    --set global.defaultPodDisruptionBudget.enabled=false \
+    --set gateways.istio-ingressgateway.name=istio-ingress-external \
+    --set gateways.istio-ingressgateway.labels.app=istio-ingress-external \
+    --set gateways.istio-ingressgateway.labels.istio=ingress-external \
+    --set gateways.istio-ingressgateway.daemonsetEnabled=true \
+    --set gateways.istio-ingressgateway.externalTrafficPolicy=Local \
     --set gateways.istio-ingressgateway.serviceAnnotations."service\.beta\.kubernetes\.io/alicloud-loadbalancer-force-override-listeners"=true \
     ${ISTIO_SRC_DIR}/istio/${ISTIO_VER}/release/manifests/charts/gateways/istio-ingress
 ```
@@ -111,6 +133,7 @@ helm upgrade --install istio-ingress \
 helm upgrade --install istio-servicemonitor \
     --namespace istio-system \
     --set global.telemetryNamespace=istio-system \
+    --set serviceMonitor.labels.release=po \
     ${ISTIO_SRC_DIR}/istio/charts/prometheusOperator
 ```
 ### kiali
@@ -192,3 +215,7 @@ ${ISTIO_SRC_DIR}/istio/${ISTIO_VER}/bin/istioctl profile dump --config-path valu
 
 # reference
 * [istio helm installation](https://istio.io/latest/docs/setup/install/helm/)
+* [Istio Proxy Start-up Latency](https://www.stackrox.com/post/2019/11/how-to-make-istio-work-with-your-apps/)
+* [go-istio-proxy-wait](https://github.com/allisson/go-istio-proxy-wait)
+* [Using Istio with CronJobs](https://github.com/istio/istio/issues/11659)
+* [Sidecar: adding exceptions](https://istio.io/latest/docs/setup/additional-setup/sidecar-injection/#more-control-adding-exceptions)

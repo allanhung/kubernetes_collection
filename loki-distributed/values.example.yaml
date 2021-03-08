@@ -1,0 +1,13 @@
+loki-distributed:
+  bucketname: my-bucket
+  alertmanager_external_url: https://alertmanager.my-domain.com
+  gateway:
+    ingress:
+      hosts:
+        - host: loki.my-domain.com
+          paths:
+            - /
+      tls:
+        - secretName: loki.my-domain.com-tls
+          hosts:
+            - loki.my-domain.com

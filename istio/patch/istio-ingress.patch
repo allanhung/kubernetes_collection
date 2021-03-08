@@ -1,0 +1,66 @@
+--- a/release/manifests/charts/gateways/istio-ingress/templates/autoscale.yaml
++++ b/release/manifests/charts/gateways/istio-ingress/templates/autoscale.yaml
+@@ -1,5 +1,6 @@
+ {{ $gateway := index .Values "gateways" "istio-ingressgateway" }}
+ {{- if and $gateway.autoscaleEnabled $gateway.autoscaleMin $gateway.autoscaleMax }}
++{{- if not $gateway.daemonsetEnabled }}
+ apiVersion: autoscaling/v2beta1
+ kind: HorizontalPodAutoscaler
+ metadata:
+@@ -25,3 +26,4 @@
+         targetAverageUtilization: {{ $gateway.cpu.targetAverageUtilization }}
+ ---
+ {{- end }}
++{{- end }}
+--- a/release/manifests/charts/gateways/istio-ingress/templates/deployment.yaml
++++ b/release/manifests/charts/gateways/istio-ingress/templates/deployment.yaml
+@@ -1,6 +1,10 @@
+ {{- $gateway := index .Values "gateways" "istio-ingressgateway" }}
+ apiVersion: apps/v1
++{{- if $gateway.daemonsetEnabled }}
++kind: DaemonSet
++{{- else }}
+ kind: Deployment
++{{- end }}
+ metadata:
+   name: {{ $gateway.name | default "istio-ingressgateway" }}
+   namespace: {{ .Release.Namespace }}
+@@ -11,7 +15,7 @@
+     install.operator.istio.io/owning-resource: {{ .Values.ownerName | default "unknown" }}
+     operator.istio.io/component: "IngressGateways"
+ spec:
+-{{- if not $gateway.autoscaleEnabled }}
++{{- if and (not $gateway.autoscaleEnabled) (not $gateway.daemonsetEnabled) }}
+ {{- if $gateway.replicaCount }}
+   replicas: {{ $gateway.replicaCount }}
+ {{- end }}
+@@ -19,10 +23,17 @@
+   selector:
+     matchLabels:
+ {{ $gateway.labels | toYaml | indent 6 }}
++  {{- if not $gateway.daemonsetEnabled }}
+   strategy:
+     rollingUpdate:
+       maxSurge: {{ $gateway.rollingMaxSurge }}
+       maxUnavailable: {{ $gateway.rollingMaxUnavailable }}
++  {{- else }}
++  updateStrategy:
++    type: RollingUpdate
++    rollingUpdate:
++      maxUnavailable: {{ $gateway.rollingMaxUnavailable }}
++  {{- end }}
+   template:
+     metadata:
+       labels:
+@@ -207,7 +218,11 @@
+           - name: ISTIO_META_WORKLOAD_NAME
+             value: {{ $gateway.name | default "istio-ingressgateway" }}
+           - name: ISTIO_META_OWNER
++          {{- if $gateway.daemonsetEnabled }}
++            value: kubernetes://apis/apps/v1/namespaces/{{ .Release.Namespace }}/daemonsets/{{ $gateway.name | default "istio-ingressgateway" }}
++          {{- else }}
+             value: kubernetes://apis/apps/v1/namespaces/{{ .Release.Namespace }}/deployments/{{ $gateway.name | default "istio-ingressgateway" }}
++          {{- end }}
+           {{- if $.Values.global.meshID }}
+           - name: ISTIO_META_MESH_ID
+             value: "{{ $.Values.global.meshID }}"

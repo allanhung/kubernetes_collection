@@ -1,0 +1,10 @@
+{{- if .Values.etcd.env_vars }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: loki-etcd-env-vars
+data:
+{{- range $key, $val := .Values.etcd.env_vars }}
+  {{ $key }}: {{ $val | quote }}
+{{- end }}
+{{- end }}

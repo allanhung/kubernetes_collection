@@ -55,6 +55,13 @@ Append follow annotation in ingress resource.
         kubernetes.io/tls-acme: "true" 
 ```
 
+### Renew certificate
+```bash
+export MYCERTS=my-certs
+kubectl patch certs ${MYCERTS} --type=json -p='[{"op": "replace", "path": "/spec/renewBefore", "value": "1440h"}]'
+kubectl patch certs ${MYCERTS} --type=json -p='[{"op": "remove", "path": "/spec/renewBefore"}]'
+```
+
 ### Dashboard
 * [11001](https://grafana.com/grafana/dashboards/11001)
 
