@@ -1,0 +1,135 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: secret-argo-artifact-credential
+  labels: {{- include "labels" . | nindent 4 }}
+spec:
+  rules:
+  - name: secret-argo-artifact-credential
+    match:
+      resources:
+        name: "argo-*"
+        kinds:
+        - Namespace
+    exclude:
+      resources:
+        namespaces:
+        - {{ .Release.Namespace }}
+    generate:
+      kind: Secret
+      name: argo-artifact-credential
+      namespace: "{{`{{request.object.metadata.name}}`}}"
+      synchronize : true
+      clone:
+        namespace: {{ .Release.Namespace }} 
+        name: argo-artifact-credential
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: sa-argo-workflow
+  labels: {{- include "labels" . | nindent 4 }}
+spec:
+  rules:
+  - name: sa-argo-workflow
+    match:
+      resources:
+        name: "argo-*"
+        kinds:
+        - Namespace
+    exclude:
+      resources:
+        namespaces:
+        - {{ .Release.Namespace }}
+    generate:
+      synchronize: true
+      kind: ServiceAccount
+      name: argo-workflow
+      namespace: "{{`{{request.object.metadata.name}}`}}"
+      data: {}
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: rolebinding-argo-workflow
+  labels: {{- include "labels" . | nindent 4 }}
+spec:
+  rules:
+  - name: rolebinding-argo-workflow
+    match:
+      resources:
+        name: "argo-*"
+        kinds:
+        - Namespace
+    exclud4yye:
+      resources:
+        namespaces:
+        - {{ .Release.Namespace }}
+    generate:
+      kind: RoleBinding
+      name: argo-workflow
+      namespace: "{{`{{request.object.metadata.name}}`}}"
+      data:
+        subjects:
+        - kind: ServiceAccount
+          name: argo-workflow
+          namespace: "{{`{{request.object.metadata.name}}`}}"
+        roleRef:
+          apiGroup: rbac.authorization.k8s.io
+          kind: ClusterRole
+          name: argo-workflow
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: sa-argo-workflow-api
+  labels: {{- include "labels" . | nindent 4 }}
+spec:
+  rules:
+  - name: sa-argo-workflow-api
+    match:
+      resources:
+        name: "argo-*"
+        kinds:
+        - Namespace
+    exclude:
+      resources:
+        namespaces:
+        - {{ .Release.Namespace }}
+    generate:
+      synchronize: true
+      kind: ServiceAccount
+      name: argo-workflow-api
+      namespace: "{{`{{request.object.metadata.name}}`}}"
+      data: {}
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: rolebinding-argo-workflow-api
+  labels: {{- include "labels" . | nindent 4 }}
+spec:
+  rules:
+  - name: rolebinding-argo-workflow-api
+    match:
+      resources:
+        name: "argo-*"
+        kinds:
+        - Namespace
+    exclude:
+      resources:
+        namespaces:
+        - {{ .Release.Namespace }}
+    generate:
+      kind: RoleBinding
+      name: argo-workflow-api
+      namespace: "{{`{{request.object.metadata.name}}`}}"
+      data:
+        subjects:
+        - kind: ServiceAccount
+          name: argo-workflow-api
+          namespace: "{{`{{request.object.metadata.name}}`}}"
+        roleRef:
+          apiGroup: rbac.authorization.k8s.io
+          kind: ClusterRole
+          name: argo-workflow-api

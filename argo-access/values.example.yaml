@@ -1,0 +1,14 @@
+loki-distributed:
+  bucketname: loki-dev-quidops-com
+  region: us-east-1
+  alertmanager_external_url: https://alertmanager.dev.in.quid.com
+  gateway:
+    ingress:
+      hosts:
+        - host: loki.dev.in.quid.com
+          paths:
+            - /
+      tls:
+        - secretName: loki.dev.in.quid.com-tls
+          hosts:
+            - loki.dev.in.quid.com

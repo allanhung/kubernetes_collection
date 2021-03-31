@@ -16,3 +16,4 @@ helm upgrade --install statsd-exporter \
 * [vault-monitoring](https://coreos.com/tectonic/docs/latest/vault-operator/user/monitoring.html)
 * [vault-mapping](https://gist.github.com/tam7t/64291f4ebbc1c45a1fc876b6c0613221)
 * [vault-exporter](https://github.com/kubevault/vault_exporter)
+* [Forward DogStatsD Metrics to Prometheus](https://marselester.com/prometheus-via-dogstatsd.html)
