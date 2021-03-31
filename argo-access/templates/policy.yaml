@@ -48,6 +48,19 @@ spec:
       namespace: "{{`{{request.object.metadata.name}}`}}"
       data: {}
 ---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: kyverno:generate-argo-workflow
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: argo-workflow
+subjects:
+- kind: ServiceAccount
+  name: kyverno
+  namespace: {{ .Release.Namespace }}
+---
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
 metadata:
@@ -61,7 +74,7 @@ spec:
         name: "argo-*"
         kinds:
         - Namespace
-    exclud4yye:
+    exclude:
       resources:
         namespaces:
         - {{ .Release.Namespace }}
@@ -102,6 +115,19 @@ spec:
       name: argo-workflow-api
       namespace: "{{`{{request.object.metadata.name}}`}}"
       data: {}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: kyverno:generate-argo-workflow-api
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: argo-workflow-api
+subjects:
+- kind: ServiceAccount
+  name: kyverno
+  namespace: {{ .Release.Namespace }}
 ---
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy

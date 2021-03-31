@@ -11,3 +11,6 @@ initImage:
   repository: my-registry/kyverno/kyvernopre
   tag: v1.3.4
   pullPolicy: Always
+
+generatecontrollerExtraResources:
+- serviceaccounts

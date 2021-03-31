@@ -54,6 +54,8 @@ kubectl api-resources
 kubectl get --raw /apis/external.metrics.k8s.io/v1beta1
 kubectl get --raw /apis/custom.metrics.k8s.io/v1beta1
 ```
+#### attempting to grant RBAC permissions not currently held
+* If you wish to write a generate rule which creates a new RoleBinding resource granting some user the admin role over a new Namespace, the Kyverno service account must have a ClusterRoleBinding in place for that same admin role.
 
 ### Reference
 * [kyverno](https://github.com/kyverno/kyverno)
@@ -61,3 +63,4 @@ kubectl get --raw /apis/custom.metrics.k8s.io/v1beta1
 * [policy management with Kyverno](https://aws.amazon.com/blogs/containers/easy-as-one-two-three-policy-management-with-kyverno-on-amazon-eks/)
 * [issue 1481](https://github.com/kyverno/kyverno/issues/1481)
 * [issue 1490](https://github.com/kyverno/kyverno/issues/1490)
+* [Generating Bindings](https://kyverno.io/docs/writing-policies/generate/#generating-bindings)
