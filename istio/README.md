@@ -67,6 +67,8 @@ helm upgrade --install istiod \
     --set global.meshID=vpc1-mesh \
     --set global.multiCluster.clusterName=cluster1-us-east-1 \
     --set global.network=vpc1.us-east-1 \
+    --set global.proxy.logLevel=debug \
+    --set global.accessLogFile=/dev/stdout \
     --set global.jwtPolicy=first-party-jwt \
     --set global.arch.s390x=0 \
     --set global.arch.ppc64le=0 \
@@ -182,26 +184,7 @@ ${ISTIO_SRC_DIR}/istio/${ISTIO_VER}/bin/istioctl manifest generate -f ${ISTIO_SR
 ```bash
 ${ISTIO_SRC_DIR}/istio/${ISTIO_VER}/bin/istioctl install -f ${ISTIO_SRC_DIR}/istio/${ISTIO_VER}/config/istio-default-profile.yaml
 ```
-# Useful Command
-### dump components config in default profile
-```bash
-${ISTIO_SRC_DIR}/istio/${ISTIO_VER}/bin/istioctl profile dump --config-path components default
-```
-### dump base component config and values in default profile
-```bash
-${ISTIO_SRC_DIR}/istio/${ISTIO_VER}/bin/istioctl profile dump --config-path components.base default
-${ISTIO_SRC_DIR}/istio/${ISTIO_VER}/bin/istioctl profile dump --config-path values.base default
-```
-### dump pilot component config and values in default profile
-```bash
-${ISTIO_SRC_DIR}/istio/${ISTIO_VER}/bin/istioctl profile dump --config-path components.pilot default
-${ISTIO_SRC_DIR}/istio/${ISTIO_VER}/bin/istioctl profile dump --config-path values.pilot default
-```
-### dump ingressGateways component config and values in default profile
-```
-${ISTIO_SRC_DIR}/istio/${ISTIO_VER}/bin/istioctl profile dump --config-path components.ingressGateways default
-${ISTIO_SRC_DIR}/istio/${ISTIO_VER}/bin/istioctl profile dump --config-path values.gateways.istio-ingressgateway default
-```
+
 # dashboard
 * [7630 Istio Workload Dashboard](https://grafana.com/grafana/dashboards/7630)
 * [7636 Istio Service Dashboard](https://grafana.com/grafana/dashboards/7636)
@@ -219,3 +202,6 @@ ${ISTIO_SRC_DIR}/istio/${ISTIO_VER}/bin/istioctl profile dump --config-path valu
 * [go-istio-proxy-wait](https://github.com/allisson/go-istio-proxy-wait)
 * [Using Istio with CronJobs](https://github.com/istio/istio/issues/11659)
 * [Sidecar: adding exceptions](https://istio.io/latest/docs/setup/additional-setup/sidecar-injection/#more-control-adding-exceptions)
+* [Service upstream support with Istio](https://github.com/kubernetes/ingress-nginx/issues/3171)
+* [Nginx Controller using endpoints instead of Services](https://github.com/kubernetes/ingress-nginx/issues/257)
+* [istio deployment-models](https://istio.io/latest/docs/ops/deployment/deployment-models/)
