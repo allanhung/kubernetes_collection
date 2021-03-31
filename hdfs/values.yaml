@@ -1,0 +1,30 @@
+namenode:
+  repository: gchq/hdfs
+  tag: 3.2.1
+  dataVolumes:
+    pvcTemplateSpec:
+      storageClassName: topology-aware-cloud-efficiency
+      resources:
+        requests:
+          storage: 20Gi
+
+datanode:
+  repository: gchq/hdfs
+  dataVolumes:
+    pvcTemplateSpec:
+      storageClassName: topology-aware-cloud-efficiency
+      resources:
+        requests:
+          storage: 20Gi
+
+config:
+  coreSite:
+    dfs.namenode.datanode.registration.ip-hostname-check: false
+  hdfsSite:
+    dfs.namenode.datanode.registration.ip-hostname-check: false
+
+ingress:
+  enabled: true
+  annotations:
+    kubernetes.io/ingress.class: nginx-internal
+  pathPrefix: /
