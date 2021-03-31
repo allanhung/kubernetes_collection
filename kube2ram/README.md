@@ -7,6 +7,6 @@
 
 ## Build image and push image
 ```bash
-docker build -t docker.quid.com/kube2ram:1.0.0 .
-docker push docker.quid.com/kube2ram:1.0.0
+docker build -t my-docker-registry/kube2ram:1.0.0 .
+docker push my-docker-registry/kube2ram:1.0.0
 ```

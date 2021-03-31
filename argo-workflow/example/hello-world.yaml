@@ -12,6 +12,6 @@ spec:
   templates:
   - name: whalesay
     container:
-      image: docker-mirror.quid.com/docker/whalesay:latest
+      image: docker/whalesay:latest
       command: [cowsay]
       args: ["hello world"]

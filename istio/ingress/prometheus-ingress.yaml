@@ -7,7 +7,7 @@ metadata:
   name: prometheus
 spec:
   rules:
-  - host: istio-prometheus.develop.in.quid.com
+  - host: istio-prometheus.example.com
     http:
       paths:
       - backend:
@@ -16,5 +16,5 @@ spec:
         path: /
   tls:
   - hosts:
-    - istio-prometheus.develop.in.quid.com
-    secretName: istio-prometheus.develop.in.quid.com-tls
+    - istio-prometheus.example.com
+    secretName: istio-prometheus.example.com-tls
