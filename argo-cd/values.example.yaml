@@ -1,0 +1,22 @@
+server:
+  ingress:
+    hosts:
+      - argo-cd.example.com
+    tls:
+      - secretName: argo-cd.example.com-tls
+        hosts:
+          - argo-cd.example.com
+  config:
+    url: https://argo-cd.example.com
+    oidc.config: |
+      name: okta
+      issuer: https://dex.example.com
+      clientID: my-client-id
+      clientSecret: my-client-secrert
+      requestedIDTokenClaims:
+        groups:
+          essential: true
+      requestedScopes:
+        - openid
+        - profile
+        - email
