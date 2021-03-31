@@ -16,5 +16,13 @@ helm upgrade --install loki \
   ./
 ```
 
+### Troubleshooting
+* msg="error removing stale clients" err="empty ring"
+```bash
+etcdctl get "" --prefix --keys-only
+etcdctl del "" --from-key=true
+```
+
 ### Reference
 * [loki distributed](https://github.com/grafana/helm-charts/tree/main/charts/loki-distributed)
+* [loki debug](https://www.jianshu.com/p/6b24340c2cf1)

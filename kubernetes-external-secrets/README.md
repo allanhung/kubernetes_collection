@@ -12,7 +12,7 @@ helm repo add external-secrets https://external-secrets.github.io/kubernetes-ext
 helm repo update
 
 helm upgrade --install kes \
-  -n infra \
+  -n kubernetes-external-secrets \
   --create-namespace \
   -f ./values.yaml \
   external-secrets/kubernetes-external-secrets

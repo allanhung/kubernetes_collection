@@ -12,12 +12,12 @@ dependencies:
 - name: "loki-distributed"
   condition: loki-distributed.enabled
   repository: "https://grafana.github.io/helm-charts"
-  version: "^0.22.0"
+  version: "^0.28.0"
 - name: "promtail"
   condition: promtail.enabled
   repository: "https://grafana.github.io/helm-charts"
-  version: "^3.0.1"
+  version: "^3.5.0"
 - name: "etcd"
   condition: etcd.enabled
   repository: "https://charts.bitnami.com/bitnami"
-  version: "^5.5.2"
+  version: "^5.6.2"

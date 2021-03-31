@@ -31,5 +31,15 @@ helm upgrade --install etcd \
   bitnami/etcd
 ```
 
+### Trouble Shooting
+* member not found
+```bash
+etcdctl member list
+etcdctl member remove <member_id>
+# remove member_id file
+rm -f /bitnami/etcd/data/member_id
+```
+
 ### Reference
 * [etcd](https://github.com/bitnami/charts/tree/master/bitnami/etcd)
+* [loki-etcd](https://www.jianshu.com/p/f9ab6296ff29)

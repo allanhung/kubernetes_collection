@@ -45,7 +45,6 @@ loki-distributed:
         grpc_client_config:
           max_recv_msg_size: 83886080
           max_send_msg_size: 83886080
-          use_gzip_compression: true
           rate_limit: 0
           rate_limit_burst: 0
           backoff_on_ratelimits: true
@@ -99,7 +98,7 @@ loki-distributed:
       storage_config:
         aws:
           bucketnames: {{ .Values.bucketname }}
-          endpoint: oss-{{ .Values.region }}.aliyuncs.com
+          endpoint: oss-{{ .Values.region }}-internal.aliyuncs.com
           region: {{ .Values.region }}
           access_key_id: {{ .Values.AccessKey }}
           secret_access_key: {{ .Values.SecretKey }}
@@ -325,8 +324,9 @@ loki-distributed:
 promtail:
   enabled: true
   image:
-    repository: docker.io/grafana/promtail
-    tag: 2.1.0
+    registry: docker.io
+    repository: grafana/promtail
+    tag: null
   serviceMonitor:
     enabled: true
     interval: ""
