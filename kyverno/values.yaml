@@ -1,0 +1,13 @@
+podSecurityStandard: None
+
+image:
+  repository: my-registry/kyverno/kyverno
+  tag: v1.3.4
+  pullPolicy: Always
+  pullSecrets:
+  - name: my-registry-secret
+
+initImage:
+  repository: my-registry/kyverno/kyvernopre
+  tag: v1.3.4
+  pullPolicy: Always

@@ -1,0 +1,26 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: zk-kafka-address
+spec:
+  rules:
+  - name: zk-kafka-address
+    match:
+      resources:
+        kinds:
+        - Namespace
+    exclude:
+      resources:
+        namespaces:
+        - default
+        - kube-public
+        - kube-system
+    generate:
+      synchronize: true
+      kind: ConfigMap
+      name: zk-kafka-address
+      # generate the resource in the new namespace
+      namespace: "{{request.object.metadata.name}}"
+      clone:
+        namespace: source-ns
+        name: source-configmap
