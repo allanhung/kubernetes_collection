@@ -1,0 +1,39 @@
+{{- if .Values.eventsource.github -}}
+{{- if .Capabilities.APIVersions.Has "networking.k8s.io/v1beta1" }}
+apiVersion: networking.k8s.io/v1beta1
+{{ else }}
+apiVersion: extensions/v1beta1
+{{ end -}}
+kind: Ingress
+metadata:
+{{- if .Values.webhook.annotations }}
+  annotations:
+  {{- range $key, $value := .Values.webhook.annotations }}
+    {{ $key }}: {{ $value | quote }}
+  {{- end }}
+{{- end }}
+  name: {{ .Release.Name }}-webhook-github
+  labels:
+    app: {{ .Release.Name }}-github
+    chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+{{- if .Values.webhook.labels }}
+{{- toYaml .Values.webhook.labels | nindent 4 }}
+{{- end }}
+spec:
+{{- if .Values.webhook.tls }}
+  tls:
+    - hosts:
+        - webhook-github.{{ .Values.webhook.domain }}
+      secretName: webhook-github.{{ .Values.webhook.domain }}-tls
+{{- end }}
+  rules:
+    - host: webhook-github.{{ .Values.webhook.domain }}
+      http:
+        paths:
+          - path: /
+            backend:
+              serviceName: {{ $.Release.Name }}-github-eventsource-svc
+              servicePort: {{ $.Values.eventsource.github.servicePort }}
+{{- end -}}

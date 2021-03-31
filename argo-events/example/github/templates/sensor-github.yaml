@@ -1,0 +1,99 @@
+{{- if .Values.eventsource.github -}}
+{{- range $repo := .Values.eventsource.github.repos }}
+apiVersion: argoproj.io/v1alpha1
+kind: Sensor
+metadata:
+  name: {{ $.Release.Name }}-github-{{ $repo.repository }}
+  labels:
+    app: {{ $.Release.Name }}-github-{{ $repo.repository }}
+    chart: {{ $.Chart.Name }}-{{ $.Chart.Version | replace "+" "_" }}
+    release: {{ $.Release.Name }}
+    heritage: {{ $.Release.Service }}
+spec:
+  dependencies:
+  - eventName: {{ $repo.repository }}
+    eventSourceName: {{ $.Release.Name }}-github
+    name: {{ $.Release.Name }}-github-{{ $repo.repository }}
+  eventBusName: {{ $.Release.Name }}-github
+  template:
+    serviceAccountName: argo-events-sa
+  triggers:
+  - template:
+      name: {{ $.Release.Name }}-github-{{ $repo.repository }}-trigger
+      argoWorkflow:
+        group: argoproj.io
+        version: v1alpha1
+        resource: workflows
+        operation: submit
+        source:
+          resource:
+            apiVersion: argoproj.io/v1alpha1
+            kind: Workflow
+            metadata:
+              generateName: {{ $repo.repository }}-
+              namespace: {{ $.Release.Namespace }}
+            spec:
+              entrypoint: build
+              serviceAccountName: {{ $.Release.Name }}-workflow-sa
+              volumes:
+              - name: {{ $.Release.Name }}-docker-access
+                secret:
+                  secretName: {{ $.Release.Name }}-docker-access
+                  items:
+                    - key: .dockerconfigjson
+                      path: config.json
+              - name: {{ $.Release.Name }}-github-access
+                secret:
+                  secretName: {{ $.Release.Name }}-github-access
+                  items:
+                    - key: token
+                      path: token
+              templates:
+              - name: build
+                dag:
+                  tasks:
+                  - name: build
+                    template: build-kaniko-git
+                    arguments:
+                      parameters:
+                      - name: repo_url
+                        value: ""
+                      - name: repo_name
+                        value: ""
+                      - name: repo_fullname
+                        value: ""
+              - name: build-kaniko-git
+                inputs:
+                  parameters:
+                    - name: repo_url
+                    - name: repo_name
+                    - name: repo_fullname
+                script:
+                  image: alpine
+                  command: [sh]
+                  source: |
+                    echo This is a build simulation...
+                    echo "repo_url: {{`{{inputs.parameters.repo_url}}`}}"
+                    echo "repo_name: {{`{{inputs.parameters.repo_name}}`}}"
+                    echo "repo_fullname: {{`{{inputs.parameters.repo_fullname}}`}}"
+                    echo "docker credential ---"
+                    cat /kaniko/.docker/config.json
+                    sleep 5
+                  volumeMounts:
+                  - name: {{ $.Release.Name }}-docker-access
+                    mountPath: /kaniko/.docker
+        parameters:
+        - src:
+            dependencyName: {{ $.Release.Name }}-github-{{ $repo.repository }}
+            dataKey: body.repository.git_url
+          dest: spec.templates.0.dag.tasks.0.arguments.parameters.0.value
+        - src:
+            dependencyName: {{ $.Release.Name }}-github-{{ $repo.repository }}
+            dataKey: body.repository.name
+          dest: spec.templates.0.dag.tasks.0.arguments.parameters.1.value
+        - src:
+            dependencyName: {{ $.Release.Name }}-github-{{ $repo.repository }}
+            dataKey: body.repository.full_name
+          dest: spec.templates.0.dag.tasks.0.arguments.parameters.2.value
+{{- end -}}
+{{- end -}}

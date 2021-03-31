@@ -1,0 +1,45 @@
+{{- if .Values.eventsource.github -}}
+apiVersion: argoproj.io/v1alpha1
+kind: EventSource
+metadata:
+  name: {{ .Release.Name }}-github
+  labels:
+    app: {{ .Release.Name }}-github
+    chart: {{ .Chart.Name }}-{{ $.Chart.Version | replace "+" "_" }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  eventBusName: {{ .Release.Name }}-github
+  service:
+    ports:
+    - port: {{ .Values.eventsource.github.servicePort }}
+      targetPort: {{ $.Values.eventsource.github.servicePort }}
+  github:
+{{- range $repo := .Values.eventsource.github.repos }}
+    {{ $repo.repository }}:
+      owner: {{ $repo.owner }}
+      repository: {{ $repo.repository }}
+      webhook:
+        endpoint: /{{ $repo.repository }}
+        port: "{{ $.Values.eventsource.github.servicePort }}"
+        method: POST
+{{- if $.Values.webhook.tls }}
+        url: https://webhook-github.{{ $.Values.webhook.domain }}
+{{- else }}
+        url: http://webhook-github.{{ $.Values.webhook.domain }}
+{{- end }}
+      events:
+      {{- range $p := $repo.events }}
+        - {{ $p | quote }}
+      {{- end }}  
+      apiToken:
+        name: {{ $.Release.Name }}-github-access
+        key: token
+      webHookSecret:
+        name: {{ $.Release.Name }}-github-access
+        key: secret
+      insecure: {{ $repo.insecure }}
+      active: {{ $repo.active }}
+      contentType: {{ $repo.contentType }}
+{{- end -}}
+{{- end -}}  

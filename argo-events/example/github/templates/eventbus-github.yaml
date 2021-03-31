@@ -1,0 +1,16 @@
+{{- if .Values.eventsource.github -}}
+apiVersion: argoproj.io/v1alpha1
+kind: EventBus
+metadata:
+  name: {{ .Release.Name }}-github
+  labels:
+    app: {{ .Release.Name }}-github
+    chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  nats:
+    native:
+      auth: token
+      replicas: {{ .Values.eventbus.replicas }}
+{{- end -}}
