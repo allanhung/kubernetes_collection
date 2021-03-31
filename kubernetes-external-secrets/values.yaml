@@ -1,0 +1,16 @@
+env:
+  VAULT_ADDR: https://my-vault.example.com
+  DEFAULT_VAULT_MOUNT_POINT: "my-vault-auth"
+  DEFAULT_VAULT_ROLE: "my-vault-role"
+  LOG_LEVEL: debug
+
+serviceMonitor:
+  enabled: false
+
+image:
+  repository: my-registry/external-secrets/kubernetes-external-secrets
+  tag: 6.4.0
+  pullPolicy: Always
+
+imagePullSecrets:
+- name: my-registry-secret

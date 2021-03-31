@@ -1,0 +1,13 @@
+--- a/kubernetes-external-secrets/Dockerfile
++++ b/kubernetes-external-secrets/Dockerfile
+@@ -11,6 +11,10 @@
+ # Copy app to source directory
+ COPY . .
+ 
++# Patch issue #563
++COPY swagger-fluent.patch .
++RUN patch -p1 < swagger-fluent.patch
++
+ # Change back to the "node" user; using its UID for PodSecurityPolicy "non-root" compatibility
+ USER 1000
+ CMD ["npm", "start"]
