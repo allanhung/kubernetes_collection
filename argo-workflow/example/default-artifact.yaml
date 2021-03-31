@@ -1,0 +1,50 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: artifact-passing-
+spec:
+  entrypoint: artifact-example
+  serviceAccountName: argo-workflow
+  templates:
+  - name: artifact-example
+    steps:
+    - - name: generate-artifact
+        template: whalesay
+    - - name: consume-artifact
+        template: print-message
+        arguments:
+          artifacts:
+          - name: message
+            from: "{{steps.generate-artifact.outputs.artifacts.hello-art}}"
+
+  - name: whalesay
+    container:
+      image: docker/whalesay:latest
+      command: [sh, -c]
+      args: ["sleep 1; cowsay hello world | tee /mnt/workdir/hello_world.txt"]
+      volumeMounts:
+        - name: workdir
+          mountPath: /mnt/workdir
+    volumes:
+      - name: workdir
+        emptyDir: {}
+    outputs:
+      artifacts:
+      - name: hello-art
+        path: /mnt/workdir/hello_world.txt
+
+  - name: print-message
+    volumes:
+      - name: workdir
+        emptyDir: {}
+    inputs:
+      artifacts:
+      - name: message
+        path: /mnt/workdir/hello_world.txt
+    container:
+      image: alpine:latest
+      command: [sh, -c]
+      args: ["cat /mnt/workdir/hello_world.txt"]
+      volumeMounts:
+        - name: workdir
+          mountPath: /mnt/workdir

@@ -1,0 +1,22 @@
+controller:
+  containerRuntimeExecutor: k8sapi
+  # it's for reducing the time gap between steps
+  extraEnv:
+    - name: DEFAULT_REQUEUE_TIME
+      value: "2s"
+      
+server:
+  extraArgs:
+    - --auth-mode=sso
+  ingress:
+    enabled: true
+    annotations:
+      kubernetes.io/ingress.class: nginx-internal
+      kubernetes.io/tls-acme: "true"
+  sso:
+    clientId:
+      name: argo-workflows-sso
+      key: client-id
+    clientSecret:
+      name: argo-workflows-sso
+      key: client-secret

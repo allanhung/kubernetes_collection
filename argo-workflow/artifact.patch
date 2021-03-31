@@ -1,0 +1,12 @@
+--- a/argo/templates/workflow-controller-config-map.yaml
++++ b/argo/templates/workflow-controller-config-map.yaml
+@@ -39,6 +39,9 @@
+       {{- if .Values.artifactRepository.gcs }}
+       gcs:
+ {{ toYaml .Values.artifactRepository.gcs | indent 8}}
++      {{- else if .Values.artifactRepository.oss }}
++      oss:
++{{ toYaml .Values.artifactRepository.oss | indent 8}}
+       {{- else }}
+       s3:
+         {{- if .Values.useStaticCredentials }}

@@ -1,0 +1,11 @@
+server:
+  ingress:
+    hosts:
+      - argo-workflows.example.com
+    tls:
+      - secretName: argo-workflows.example.com-tls
+        hosts:
+          - argo-workflows.example.com
+  sso:
+    issuer: https://dex.example.com
+    redirectUrl: https://argo-workflows.example.com/oauth2/callback
