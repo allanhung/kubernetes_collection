@@ -29,6 +29,7 @@ metadata:
   name: my-secret
 spec:
   backendType: vault
+  kvVersion: 1
   data:
   - name: secretKey
     key: secret/my-secret-path

@@ -1,0 +1,131 @@
+{
+  "appConfig": {},
+  "application": "---APPNAME---",
+  "limitConcurrent": true,
+  "name": "iac----ENV---",
+  "description": "Pipeline created by code, manual edit might not persist",
+  "expectedArtifacts": [
+    {
+      "defaultArtifact": {
+        "artifactAccount": "---ARTIFACTACCOUNT---",
+        "customKind": true,
+        "reference": "https://---HELMREPOSITORY---/${trigger['buildInfo']['name']}/${trigger['buildInfo']['scm'][0]['sha1']}/${trigger['buildInfo']['scm'][0]['sha1']}.tgz",
+        "type": "http/file"
+      },
+      "displayName": "helm-package",
+      "id": "helm-package-main",
+      "matchArtifact": {
+        "artifactAccount": "---ARTIFACTACCOUNT---",
+        "customKind": true,
+        "reference": "https://---HELMREPOSITORY---/${trigger['buildInfo']['name']}/${trigger['buildInfo']['scm'][0]['sha1']}/${trigger['buildInfo']['scm'][0]['sha1']}.tgz",
+        "type": "http/file"
+      },
+      "useDefaultArtifact": true,
+      "usePriorArtifact": false
+    },
+    {
+      "defaultArtifact": {
+        "artifactAccount": "---ARTIFACTACCOUNT---",
+        "customKind": true,
+        "reference": "https://---HELMREPOSITORY---/${trigger['buildInfo']['name']}/${trigger['buildInfo']['scm'][0]['sha1']}/values.---ENV---.yaml",
+        "type": "http/file"
+      },
+      "displayName": "---ENV----values",
+      "id": "helm-package----ENV---",
+      "matchArtifact": {
+        "artifactAccount": "---ARTIFACTACCOUNT---",
+        "customKind": true,
+        "reference": "https://---HELMREPOSITORY---/${trigger['buildInfo']['name']}/${trigger['buildInfo']['scm'][0]['sha1']}/values.---ENV---.yaml",
+        "type": "http/file"
+      },
+      "useDefaultArtifact": true,
+      "usePriorArtifact": false
+    }
+  ],
+  "keepWaitingPipelines": false,
+  "lastModifiedBy": "---MAINTAINER---",
+  "notifications": [
+    {
+      "address": "---EMAILADDR---",
+      "cc": "",
+      "customBody": "<b> Status: </b> Bake: ${#stageByRefId(\"1\")[\"status\"]}, Deploy: ${#stageByRefId(\"2\")[\"status\"]}<br><b> Bake Error: </b> ${(#stageByRefId(\"1\")[\"status\"] == \"TERMINAL\") ? #stageByRefId(\"1\")[\"context\"][\"exception\"][\"details\"][\"errors\"][0] : \"None\"}<br><b> Deploy Error: </b> ${(#stageByRefId(\"2\")[\"status\"] == \"TERMINAL\") ? #stageByRefId(\"2\")[\"context\"][\"exception\"][\"details\"][\"errors\"][0] : \"None\"}<br><b>Spinnaker Application: </b> <a href=\"http://---SPINNAKERURI---/#/applications/${execution['application']}/executions\"> ${execution['application']} </a><br><b>Spinnaker Pipeline Execution Details - UI: </b> <a href=\"http://---SPINNAKERURI---/#/applications/${execution['application']}/executions/details/${execution['id']}\"> ${execution['name']} </a><br><b>Spinnaker Pipeline Execution Details - JSON: </b> <a href=\"http://---SPINNAKERAPI---/pipelines/${execution['id']}\"> ${execution['id']} </a><br><b>Travis Build Number: </b> <a href=\"${trigger['buildInfo']['url']}\"> ${trigger['buildNumber']} </a><br><b>Github Repository: </b> <a href=\"https://github.com/${trigger['buildInfo']['name']}\"> ${trigger['buildInfo']['name']} </a><br><b>Github Branch/Tag: </b> ${trigger['buildInfo']['scm'][0]['branch']}<br><b>Github Commit ID: </b> <a href=\"https://github.com/${trigger['buildInfo']['name']}/commit/${trigger['buildInfo']['scm'][0]['sha1']}\"> ${trigger['buildInfo']['scm'][0]['sha1']} </a><br><b>Trigger Type: </b> ${trigger['type']}<br><b>Triggered By: </b> ${trigger['user']}<br>",
+      "customSubject": "${execution['status']} - ${execution['application']} - ${trigger['buildInfo']['name']} - ${execution['name']}",
+      "level": "pipeline",
+      "type": "email",
+      "when": [
+        "pipeline.complete",
+        "pipeline.failed",
+        "pipeline.starting"
+      ]
+    }
+  ],
+  "stages": [
+    {
+      "comments": "Bake HELM Package",
+      "expectedArtifacts": [
+        {
+          "defaultArtifact": {
+            "customKind": true
+          },
+          "displayName": "Bake HELM Package",
+          "id": "bake-helmp-package",
+          "matchArtifact": {
+            "name": "---APPNAME---",
+            "type": "embedded/base64"
+          },
+          "useDefaultArtifact": false,
+          "usePriorArtifact": false
+        }
+      ],
+      "inputArtifacts": [
+        {
+          "account": "---ARTIFACTACCOUNT---",
+          "id": "helm-package-main"
+        },
+        {
+          "account": "---ARTIFACTACCOUNT---",
+          "id": "helm-package----ENV---"
+        }
+      ],
+      "name": "Bake----ENV---",
+      "namespace": "default",
+      "outputName": "---ENV----release",
+      "overrides": {},
+      "refId": "1",
+      "templateRenderer": "HELM3",
+      "type": "bakeManifest"
+    },
+    {
+      "account": "---PROVIDER---",
+      "cloudProvider": "kubernetes",
+      "manifestArtifactAccount": "embedded-artifact",
+      "manifestArtifactId": "bake-helmp-package",
+      "moniker": {
+        "app": "---APPNAME---"
+      },
+      "name": "Deploy----ENV---",
+      "refId": "2",
+      "requisiteStageRefIds": [
+        "1"
+      ],
+      "skipExpressionEvaluation": false,
+      "source": "artifact",
+      "trafficManagement": {
+        "enabled": false,
+        "options": {
+          "enableTraffic": false
+        }
+      },
+      "type": "deployManifest"
+    }
+  ],
+  "triggers": [
+    {
+      "description": "(Travis) travis-infra: ---GITOWNER---/---APPNAME---/---BRANCH---",
+      "enabled": false,
+      "job": "---GITOWNER---/---APPNAME---/---BRANCH---",
+      "master": "travis-infra",
+      "type": "travis"
+    }
+  ]
+}

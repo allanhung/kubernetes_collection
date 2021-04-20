@@ -1,13 +1,19 @@
-FROM golang:1.15 AS build
+FROM golang:1.16.0 AS build
+ENV ARCH=linux
 ENV CGO_ENABLED=0
-ENV GOOS=linux
-ENV GOARCH=amd64
-ENV GOPATH=/go
-RUN go get -d -u github.com/AliyunContainerService/kube2ram
+RUN apt-get update && apt-get install -y patch
+RUN mkdir -p /go/src/github.com/AliyunContainerService
+RUN cd /go/src/github.com/AliyunContainerService && git clone https://github.com/AliyunContainerService/kube2ram
 WORKDIR /go/src/github.com/AliyunContainerService/kube2ram
+COPY kube2ram.patch .
+COPY go.mod .
+RUN patch -p1 < kube2ram.patch
+RUN sed -i -e "s#STSEndpoint = .*#STSEndpoint = \"https://sts.us-east-1.aliyuncs.com\"#g" ram/ram.go
+RUN rm -rf vendor glide.*
+RUN go mod tidy
 RUN go build -o kube2ram cmd/main.go
 
-FROM alpine:3.9
+FROM alpine:3.12.1
 RUN apk --no-cache add \
     ca-certificates \
     tzdata \

@@ -8,9 +8,11 @@ spec:
   - name: secret-argo-artifact-credential
     match:
       resources:
-        name: "argo-*"
         kinds:
         - Namespace
+        selector:
+          matchLabels:
+            {{- toYaml .Values.matchLabels | nindent 12 }}
     exclude:
       resources:
         namespaces:
@@ -34,15 +36,17 @@ spec:
   - name: sa-argo-workflow
     match:
       resources:
-        name: "argo-*"
         kinds:
         - Namespace
+        selector:
+          matchLabels:
+            {{- toYaml .Values.matchLabels | nindent 12 }}
     exclude:
       resources:
         namespaces:
         - {{ .Release.Namespace }}
     generate:
-      synchronize: true
+      synchronize: false
       kind: ServiceAccount
       name: argo-workflow
       namespace: "{{`{{request.object.metadata.name}}`}}"
@@ -71,9 +75,11 @@ spec:
   - name: rolebinding-argo-workflow
     match:
       resources:
-        name: "argo-*"
         kinds:
         - Namespace
+        selector:
+          matchLabels:
+            {{- toYaml .Values.matchLabels | nindent 12 }}
     exclude:
       resources:
         namespaces:
@@ -102,15 +108,17 @@ spec:
   - name: sa-argo-workflow-api
     match:
       resources:
-        name: "argo-*"
         kinds:
         - Namespace
+        selector:
+          matchLabels:
+            {{- toYaml .Values.matchLabels | nindent 12 }}
     exclude:
       resources:
         namespaces:
         - {{ .Release.Namespace }}
     generate:
-      synchronize: true
+      synchronize: false
       kind: ServiceAccount
       name: argo-workflow-api
       namespace: "{{`{{request.object.metadata.name}}`}}"
@@ -139,9 +147,11 @@ spec:
   - name: rolebinding-argo-workflow-api
     match:
       resources:
-        name: "argo-*"
         kinds:
         - Namespace
+        selector:
+          matchLabels:
+            {{- toYaml .Values.matchLabels | nindent 12 }}
     exclude:
       resources:
         namespaces:

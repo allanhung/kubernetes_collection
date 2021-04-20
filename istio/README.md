@@ -185,6 +185,10 @@ ${ISTIO_SRC_DIR}/istio/${ISTIO_VER}/bin/istioctl manifest generate -f ${ISTIO_SR
 ${ISTIO_SRC_DIR}/istio/${ISTIO_VER}/bin/istioctl install -f ${ISTIO_SRC_DIR}/istio/${ISTIO_VER}/config/istio-default-profile.yaml
 ```
 
+### neverInjectSelector 
+```bash
+kubectl edti cm istio-sidecar-injector -n istio-system
+```
 # dashboard
 * [7630 Istio Workload Dashboard](https://grafana.com/grafana/dashboards/7630)
 * [7636 Istio Service Dashboard](https://grafana.com/grafana/dashboards/7636)

@@ -18,5 +18,15 @@ hal config deploy edit --type distributed --account-name my-k8s-account
 hal deploy apply
 ```
 
+### TroubleShooting
+```bash
+kubectl logs -l app.kubernetes.io/name=deck -c deck --tail=5 -f
+kubectl logs -l app.kubernetes.io/name=echo -c echo --tail=5 -f
+kubectl logs -l app.kubernetes.io/name=orca -c orca --tail=5 -f
+kubectl logs -l app.kubernetes.io/name=clouddriver -c clouddriver --tail=5 -f
+kubectl logs -l app.kubernetes.io/name=rosco -c rosco --tail=5 -f
+```
+
 ### Reference
 * [Install and Configure Spinnaker](https://spinnaker.io/setup/install/)
+* [disable configmap versioning](https://spinnaker.io/reference/providers/kubernetes-v2/#strategy)

@@ -1,0 +1,215 @@
+--- a/glide.lock
++++ b/glide.lock
+@@ -212,7 +212,7 @@
+   - pkg/util/runtime
+   - pkg/util/wait
+ - name: k8s.io/client-go
+-  version: e121606b0d09b2e1c467183ee46217fa85a6b672
++  version: 249fa7a1d3aa05d8e423e8de91ffedd5a58243f5
+   subpackages:
+   - discovery
+   - kubernetes
+--- a/pod.go
++++ b/pod.go
+@@ -4,8 +4,7 @@
+ 	"fmt"
+ 
+ 	log "github.com/sirupsen/logrus"
+-	"k8s.io/client-go/pkg/api/unversioned"
+-	"k8s.io/client-go/pkg/api/v1"
++	v1 "k8s.io/api/core/v1"
+ 	"k8s.io/client-go/tools/cache"
+ )
+ 
+@@ -72,14 +71,9 @@
+ }
+ 
+ func isPodActive(p *v1.Pod) bool {
+-	podDeleted := false
+-	if p.DeletionTimestamp != nil {
+-		podDeleted = p.DeletionTimestamp.Before(unversioned.Now())
+-	}
+ 	return p.Status.PodIP != "" &&
+ 		v1.PodSucceeded != p.Status.Phase &&
+-		v1.PodFailed != p.Status.Phase &&
+-		!podDeleted
++		v1.PodFailed != p.Status.Phase
+ }
+ 
+ // PodIPIndexFunc maps a given Pod to it's IP for caching.
+--- a/namespace.go
++++ b/namespace.go
+@@ -5,7 +5,7 @@
+ 	"fmt"
+ 
+ 	log "github.com/sirupsen/logrus"
+-	"k8s.io/client-go/pkg/api/v1"
++	v1 "k8s.io/api/core/v1"
+ )
+ 
+ // NamespaceHandler outputs change events from K8.
+--- a/namespace_test.go
++++ b/namespace_test.go
+@@ -3,7 +3,7 @@
+ import (
+ 	"testing"
+ 
+-	"k8s.io/client-go/pkg/api/v1"
++	v1 "k8s.io/api/core/v1"
+ )
+ 
+ func TestGetNamespaceRoleAnnotation(t *testing.T) {
+--- a/mappings/mapper.go
++++ b/mappings/mapper.go
+@@ -7,7 +7,7 @@
+ 
+ 	glob "github.com/ryanuber/go-glob"
+ 	log "github.com/sirupsen/logrus"
+-	"k8s.io/client-go/pkg/api/v1"
++	v1 "k8s.io/api/core/v1"
+ 
+ 	"github.com/AliyunContainerService/kube2ram"
+ 	"github.com/AliyunContainerService/kube2ram/ram"
+--- a/mappings/mapper_test.go
++++ b/mappings/mapper_test.go
+@@ -4,7 +4,7 @@
+ 	"fmt"
+ 	"testing"
+ 
+-	"k8s.io/client-go/pkg/api/v1"
++	v1 "k8s.io/api/core/v1"
+ 
+ 	"github.com/AliyunContainerService/kube2ram/ram"
+ )
+--- a/k8s/k8s.go
++++ b/k8s/k8s.go
+@@ -5,10 +5,11 @@
+ 	"time"
+ 
+ 	"github.com/AliyunContainerService/kube2ram"
++	v1 "k8s.io/api/core/v1"
++	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
++	selector "k8s.io/apimachinery/pkg/fields"
+ 	"k8s.io/apimachinery/pkg/util/wait"
+ 	"k8s.io/client-go/kubernetes"
+-	"k8s.io/client-go/pkg/api/v1"
+-	selector "k8s.io/client-go/pkg/fields"
+ 	"k8s.io/client-go/rest"
+ 	"k8s.io/client-go/tools/cache"
+ )
+@@ -23,11 +24,12 @@
+ // Client represents a kubernetes client.
+ type Client struct {
+ 	*kubernetes.Clientset
+-	namespaceController *cache.Controller
++	namespaceController cache.Controller
+ 	namespaceIndexer    cache.Indexer
+-	podController       *cache.Controller
++	podController       cache.Controller
+ 	podIndexer          cache.Indexer
+ 	nodeName            string
++	resolveDupIPs       bool
+ }
+ 
+ // Returns a cache.ListWatch that gets all changes to pods.
+@@ -100,12 +102,34 @@
+ 		return pods[0].(*v1.Pod), nil
+ 	}
+ 
+-	//This happens with `hostNetwork: true` pods
+-	podNames := make([]string, len(pods))
+-	for i, pod := range pods {
+-		podNames[i] = pod.(*v1.Pod).ObjectMeta.Name
++	if !k8s.resolveDupIPs {
++		podNames := make([]string, len(pods))
++		for i, pod := range pods {
++			podNames[i] = pod.(*v1.Pod).ObjectMeta.Name
++		}
++		return nil, fmt.Errorf("%d pods (%v) with the ip %s indexed", len(pods), podNames, IP)
++	}
++	pod, err := resolveDuplicatedIP(k8s, IP)
++	if err != nil {
++		return nil, err
++	}
++	return pod, nil
++}
++
++func resolveDuplicatedIP(k8s *Client, IP string) (*v1.Pod, error) {
++	runningPodList, err := k8s.CoreV1().Pods("").List(metav1.ListOptions{
++		FieldSelector: selector.OneTermEqualSelector("status.podIP", IP).String(),
++	})
++	if err != nil {
++		return nil, fmt.Errorf("resolveDuplicatedIP: Error retriving the pod with IP %s from the k8s api", IP)
++	}
++	for _, pod := range runningPodList.Items {
++		if !pod.Spec.HostNetwork && string(pod.Status.Phase) == "Running" {
++			return &pod, nil
++		}
+ 	}
+-	return nil, fmt.Errorf("%d pods (%v) with the ip %s indexed", len(pods), podNames, IP)
++	error := fmt.Errorf("more than a pod with the same IP has been indexed, this can happen when pods have hostNetwork: true")
++	return nil, error
+ }
+ 
+ // NamespaceByName retrieves a namespace by it's given name.
+@@ -124,14 +148,16 @@
+ }
+ 
+ // NewClient returns a new kubernetes client.
+-func NewClient(host, token, nodeName string, insecure bool) (*Client, error) {
++func NewClient(host, token, nodeName string, insecure, resolveDupIPs bool) (*Client, error) {
+ 	var config *rest.Config
+ 	var err error
+ 	if host != "" && token != "" {
+ 		config = &rest.Config{
+ 			Host:        host,
+ 			BearerToken: token,
+-			Insecure:    insecure,
++			TLSClientConfig: rest.TLSClientConfig{
++				Insecure: insecure,
++			},
+ 		}
+ 	} else {
+ 		config, err = rest.InClusterConfig()
+@@ -143,5 +169,5 @@
+ 	if err != nil {
+ 		return nil, err
+ 	}
+-	return &Client{Clientset: client, nodeName: nodeName}, nil
++	return &Client{Clientset: client, nodeName: nodeName, resolveDupIPs: resolveDupIPs}, nil
+ }
+--- a/server/server.go
++++ b/server/server.go
+@@ -37,6 +37,7 @@
+ 	defaultMaxInterval                = 1 * time.Second
+ 	defaultMetadataAddress            = "100.100.100.200"
+ 	defaultNamespaceKey               = "ram.aliyuncs.com/allowed-roles"
++	defaultResolveDupIPs              = false
+ 	defaultNamespaceRestrictionFormat = "glob"
+ 	healthcheckInterval               = 30 * time.Second
+ )
+@@ -63,6 +64,7 @@
+ 	LogLevel                   string
+ 	LogFormat                  string
+ 	NamespaceRestrictionFormat string
++	ResolveDupIPs              bool
+ 	UseRegionalStsEndpoint     bool
+ 	AddIPTablesRule            bool
+ 	AutoDiscoverBaseArn        bool
+@@ -342,7 +344,7 @@
+ 
+ // Run runs the specified Server.
+ func (s *Server) Run(host, token, nodeName string, insecure bool, accessKey, accessSecret string) error {
+-	k, err := k8s.NewClient(host, token, nodeName, insecure)
++	k, err := k8s.NewClient(host, token, nodeName, insecure, s.ResolveDupIPs)
+ 	if err != nil {
+ 		return err
+ 	}
+@@ -421,6 +423,7 @@
+ 		LogFormat:                  defaultLogFormat,
+ 		MetadataAddress:            defaultMetadataAddress,
+ 		NamespaceKey:               defaultNamespaceKey,
++		ResolveDupIPs:              defaultResolveDupIPs,
+ 		NamespaceRestrictionFormat: defaultNamespaceRestrictionFormat,
+ 		HealthcheckFailReason:      "Healthcheck not yet performed",
+ 		RAMRoleSessionTTL:          defaultRAMRoleSessionTTL,
