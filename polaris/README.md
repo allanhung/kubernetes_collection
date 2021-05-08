@@ -20,3 +20,4 @@ The Polaris webhook provides a way to enforce standards in all of your Kubernete
 * [Polaris](https://github.com/FairwindsOps/polaris)
 * [Polaris helm Chart](https://github.com/FairwindsOps/charts/tree/master/stable/polaris)
 * [Setting up polaris on kubernetes](https://www.civo.com/learn/setting-up-polaris-on-k8s)
+* [Kubernetes Scanner](https://geekflare.com/kubernetes-security-scanner)
