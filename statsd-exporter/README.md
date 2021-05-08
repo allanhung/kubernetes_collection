@@ -1,13 +1,14 @@
 ### Installation
 ```bash
-helm repo add niclic https://niclic.github.com/helm-charts
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
 helm repo update
 
 helm upgrade --install statsd-exporter \
-    --namespace monitoring  \
+    --namespace infra  \
+    --create-namespace \
     -f values.yaml \
     -f values.vault.yaml \
-    niclic/prometheus-statsd-exporter
+    prometheus-community/prometheus-statsd-exporter
 ```        
 
 ### Reference

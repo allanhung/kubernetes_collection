@@ -1,3 +1,10 @@
 image:
   repository: prom/statsd-exporter
-  tag: v0.16.0
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: "" 
+
+serviceMonitor:
+  enabled: true
+  namespace: monitoring
+  additionalLabels:
+    release: po
