@@ -1,0 +1,3 @@
+txtOwnerId: k8s.alicloud
+domainFilters:
+  - mydomain.com

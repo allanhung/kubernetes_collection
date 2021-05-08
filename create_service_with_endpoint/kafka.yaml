@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: Endpoints
+metadata:
+  name: kafka
+  labels:
+    app: kafka
+subsets:
+- addresses:
+  - ip: 10.1.1.1
+  - ip: 10.1.1.2
+  - ip: 10.1.1.3
+  ports:
+  - name: kafka
+    port: 9092
+    protocol: TCP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka
+  labels:
+    app: kafka
+spec:
+  type: ClusterIP
+  ports:
+  - name: kafka
+    port: 9092
+    protocol: TCP
+    targetPort: 9092

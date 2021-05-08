@@ -1,20 +1,20 @@
 # External DNS
     
-### Transfer kustomize to helm
+### Installation    
+
 ```bash
-mkdir -p chart/templates
-docker run -v ${PWD}:/working kustomize-helm-plugins kustomize/overlays/helm > chart/templates/all.yaml
-```
-### Installation with kustomize
-```bash
-kustomize build kustomize/overlays/${example} | kubectl apply -f -
-```
-### Installation with Helm
-```bash
-kubectl create ns external-dns
-helm upgrade external-dns chart/ --install --namespace external-dns -f chart/values.yaml
+helm repo add bitnami https://charts.bitnami.com/bitnami
+
+helm upgrade --install exdns \
+  --namespace infra \
+  --create-namespace \
+  -f values.yaml \
+  -f values.alicloud.yaml \
+  bitnami/external-dns
 ```
 
-### Reference
-  - [kustomize-helm-plugins](https://github.com/allanhung/kustomize-helm-plugins)
-  - [external-dns](https://github.com/kubernetes-sigs/external-dns)
+## Reference
+
+* [external-dns](https://github.com/kubernetes-sigs/external-dns)
+* [external-dns alibabacloud tutorial](https://github.com/kubernetes-sigs/external-dns/blob/master/docs/tutorials/alibabacloud.md)
+* [bitnami external-dns helm chart](https://github.com/bitnami/charts/tree/master/bitnami/external-dns)

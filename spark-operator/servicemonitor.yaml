@@ -2,44 +2,8 @@ apiVersion: v1
 kind: Service
 metadata:
   labels:
-    service: spark-operator-metrics
-  name: spark-operator-metrics
-  namespace: spark-operator
-spec:
-  ports:
-  - name: jmx
-    port: 10254
-    protocol: TCP
-    targetPort: 10254
-  selector:
-    app.kubernetes.io/name: sparkoperator
-  type: ClusterIP
----
-apiVersion: monitoring.coreos.com/v1
-kind: ServiceMonitor
-metadata:
-  labels:
-    release: po
-  name: spark-operator
-  namespace: infra
-spec:
-  selector:
-    matchLabels:
-      service: spark-operator-metrics
-  namespaceSelector:
-    matchNames:
-    - spark-operator
-  endpoints:
-  - interval: 15s
-    port: jmx
-    path: /metrics
----
-apiVersion: v1
-kind: Service
-metadata:
-  labels:
-    service: spark-metrics
-  name: spark-metrics
+    service: spark-application-metrics
+  name: spark-application-metrics
   namespace: spark
 spec:
   type: ClusterIP
@@ -57,12 +21,12 @@ kind: ServiceMonitor
 metadata:
   labels:
     release: po
-  name: spark-metrics
+  name: spark-application-metrics
   namespace: infra
 spec:
   selector:
     matchLabels:
-      service: spark-metrics
+      service: spark-application-metrics
   namespaceSelector:
     matchNames:
     - spark

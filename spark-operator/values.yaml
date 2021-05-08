@@ -1,11 +1,22 @@
-serviceAccounts:
-  spark:
-    name: spark
-sparkJobNamespace: spark
+image:
+  # use chart appVersion
+  tag: ""
 
-enableWebhook: true
+sparkJobNamespace: spark
+logLevel: 2
+
+webhook:
+  enable: true
 
 leaderElection:
-  enable: true
   lockName: "spark-operator-lock"
-replicas: 3
+
+replicaCount: 3
+
+metrics:
+  enable: true
+
+podMonitor:
+  enable: true
+  labels:
+    release: po

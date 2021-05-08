@@ -64,6 +64,7 @@ helm upgrade --install istio-base \
 helm upgrade --install istiod \
     --namespace istio-system \
     -f ${ISTIO_SRC_DIR}/istio/values.inject.yaml \
+    --set global.hub=my-docker-io-proxy \
     --set global.meshID=vpc1-mesh \
     --set global.multiCluster.clusterName=cluster1-us-east-1 \
     --set global.network=vpc1.us-east-1 \

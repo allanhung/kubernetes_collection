@@ -48,3 +48,7 @@ EOF
 kubectl exec -ti kube2ram-test bash
 curl -w "%{http_code}\n" http://100.100.100.200/latest/meta-data/ram/security-credentials/
 ```
+
+## Reference
+* [kube2iam](https://github.com/jtblin/kube2iam)
+* [Interface conversion fails](https://github.com/jtblin/kube2iam/issues/178)

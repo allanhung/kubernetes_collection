@@ -1,0 +1,27 @@
+image:
+  registry: docker-mirror.quid.com
+  repository: bitnami/external-dns
+
+sources:
+  - service
+  - ingress
+  - istio-gateway
+  - istio-virtualservice
+
+logLevel: info
+logFormat: text
+provider: alibabacloud
+domainFilters: []
+extraArgs: {}
+interval: 1m
+podAnnotations:
+  ram.aliyuncs.com/role: external-dns
+policy: sync
+txtOwnerId: k8s
+
+metrics:
+  enabled: true
+  serviceMonitor:
+    enabled: true
+    selector:
+      release: po
