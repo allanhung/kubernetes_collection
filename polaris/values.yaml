@@ -1,0 +1,20 @@
+image:
+  repository: quay.io/fairwinds/polaris
+  # image.tag -- The Polaris Image tag to use. Defaults to the Chart's AppVersion
+  tag: ""
+
+dashboard:
+  ingress:
+    enabled: true
+    annotations:
+      kubernetes.io/ingress.class: my-ingress-class
+      kubernetes.io/tls-acme: "true"
+    hosts:
+      - polaris.my-domain.com
+    tls:
+    - secretName: polaris-tls
+      hosts:
+      - polaris.my-domain.com
+
+webhook:
+  enabled: true
