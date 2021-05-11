@@ -1,16 +1,37 @@
+fullnameOverride: consul
+
 global:
-  image: "consul:1.8.2"
+  image: consul:1.9.5
+  imageK8S: hashicorp/consul-k8s:0.25.0
   datacenter: dev
+
 server:
   enabled: true
   replicas: 1
   bootstrapExpect: 1  
+  exposeGossip: false
   storage: 10Gi
   storageClass: null  
   disruptionBudget:
-    enabled: false  
+    enabled: false
+  extraConfig: |
+    {
+      "telemetry": {
+        "prometheus_retention_time": "24h"
+      },
+      "performance": {
+        "raft_multiplier": 1
+      }
+    }
+
 client:
   enabled: false
+  grpc: true
+  exposeGossipPorts: false
+
+dns:
+  enabled: false
+
 syncCatalog:
   enabled: true
   toConsul: true
@@ -19,3 +40,10 @@ syncCatalog:
   syncClusterIPServices: false
   addK8SNamespaceSuffix: false  
   k8sTag: k8s-dev
+
+ui:
+  enabled: true
+  ingress:
+    annotations:
+      kubernetes.io/ingress.class: nginx
+      kubernetes.io/tls-acme: "true"

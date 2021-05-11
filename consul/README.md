@@ -2,12 +2,16 @@
 ### Installation
 ```bash
 helm repo add hashicorp https://helm.releases.hashicorp.com
-kubectl create ns consul
-kubectl config set-context --current --namespace=consul
-helm upgrade consul hashicorp/consul --install \
+helm repo update
+
+helm pull hashicorp/consul --version 0.31.1 --untar && patch -p1 < consul.patch
+
+helm upgrade --install consul \
     --namespace consul \
-    -f values.yaml
-kubectl apply -f ingress.yaml -n consul
+    --create-namespace \
+    ./consul
+
+rm -rf ./consul
 ```
 
 ### List Service

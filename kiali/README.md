@@ -2,21 +2,17 @@
 ```bash
 helm repo add kiali https://kiali.org/helm-charts
 helm repo update
-helm upgrade --install kiali-operator \
-    --namespace kiali-operator \
-    --create-namespace \
-    --set cr.create=true \
-    --set cr.namespace=istio-system
-    kiali/kiali-operator
-```
 
-## Uninstall
-```bash
-kubectl delete kiali kiali -n istio-system
-helm uninstall kiali-operator -n kiali-operator
-kubectl delete crd monitoringdashboards.monitoring.kiali.io
-kubectl delete crd kialis.kiali.io
-kubectl patch kiali kiali -n istio-system -p '{"metadata":{"finalizers": []}}' --type=merge
+kubectl create secret generic kiali --from-literal="oidc-secret=$CLIENT_SECRET" -n istio-system
+
+helm pull kiali/kiali-server --version 1.34.0 --untar 
+patch -p1 < kiali.patch
+
+helm upgrade --install kiali \
+    --namespace istio-system \
+    --create-namespace \
+    -f values.yaml \
+    ./kiali-server
 ```
 
 ## Openid Support
@@ -31,12 +27,14 @@ kubectl create secret generic ca-bundle --from-file=ca-bundle.trust.crt
 openssl s_client -showcerts -connect oidc-proxy.my-domian:443 < /dev/null
 ```
 
-## Build
+## Build for debug
 ```bash
 docker build -t /kiali:v1.28.1 .
 ```
 
-# reference
+### Reference
+* [kiali-helm](https://github.com/kiali/helm-charts)
+* [kiali-operator generated yaml](https://repo1.dso.mil/platform-one/apps/istio/-/blob/master/generate/generated.yaml)
 * [kiali_cr.yaml](https://github.com/kiali/kiali-operator/blob/master/deploy/kiali/kiali_cr.yaml)
 * [kiali hel charts](https://github.com/kiali/helm-charts)
 * [log_level](https://github.com/kiali/kiali/pull/3382/files#diff-894630a7ed925c7768a861c4465bc9ad393f7937df7cac5c77ab123c03921aeeR123)

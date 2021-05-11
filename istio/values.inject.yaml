@@ -4,5 +4,5 @@ sidecarInjectorWebhook:
     - key: job-name
       operator: Exists
   - matchExpressions:
-    - key: workflows.argoproj.io
+    - key: workflows.argoproj.io/workflow
       operator: Exists

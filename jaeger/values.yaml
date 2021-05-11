@@ -1,0 +1,63 @@
+provisionDataStore:
+  cassandra: true
+  elasticsearch: false
+  kafka: false
+
+storage:
+  type: cassandra
+  cassandra:
+    user: user
+    usePassword: true
+    password: password
+
+cassandra:
+  image:
+    repo: docker-proxy.mydomain.com/cassandra
+    tag: 3.11.6
+  persistence:
+    enabled: true
+    storageClass: topology-aware-cloud-efficiency
+    accessMode: ReadWriteOnce
+    size: 20Gi 
+
+ingester:
+  enabled: false
+
+agent:
+  enabled: false
+
+collector:
+  enabled: true
+  service:
+    zipkin:
+      port: 9411
+  ingress:
+    enabled: false
+    annotations:
+      kubernetes.io/ingress.class: nginx-internal
+      kubernetes.io/tls-acme: "true"
+    hosts:
+      - jaeger-collector.mydomain.com
+    tls:
+      - secretName: jaeger-collector.mydomain.com-tls
+        hosts:
+          - jaeger-collector.mydomain.com
+
+query:
+  enabled: true
+  oAuthSidecar:
+    enabled: false
+  ingress:
+    enabled: true
+    annotations:
+      kubernetes.io/ingress.class: nginx-internal
+      kubernetes.io/tls-acme: "true"
+    hosts:
+      - jaeger-query.mydomain.com
+    tls:
+      - secretName: jaeger-query.mydomain.com-tls
+        hosts:
+          - jaeger-query.mydomain.com
+
+spark:
+  enabled: false
