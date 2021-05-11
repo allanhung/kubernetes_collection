@@ -1,5 +1,5 @@
 image:
-  registry: docker-mirror.quid.com
+  registry: docker-proxy.mydomain.com
   repository: bitnami/external-dns
 
 sources:
