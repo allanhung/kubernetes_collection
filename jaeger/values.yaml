@@ -20,13 +20,27 @@ cassandra:
     accessMode: ReadWriteOnce
     size: 20Gi 
 
+schema:
+  image: docker-proxy.mydomain.com/jaegertracing/jaeger-cassandra-schema
+
 ingester:
+  image: docker-proxy.mydomain.com/jaegertracing/jaeger-ingester
   enabled: false
+  serviceMonitor:
+    enabled: true
+    additionalLabels:
+      release: po
 
 agent:
-  enabled: false
+  image: docker-proxy.mydomain.com/jaegertracing/jaeger-agent
+  enabled: true
+  serviceMonitor:
+    enabled: true
+    additionalLabels:
+      release: po
 
 collector:
+  image: docker-proxy.mydomain.com/jaegertracing/jaeger-collector
   enabled: true
   service:
     zipkin:
@@ -42,10 +56,16 @@ collector:
       - secretName: jaeger-collector.mydomain.com-tls
         hosts:
           - jaeger-collector.mydomain.com
+  serviceMonitor:
+    enabled: true
+    additionalLabels:
+      release: po
 
 query:
+  image: docker-proxy.mydomain.com/jaegertracing/jaeger-query
   enabled: true
   oAuthSidecar:
+    image: quay.io/oauth2-proxy/oauth2-proxy:v7.1.0
     enabled: false
   ingress:
     enabled: true
@@ -58,6 +78,11 @@ query:
       - secretName: jaeger-query.mydomain.com-tls
         hosts:
           - jaeger-query.mydomain.com
+  serviceMonitor:
+    enabled: true
+    additionalLabels:
+      release: po
 
 spark:
+  image: docker-proxy.mydomain.com/jaegertracing/spark-dependencies
   enabled: false
