@@ -9,6 +9,7 @@ storage:
     user: user
     usePassword: true
     password: password
+    keyspace: jaeger_index
 
 cassandra:
   image:
@@ -85,4 +86,4 @@ query:
 
 spark:
   image: docker-proxy.mydomain.com/jaegertracing/spark-dependencies
-  enabled: false
+  enabled: true
