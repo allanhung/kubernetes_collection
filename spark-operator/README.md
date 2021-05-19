@@ -74,6 +74,7 @@ executor:
     exposeExecutorMetrics: true
     prometheus:
       jmxExporterJar: "/prometheus/jmx_prometheus_javaagent-0.11.0.jar"
+      portName: metrics
       port: 8090
 ```
 

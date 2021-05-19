@@ -1,0 +1,18 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: spark-application-podmonitor
+  labels:
+    release: po
+spec:
+  podMetricsEndpoints:
+    - interval: 5s
+      port: metrics
+      scheme: http
+  jobLabel: spark-application-monitor
+  namespaceSelector:
+    matchNames:
+      - spark
+  selector:
+    matchLabels:
+      sparkoperator.k8s.io/launched-by-spark-operator: "true"

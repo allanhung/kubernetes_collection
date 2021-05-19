@@ -2,14 +2,13 @@ apiVersion: v1
 kind: Service
 metadata:
   labels:
-    service: spark-application-metrics
-  name: spark-application-metrics
-  namespace: spark
+    service: spark-application-monitor
+  name: spark-application-monitor
 spec:
   type: ClusterIP
   clusterIP: None
   ports:
-  - name: jmx
+  - name: metrics
     port: 8090
     protocol: TCP
     targetPort: 8090
@@ -21,16 +20,15 @@ kind: ServiceMonitor
 metadata:
   labels:
     release: po
-  name: spark-application-metrics
-  namespace: infra
+  name: spark-application-monitor
 spec:
   selector:
     matchLabels:
-      service: spark-application-metrics
+      service: spark-application-monitor
   namespaceSelector:
     matchNames:
     - spark
   endpoints:
   - interval: 5s
-    port: jmx
-    path: /metrics
+    port: metrics
+    scheme: http

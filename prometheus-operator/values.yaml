@@ -78,6 +78,11 @@ prometheus:
       kubernetes.io/ingress.class: my-ingress-class
       kubernetes.io/tls-acme: "true"
   prometheusSpec:
+    containers:
+    - name: prometheus
+      env:
+      - name: JAEGER_AGENT_PORT
+        value: "5755"    
     storageSpec: 
       volumeClaimTemplate:
         spec:

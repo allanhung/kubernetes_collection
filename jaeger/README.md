@@ -28,3 +28,5 @@ docker build -t allanhung/jaeger-query:1.22.0 .
 * [build from source](https://github.com/jaegertracing/jaeger/blob/master/CONTRIBUTING.md)
 * [Error reading dependencies from storage](https://github.com/jaegertracing/jaeger/issues/1940)
 * [dependency version](https://github.com/jaegertracing/jaeger/blob/master/plugin/storage/cassandra/dependencystore/bootstrap.go#L24-L28)
+* [Prometheus Crash Loop on Kubernetes since Jaeger added](https://github.com/prometheus/prometheus/issues/7286)
+* [JAEGER_AGENT_PORT invalid syntax](https://github.com/helm/charts/issues/22769)

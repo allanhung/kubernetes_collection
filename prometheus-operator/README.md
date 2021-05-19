@@ -64,3 +64,5 @@ kubectl set env ds/flexvolume ENABLE_METRICS_DISK=true -n kube-system
 * [Failed to list](https://github.com/prometheus-operator/prometheus-operator/issues/3542)
 * [Prometheus Operator CRD](https://github.com/prometheus-operator/prometheus-operator/blob/master/example/prometheus-operator-crd/monitoring.coreos.com_alertmanagers.yaml)
 * [Prometheus operator troubleshooting](https://github.com/coreos/prometheus-operator/blob/master/Documentation/troubleshooting.md#overview-of-servicemonitor-tagging-and-related-elements)
+* [Prometheus Crash Loop on Kubernetes since Jaeger added](https://github.com/prometheus/prometheus/issues/7286)
+* [JAEGER_AGENT_PORT invalid syntax](https://github.com/helm/charts/issues/22769)
