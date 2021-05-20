@@ -15,5 +15,5 @@
 /istio/charts/istio-ingress.bak
 /istio/ingress/my-*
 */*.lock
-*/my-*
+**/my-*
 */*.swp

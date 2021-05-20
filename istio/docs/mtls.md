@@ -18,16 +18,16 @@ spec:
 ```
 #### Disable mtls with DestinationRule
 ```yaml
-apiVersion: "networking.istio.io/v1alpha3"
-kind: "DestinationRule"
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
 metadata:
-  name: "disable-mtls"
-  namespace: "bookinfo"
+  name: disable-mtls
+  namespace: bookinfo
 spec:
   host: "*.bookinfo.svc.cluster.local"
-    trafficPolicy:
-      tls:
-        mode: DISABLE
+  trafficPolicy:
+    tls:
+      mode: DISABLE
 ```
 ### Reference
 * [peer_authentication](https://istio.io/latest/docs/reference/config/security/peer_authentication)
