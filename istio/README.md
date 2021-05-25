@@ -184,3 +184,6 @@ kubectl edti cm istio-sidecar-injector -n istio-system
 * [Service upstream support with Istio](https://github.com/kubernetes/ingress-nginx/issues/3171)
 * [Nginx Controller using endpoints instead of Services](https://github.com/kubernetes/ingress-nginx/issues/257)
 * [istio deployment-models](https://istio.io/latest/docs/ops/deployment/deployment-models/)
+* [ibm class](https://mediacenter.ibm.com/tag/tagid/%E5%BC%80%E6%BA%90%E6%8A%80%E6%9C%AF%20*%20ibm%20%E5%BE%AE%E8%AE%B2%E5%A0%82)
+* [Debugging your debugging tools](https://www.youtube.com/watch?v=XAKY24b7XjQ)
+https://www.cncf.io/wp-content/uploads/2020/08/CNCF-Webinar-Debugging-your-debugging-tools.pptx
