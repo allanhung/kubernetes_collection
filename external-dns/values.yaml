@@ -11,6 +11,7 @@ sources:
 logLevel: info
 logFormat: text
 provider: alibabacloud
+annotationFilter: "external-dns.alpha.kubernetes.io/exclude notin (true)"
 domainFilters: []
 extraArgs: {}
 interval: 1m

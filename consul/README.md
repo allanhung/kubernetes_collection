@@ -65,6 +65,17 @@ curl --request PUT --data @echo-server.json http://consul.my-domain.com:8500/v1/
 {app="consul",component="server"} |= "failed to heartbeat"
 ```
 
+### Issue
+failed inserting node: Error while renaming Node ID: "c9ed3871-a792-a15d-4a01-d50ffebe5149": Node name xxx is reserved by node c0abfb06-0a15-28de-72cf-1c17452d1a90 with name xxx
+```bash
+consul leave
+```
+rejecting vote request since we have a leader
+Workaround:
+consul leave in consul server
+
 ### Reference
 * [consul-helm](https://github.com/hashicorp/consul-helm)
 * [service-registration-external-services](https://learn.hashicorp.com/tutorials/consul/service-registration-external-services)
+* [UDP port 8301 does not work with client.exposeGossipPort set to true](https://github.com/hashicorp/consul-helm/issues/389)
+* [network may be misconfigured](https://github.com/hashicorp/consul/issues/5195)

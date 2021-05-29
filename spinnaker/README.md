@@ -25,8 +25,18 @@ kubectl logs -l app.kubernetes.io/name=echo -c echo --tail=5 -f
 kubectl logs -l app.kubernetes.io/name=orca -c orca --tail=5 -f
 kubectl logs -l app.kubernetes.io/name=clouddriver -c clouddriver --tail=5 -f
 kubectl logs -l app.kubernetes.io/name=rosco -c rosco --tail=5 -f
+# delete execution
+curl -X POST http://spin-orca.spinnaker.svc:8083/admin/queue/zombies/{executionId}:kill
+# cancel execution
+curl -X PUT http://spin-orca.spinnaker.svc:8083/pipelines/{executionId}/cancel
+```
+Hang on Wait For Manifest To Stabilize
+Workaroud:
+```
+delete the pipeline and recreate.
 ```
 
 ### Reference
 * [Install and Configure Spinnaker](https://spinnaker.io/setup/install/)
 * [disable configmap versioning](https://spinnaker.io/reference/providers/kubernetes-v2/#strategy)
+* [zombie-executions](https://spinnaker.io/guides/runbooks/orca-zombie-executions/)

@@ -134,6 +134,10 @@ istioctl proxy-config listeners <pod-name[.namespace]> --address 0.0.0.0 --port 
 ```bash
 istioctl proxy-config listeners <pod-name[.namespace]> -o json
 ```
+### Information from Jaeger UI
+```bash
+tags error=true
+```
 ### envoy 404 NR with nginx proxypass
 Nginx is making an outbound request to an ip that is has resolved from your proxypass hostname. This won't work as envoy doesn't know what cluster ip belongs to, so it fails.
 #### nginx-ingress
