@@ -1,0 +1,53 @@
+image:
+  registry: my-registry.com
+
+docker:
+  enabled: true
+
+containerd:
+  enabled: true
+
+kubernetesSupport:
+  enabled: true
+
+auditLog:
+  enabled: false
+  dynamicBackend:
+    enabled: false
+
+falco:
+  webserver:
+    enabled: false
+
+falcosidekick:
+  enabled: true
+  config:
+    loki:
+      hostport: http://loki-loki-distributed-distributor.logging.svc.cluster.local:3100
+  ingress:
+    enabled: true
+    annotations:
+      kubernetes.io/ingress.class: nginx-internal
+      kubernetes.io/tls-acme: "true"
+    hosts:
+      - host: falcosidekick.my-domain.com
+        paths:
+          - /
+    tls:
+      - secretName: falcosidekick.my-domain.com-tls
+        hosts:
+        - falcosidekick.my-domain.com
+  webui:
+    enabled: true
+    ingress:
+      enabled: true
+      annotations:
+        kubernetes.io/ingress.class: nginx-internal
+        kubernetes.io/tls-acme: "true"
+      hosts:
+        - host: falcosidekick-ui.my-domain.com
+          paths: ["/ui", "/events", "/healthz", "/ws"]
+      tls:
+        - secretName: falcosidekick-ui.my-domain.com-tls
+          hosts:
+          - falcosidekick-ui.my-domain.com

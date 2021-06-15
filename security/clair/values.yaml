@@ -1,0 +1,74 @@
+image:
+  repository: quay.io/coreos/clair
+  tag: v4.1.0
+
+replicaCount: 1
+
+config: |
+  introspection_addr: :{{ .Values.service.healthPort }}
+  http_listen_addr: :{{ .Values.service.apiPort }}
+  log_level: info
+  indexer:
+    connstring: "postgres://{{ .Values.postgresql.postgresqlUsername }}:{{ .Values.postgresql.postgresqlPassword }}@{{ template "postgresql.fullname" . }}:5432/postgres?sslmode=disable"
+    scanlock_retry: 10
+    layer_scan_concurrency: 5
+    migrations: true
+  matcher:
+    connstring: "postgres://{{ .Values.postgresql.postgresqlUsername }}:{{ .Values.postgresql.postgresqlPassword }}@{{ template "postgresql.fullname" . }}:5432/postgres?sslmode=disable"
+    max_conn_pool: 100
+    run: ""
+    migrations: true
+    indexer_addr: {{ template "fullname" . }}
+    updater_sets:
+    - "alpine"
+    - "aws"
+    - "debian"
+    - "oracle"
+    - "photon"
+    - "pyupio"
+    - "rhel"
+    - "suse"
+    - "ubuntu"
+  matchers:
+    names:
+    - "alpine"
+    - "aws"
+    - "debian"
+    - "java"
+    - "oracle"
+    - "photon"
+    - "python"
+    - "rhel"
+    - "suse"
+    - "ubuntu"
+  notifier:
+    indexer_addr: http://{{ template "fullname" . }}:{{ .Values.service.apiPort }}/
+    matcher_addr: http://{{ template "fullname" . }}:{{ .Values.service.apiPort }}/
+    connstring: "postgres://{{ .Values.postgresql.postgresqlUsername }}:{{ .Values.postgresql.postgresqlPassword }}@{{ template "postgresql.fullname" . }}:5432/postgres?sslmode=disable"
+    migrations: true
+    delivery_interval: 1m
+    poll_interval: 5m
+
+ingress:
+  enabled: true
+  hosts:
+    - clair.my-domain.com
+  annotations:
+    kubernetes.io/ingress.class: nginx-external
+    kubernetes.io/tls-acme: "true"
+  tls:
+    - secretName: clair.my-domain.com-tls
+      hosts:
+        - clair.my-domain.com
+
+postgresql:
+  enabled: true
+  image:
+    registry: my-registry.com
+    debug: false
+  persistence:
+    enabled: true
+    storageClass: topology-aware-cloud-efficiency
+    size: 20Gi
+  networkPolicy:
+    enabled: false

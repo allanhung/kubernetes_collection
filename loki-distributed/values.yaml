@@ -412,20 +412,22 @@ etcd:
   
   image:
     repository: bitnami/etcd
-    tag: 3.4.14-debian-10-r44
-  
-  statefulset:
-    replicaCount: 3
-  
-  env_vars:
-    ETCD_HEARTBEAT_INTERVAL: "150"
-    ETCD_MAX_REQUEST_BYTES: "10485760"
-    ETCD_QUOTA_BACKEND_BYTES: "8589934592"
-    ETCD_SNAPSHOT_COUNT: "10000"
-    ETCD_AUTO_COMPACTION_RETENTION: "1"
-    ETCD_ELECTION_TIMEOUT: "1500"
 
-  envVarsConfigMap: loki-etcd-env-vars
+  replicaCount: 3
+
+  extraEnvVars:
+    - name: ETCD_HEARTBEAT_INTERVAL
+      value: "150"
+    - name: ETCD_MAX_REQUEST_BYTES
+      value: "10485760"
+    - name: ETCD_QUOTA_BACKEND_BYTES
+      value: "8589934592"
+    - name: ETCD_SNAPSHOT_COUNT
+      value: "10000"
+    - name: ETCD_AUTO_COMPACTION_RETENTION
+      value: "1"
+    - name: ETCD_ELECTION_TIMEOUT
+      value: "1500"
   
   auth:
     rbac:
@@ -445,7 +447,7 @@ etcd:
   
   metrics:
     enabled: true
-    serviceMonitor:
+    podMonitor:
       enabled: true
-      selector:
+      additionalLabels:
         release: po

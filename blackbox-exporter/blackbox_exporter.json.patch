@@ -1,0 +1,146 @@
+--- a/config/config.go
++++ b/config/config.go
+@@ -204,6 +204,8 @@ type HTTPProbe struct {
+ 	FailIfBodyNotMatchesRegexp   []Regexp                `yaml:"fail_if_body_not_matches_regexp,omitempty"`
+ 	FailIfHeaderMatchesRegexp    []HeaderMatch           `yaml:"fail_if_header_matches,omitempty"`
+ 	FailIfHeaderNotMatchesRegexp []HeaderMatch           `yaml:"fail_if_header_not_matches,omitempty"`
++	FailIfBodyMatchesJson        []string                `yaml:"fail_if_body_matches_json,omitempty"`
++	FailIfBodyNotMatchesJson     []string                `yaml:"fail_if_body_not_matches_json,omitempty"`
+ 	Body                         string                  `yaml:"body,omitempty"`
+ 	HTTPClientConfig             config.HTTPClientConfig `yaml:"http_client_config,inline"`
+ 	Compression                  string                  `yaml:"compression,omitempty"`
+--- a/go.mod
++++ b/go.mod
+@@ -12,6 +12,7 @@ require (
+ 	golang.org/x/net v0.0.0-20210505214959-0714010a04ed
+ 	gopkg.in/alecthomas/kingpin.v2 v2.2.6
+ 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
++	k8s.io/client-go v0.20.2
+ )
+ 
+ go 1.13
+--- a/prober/http.go
++++ b/prober/http.go
+@@ -14,10 +14,12 @@
+ package prober
+ 
+ import (
++	"bytes"
+ 	"compress/flate"
+ 	"compress/gzip"
+ 	"context"
+ 	"crypto/tls"
++	"encoding/json"
+ 	"errors"
+ 	"fmt"
+ 	"io"
+@@ -39,10 +41,73 @@ import (
+ 	"github.com/prometheus/client_golang/prometheus"
+ 	pconfig "github.com/prometheus/common/config"
+ 	"golang.org/x/net/publicsuffix"
++	"k8s.io/client-go/util/jsonpath"
+ 
+ 	"github.com/prometheus/blackbox_exporter/config"
+ )
+ 
++func matchJsonPath(reader io.Reader, httpConfig config.HTTPProbe, logger log.Logger) bool {
++	var jsonData interface{}
++
++	body, err := ioutil.ReadAll(reader)
++	if err != nil {
++		level.Error(logger).Log("msg", "Error reading HTTP body", "err", err)
++		return false
++	}
++
++	if err := json.Unmarshal(body, &jsonData); err != nil {
++		level.Error(logger).Log("msg", "Failed to unmarshal data to json", "err", err, "data", body) //nolint:errcheck
++		return false
++	}
++
++	for _, expression := range httpConfig.FailIfBodyMatchesJson {
++		buf := new(bytes.Buffer)
++		j := jsonpath.New("jp")
++		jsonMatcher := strings.SplitN(expression, "=", 2)
++		if err := j.Parse(jsonMatcher[0]); err != nil {
++			level.Error(logger).Log("msg", "Failed to parse jsonpath", "err", err, "path", jsonMatcher[0], "data", body)
++			return false
++		}
++		if err := j.Execute(buf, jsonData); err != nil {
++			level.Error(logger).Log("msg", "Failed to execute jsonpath", "err", err, "path", jsonMatcher[0], "data", body)
++			return false
++		}
++
++		if res, err := jsonpath.UnquoteExtend(buf.String()); err == nil {
++			if res == jsonMatcher[1] {
++				return false
++			}
++		}
++		if buf.String() == jsonMatcher[1] {
++			return false
++		}
++	}
++
++	for _, expression := range httpConfig.FailIfBodyNotMatchesJson {
++		buf := new(bytes.Buffer)
++		j := jsonpath.New("jp")
++		jsonMatcher := strings.Split(expression, "=")
++		if err := j.Parse(jsonMatcher[0]); err != nil {
++			level.Error(logger).Log("msg", "Failed to parse jsonpath", "err", err, "path", jsonMatcher[0], "data", body)
++			return false
++		}
++		if err := j.Execute(buf, jsonData); err != nil {
++			level.Error(logger).Log("msg", "Failed to execute jsonpath", "err", err, "path", jsonMatcher[0], "data", body)
++			return false
++		}
++
++		if res, err := jsonpath.UnquoteExtend(buf.String()); err == nil {
++			if res != jsonMatcher[1] {
++				return false
++			}
++		}
++		if buf.String() != jsonMatcher[1] {
++			return false
++		}
++	}
++	return true
++}
++
+ func matchRegularExpressions(reader io.Reader, httpConfig config.HTTPProbe, logger log.Logger) bool {
+ 	body, err := ioutil.ReadAll(reader)
+ 	if err != nil {
+@@ -298,6 +363,11 @@ func ProbeHTTP(ctx context.Context, target string, module config.Module, registr
+ 			Help: "Indicates if probe failed due to regex",
+ 		})
+ 
++		probeFailedDueToJson = prometheus.NewGauge(prometheus.GaugeOpts{
++			Name: "probe_failed_due_to_json",
++			Help: "Indicates if probe failed due to json",
++		})
++
+ 		probeHTTPLastModified = prometheus.NewGauge(prometheus.GaugeOpts{
+ 			Name: "probe_http_last_modified_timestamp_seconds",
+ 			Help: "Returns the Last-Modified HTTP response header in unixtime",
+@@ -316,6 +386,7 @@ func ProbeHTTP(ctx context.Context, target string, module config.Module, registr
+ 	registry.MustRegister(statusCodeGauge)
+ 	registry.MustRegister(probeHTTPVersionGauge)
+ 	registry.MustRegister(probeFailedDueToRegex)
++	registry.MustRegister(probeFailedDueToJson)
+ 
+ 	httpConfig := module.HTTP
+ 
+@@ -501,6 +572,15 @@ func ProbeHTTP(ctx context.Context, target string, module config.Module, registr
+ 
+ 		byteCounter := &byteCounter{ReadCloser: resp.Body}
+ 
++		if success && (len(httpConfig.FailIfBodyMatchesJson) > 0 || len(httpConfig.FailIfBodyNotMatchesJson) > 0) {
++			success = matchJsonPath(byteCounter, httpConfig, logger)
++			if success {
++				probeFailedDueToJson.Set(0)
++			} else {
++				probeFailedDueToJson.Set(1)
++			}
++		}
++
+ 		if success && (len(httpConfig.FailIfBodyMatchesRegexp) > 0 || len(httpConfig.FailIfBodyNotMatchesRegexp) > 0) {
+ 			success = matchRegularExpressions(byteCounter, httpConfig, logger)
+ 			if success {

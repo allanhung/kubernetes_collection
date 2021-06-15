@@ -1,0 +1,297 @@
+--- a/clair/Chart.yaml
++++ b/clair/Chart.yaml
+@@ -4,7 +4,7 @@
+ - condition: postgresql.enabled
+   name: postgresql
+   repository: https://charts.bitnami.com/bitnami
+-  version: 10.0.0
++  version: '>=10.4.9'
+ description: Clair is an open source project for the static analysis of vulnerabilities
+   in application containers.
+ home: https://coreos.com/clair
+--- a/clair/templates/_helpers.tpl
++++ b/clair/templates/_helpers.tpl
+@@ -12,8 +12,12 @@
+ */}}
+ {{- define "fullname" -}}
+ {{- $name := default .Chart.Name .Values.nameOverride -}}
++{{- if contains $name .Release.Name -}}
++{{- .Release.Name | trunc 63 | trimSuffix "-" -}}
++{{- else -}}
+ {{- printf "%s-%s" .Release.Name $name | trunc 63 | trimSuffix "-" -}}
+ {{- end -}}
++{{- end -}}
+ 
+ {{/*
+ Create chart name and version as used by the chart label.
+--- a/clair/templates/deployment.yaml
++++ b/clair/templates/deployment.yaml
+@@ -15,33 +15,35 @@
+ {{ include "clair.labels" $ | indent 8 }}
+     spec:
+       volumes:
+-      - name: "{{ .Chart.Name }}-config"
+-        configMap:
+-          name: {{ template "fullname" . }}
++      - name: "{{ .Chart.Name }}-secret"
++        secret:
++          secretName: {{ template "fullname" . }}
+       containers:
+       - name: {{ .Chart.Name }}
+         image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+         imagePullPolicy: {{ .Values.image.pullPolicy }}
+-        args:
+-        - "-log-level={{ .Values.logLevel }}"
+-        {{ if .Values.insecureTls }}- "--insecure-tls" {{end}}
++        env:
++          - name: CLAIR_CONF
++            value: '/etc/clair/clair.conf'
++          - name: CLAIR_MODE
++            value: combo
+         ports:
+         - name: clair-api
+-          containerPort: {{ .Values.service.internalApiPort }}
++          containerPort: {{ .Values.service.apiPort }}
+           protocol: TCP
+         - name: clair-health
+-          containerPort: {{ .Values.service.internalHealthPort }}
++          containerPort: {{ .Values.service.healthPort }}
+           protocol: TCP
+         livenessProbe:
+           httpGet:
+-            path: /health
+-            port: {{ .Values.service.internalHealthPort }}
++            path: {{ .Values.image.healthPath }}
++            port: {{ .Values.service.healthPort }}
+         readinessProbe:
+           httpGet:
+-            path: /health
+-            port: {{ .Values.service.internalHealthPort }}
++            path: {{ .Values.image.healthPath }}
++            port: {{ .Values.service.healthPort }}
+         volumeMounts:
+-        - name: "{{ .Chart.Name }}-config"
++        - name: "{{ .Chart.Name }}-secret"
+           mountPath: /etc/clair
+         resources:
+ {{ toYaml .Values.resources | indent 10 }}
+--- a/clair/templates/ingress.yaml
++++ b/clair/templates/ingress.yaml
+@@ -1,6 +1,6 @@
+ {{- if .Values.ingress.enabled -}}
+ {{- $serviceName := include "fullname" . -}}
+-{{- $servicePort := .Values.service.externalApiPort -}}
++{{- $servicePort := .Values.service.apiPort -}}
+ apiVersion: networking.k8s.io/v1beta1
+ kind: Ingress
+ metadata:
+--- a/clair/templates/service.yaml
++++ b/clair/templates/service.yaml
+@@ -7,15 +7,13 @@
+ spec:
+   type: {{ .Values.service.type }}
+   ports:
+-  - name: clair-api
+-    port: {{ .Values.service.externalApiPort }}
+-    targetPort: {{ .Values.service.internalApiPort }}
++  - name: {{ template "fullname" . }}-api
++    port: {{ .Values.service.apiPort }}
++    targetPort: {{ .Values.service.apiPort }}
+     protocol: TCP
+-    name: "{{ .Values.service.name }}-api"
+-  - name: clair-health
+-    port: {{ .Values.service.externalHealthPort }}
+-    targetPort: {{ .Values.service.internalHealthPort }}
++  - name: {{ template "fullname" . }}-health
++    port: {{ .Values.service.healthPort }}
++    targetPort: {{ .Values.service.healthPort }}
+     protocol: TCP
+-    name: "{{ .Values.service.name }}-health"
+   selector:
+ {{ include "clair.matchLabels" $ | indent 4 }}
+--- a/clair/values.yaml
++++ b/clair/values.yaml
+@@ -2,19 +2,15 @@
+ # This is a YAML-formatted file.
+ # Declare variables to be passed into your templates.
+ replicaCount: 1
+-logLevel: debug
+-insecureTls: false
+ image:
+-  repository: quay.io/coreos/clair
+-  tag: v2.1.6
++  name: quay.io/app-sre/clair
++  tag: v4.1.0
+   pullPolicy: IfNotPresent
++  healthPath: /healthz
+ service:
+-  name: clair
+   type: ClusterIP
+-  internalApiPort: 6060
+-  externalApiPort: 6060
+-  internalHealthPort: 6061
+-  externalHealthPort: 6061
++  apiPort: 8080
++  healthPort: 8089
+ ingress:
+   enabled: false
+   # Used to create Ingress record (should used with service.type: ClusterIP).
+@@ -35,27 +31,30 @@
+   requests:
+     cpu: 50m
+     memory: 2000Mi
+-config:
+-  # postgresURI: "postgres://user:password@host:5432/postgres?sslmode=disable"
+-  # paginationKey: "XxoPtCUzrUv4JV5dS+yQ+MdW7yLEJnRMwigVY/bpgtQ="
+-  updateInterval: 2h
+-  # notificationWebhookEndpoint: https://example.com/notify/me
+-  enabledUpdaters:
+-  - debian
+-  - ubuntu
+-  - rhel
+-  - oracle
+-  - alpine
+-  enabledNamespaceDetectors:
+-  - os-release
+-  - lsb-release
+-  - apt-sources
+-  - alpine-release
+-  - redhat-release
+-  enabledFeatureListers:
+-  - apk
+-  - dpkg
+-  - rpm
++
++config: |
++  introspection_addr: :{{ .Values.service.healthPort }}
++  http_listen_addr: :{{ .Values.service.apiPort }}
++  log_level: debug
++  indexer:
++    connstring: "postgres://{{ .Values.postgresql.postgresqlUsername }}:{{ .Values.postgresql.postgresqlPassword }}@{{ template "postgresql.fullname" . }}:5432/postgres?sslmode=disable"
++    scanlock_retry: 10
++    layer_scan_concurrency: 5
++    migrations: true
++  matcher:
++    connstring: "postgres://{{ .Values.postgresql.postgresqlUsername }}:{{ .Values.postgresql.postgresqlPassword }}@{{ template "postgresql.fullname" . }}:5432/postgres?sslmode=disable"
++    max_conn_pool: 100
++    run: ""
++    migrations: true
++    indexer_addr: {{ template "fullname" . }}
++  notifier:
++    indexer_addr: http://{{ template "fullname" . }}:{{ .Values.service.apiPort }}/
++    matcher_addr: http://{{ template "fullname" . }}:{{ .Values.service.apiPort }}/
++    connstring: "postgres://{{ .Values.postgresql.postgresqlUsername }}:{{ .Values.postgresql.postgresqlPassword }}@{{ template "postgresql.fullname" . }}:5432/postgres?sslmode=disable"
++    migrations: true
++    delivery_interval: 1m
++    poll_interval: 5m
++
+ # Configuration values for the postgresql dependency.
+ # ref: https://github.com/kubernetes/charts/blob/master/stable/postgresql/README.md
+ postgresql:
+--- a/clair/templates/secret.yaml
++++ b/clair/templates/secret.yaml
+@@ -0,0 +1,9 @@
++apiVersion: v1
++kind: Secret
++metadata:
++  name: {{ template "fullname" . }}
++  labels:
++{{ include "clair.labels" . | indent 4 }}
++data:
++  clair.conf: |
++    {{- tpl  .Values.config . | b64enc | nindent 4 }}
+--- a/clair/templates/configmap.yaml
++++ b/clair/templates/configmap.yaml
+@@ -1,92 +0,0 @@
+-apiVersion: v1
+-kind: ConfigMap
+-metadata:
+-  name: {{ template "fullname" . }}
+-  labels:
+-{{ include "clair.labels" . | indent 4 }}
+-data:
+-  config.yaml: |
+-    clair:
+-      database:
+-        # Database driver
+-        type: pgsql
+-        options:
+-          # PostgreSQL Connection string
+-          # https://www.postgresql.org/docs/current/static/libpq-connect.html#LIBPQ-CONNSTRING
+-          # This should be done using secrets or Vault, but for now this will also work
+-          {{- if .Values.config.postgresURI }}
+-          source: "{{ .Values.config.postgresURI }}"
+-          {{ else }}
+-          source: "postgres://{{ .Values.postgresql.postgresqlUsername }}:{{ .Values.postgresql.postgresqlPassword }}@{{ template "postgresql.fullname" . }}:5432/postgres?sslmode=disable"
+-          {{ end }}
+-
+-          # Number of elements kept in the cache
+-          # Values unlikely to change (e.g. namespaces) are cached in order to save prevent needless roundtrips to the database.
+-          cachesize: 16384
+-
+-          # 32-bit URL-safe base64 key used to encrypt pagination tokens
+-          # If one is not provided, it will be generated.
+-          # Multiple clair instances in the same cluster need the same value.
+-          paginationkey: "{{ .Values.config.paginationKey }}"
+-      api:
+-        # v3 grpc/RESTful API server address
+-        addr: "0.0.0.0:6060"
+-
+-        # Health server address
+-        # This is an unencrypted endpoint useful for load balancers to check to healthiness of the clair server.
+-        healthaddr: "0.0.0.0:6061"
+-
+-        # Deadline before an API request will respond with a 503
+-        timeout: 900s
+-
+-        # Optional PKI configuration
+-        # If you want to easily generate client certificates and CAs, try the following projects:
+-        # https://github.com/coreos/etcd-ca
+-        # https://github.com/cloudflare/cfssl
+-        servername:
+-        cafile:
+-        keyfile:
+-        certfile:
+-
+-      worker:
+-        namespace_detectors:
+-        {{- range $key, $value := .Values.config.enabledNamespaceDetectors }}
+-        - {{ $value }}
+-        {{- end }}
+-
+-        feature_listers:
+-        {{- range $key, $value := .Values.config.enabledFeatureListers }}
+-        - {{ $value }}
+-        {{- end }}
+-
+-      updater:
+-        # Frequency the database will be updated with vulnerabilities from the default data sources
+-        # The value 0 disables the updater entirely.
+-        interval: "{{ .Values.config.updateInterval }}"
+-        enabledupdaters:
+-        {{- range $key, $value := .Values.config.enabledUpdaters }}
+-        - {{ $value }}
+-        {{- end }}
+-
+-      notifier:
+-        # Number of attempts before the notification is marked as failed to be sent
+-        attempts: 3
+-
+-        # Duration before a failed notification is retried
+-        renotifyinterval: 2h
+-
+-        http:
+-          # Optional endpoint that will receive notifications via POST requests
+-          endpoint: "{{ .Values.config.notificationWebhookEndpoint }}"
+-
+-          # Optional PKI configuration
+-          # If you want to easily generate client certificates and CAs, try the following projects:
+-          # https://github.com/cloudflare/cfssl
+-          # https://github.com/coreos/etcd-ca
+-          servername:
+-          cafile:
+-          keyfile:
+-          certfile:
+-
+-          # Optional HTTP Proxy: must be a valid URL (including the scheme).
+-          proxy:

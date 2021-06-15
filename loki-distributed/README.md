@@ -24,6 +24,12 @@ etcdctl get "" --prefix --keys-only
 etcdctl del "" --from-key=true
 ```
 
+### Reset etcd cluster
+```bash
+kubectl edit statefulset/loki-etcd
+set ETCD_INITIAL_CLUSTER_STATE=new
+```
+
 ### Reference
 * [loki distributed](https://github.com/grafana/helm-charts/tree/main/charts/loki-distributed)
 * [loki debug](https://www.jianshu.com/p/6b24340c2cf1)

@@ -1,6 +1,16 @@
 image:
   repository: prom/blackbox-exporter
-  tag: v0.17.0
+  tag: v0.19.0
+
+config:
+  modules:
+    http_2xx:
+      prober: http
+      timeout: 5s
+      http:
+        valid_http_versions: ["HTTP/1.1", "HTTP/2.0"]
+        follow_redirects: true
+        preferred_ip_protocol: "ip4"
 
 serviceMonitor:
   enabled: true
