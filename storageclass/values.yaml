@@ -1,0 +1,7 @@
+disk_type:
+  - available
+  - cloud_ssd
+  - cloud_essd
+  - cloud_efficiency
+provisioner: alicloud/disk
+fstype: xfs

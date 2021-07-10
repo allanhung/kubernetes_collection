@@ -36,8 +36,8 @@ helm upgrade --install etcd \
 ```bash
 etcdctl member list
 etcdctl member remove <member_id>
-# remove member_id file
-rm -f /bitnami/etcd/data/member_id
+# remove file in data
+rm -f /bitnami/etcd/data/*
 ```
 
 ### Reference

@@ -2,7 +2,7 @@
 ## flannel driver
 ### configmap
 ```bash
-cat > kube-flannel-cfg.yaml << EOF
+cat << EOF | kubectl apply -f -
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -35,8 +35,6 @@ data:
   net-conf.json: |
     <keep origin config>
 EOF
-kubectl apply -f kube-flannel-cfg.yaml
-rm -f kube-flannel-cfg.yaml
 ```
 ### patch flannel daemonset
 ```bash
@@ -48,10 +46,14 @@ kubectl -n kube-system patch ds kube-flannel-ds --record --type='json' -p '[
   }
 ]'
 ```
+### restart flannel daemonset
+```bash
+kubectl -n kube-system delete pods -l app=flannel
+```
 ## terway driver
 ### configmap
 ```bash
-cat > eni-config.yaml << EOF
+cat << EOF | kubectl apply -f -
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -75,8 +77,6 @@ data:
     }
   <keep origin config>
 EOF
-kubectl apply -f eni-config.yaml
-rm -f eni-config.yaml
 ```
 ### patch terway daemonset
 ```bash
@@ -88,9 +88,13 @@ kubectl -n kube-system patch ds terway-eniip --record --type='json' -p '[
   }
 ]'
 ```
+### restart terway daemonset
+```bash
+kubectl -n kube-system delete pods -l app=terway-eniip
+```
 ## Test
 ```bash
-cat > hostport-test.yaml << EOF
+cat << EOF | kubectl apply -f -
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
@@ -119,7 +123,7 @@ spec:
           name: nginx
           protocol: TCP
 EOF
-kubectl apply -f hostport-test.yaml
+kubectl delete ds hostport-test
 telnet <node_ip> 10080
 ```
 

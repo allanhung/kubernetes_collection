@@ -1,5 +1,5 @@
 ### Installation
-
+```bash
 helm repo add dex https://charts.dexidp.io
 helm repo update
 
@@ -9,3 +9,6 @@ helm upgrade --install dex \
     -f values.example.yaml \
     dex/dex
 ``` 
+
+### Reference
+* [dex helm charts](https://github.com/dexidp/helm-charts)

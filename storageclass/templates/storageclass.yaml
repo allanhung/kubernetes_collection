@@ -1,0 +1,18 @@
+{{- range .Values.disk_type }}
+kind: StorageClass
+apiVersion: storage.k8s.io/v1
+metadata:
+  name: topology-aware-{{ . | replace "_" "-" }}
+  labels:
+    owner: Infrastructure
+    name: {{ $.Chart.Name }}
+provisioner: {{ $.Values.provisioner }}
+reclaimPolicy: Delete
+volumeBindingMode: WaitForFirstConsumer
+allowVolumeExpansion: true
+parameters:
+  type: {{ . }}
+  encrypted: "true"
+  fstype: {{ $.Values.fstype }}
+---
+{{- end }}

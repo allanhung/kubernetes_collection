@@ -16,6 +16,14 @@ helm upgrade --install loki \
   ./
 ```
 
+#### Upgrade From 0.30.x
+```bash
+# Delete the Ingesters StatefulSets
+kubectl delete statefulset loki-loki-distributed-ingester --cascade=orphan -n logging
+# Delete the Queriers StatefulSets
+kubectl delete statefulset loki-loki-distributed-querier --cascade=orphan -n logging
+```
+
 ### Troubleshooting
 * msg="error removing stale clients" err="empty ring"
 * msg="found an existing instance(s) with a problem in the ring, this instance cannot become ready until this problem is resolved. The /ring http endpoint on the distributor (or single binary) provides visibility into the ring." ring=ingester err="instance loki-loki-distributed-ingester-2 past heartbeat timeout"
