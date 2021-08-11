@@ -1,0 +1,45 @@
+name: datadog
+
+clusterAgent:
+  enabled: true
+  image:
+    repository: datadog/cluster-agent
+  token: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+  metricsProvider:
+    enabled: true
+
+datadog:
+  apiKeyExistingSecret: datadog-key
+  appKeyExistingSecret: datadog-key
+  apm:
+    enabled: true
+  clusterChecks:
+    enabled: true
+  confd: 
+    kubernetes_state.yaml: ""
+  orchestratorExplorer:
+    enabled: true
+  resources:
+    requests:
+      memory: 400Mi
+    limits:
+      memory: 400Mi
+  serviceTopology:
+    enabled: false
+  dogstatsd:
+    useHostPort: true
+    nonLocalTraffic: true
+  logLevel: INFO
+  env:
+  - name: DD_EXTRA_CONFIG_PROVIDERS
+    value: clusterchecks
+  - name: DD_STATSD_FORWARD_HOST
+    value: prom-statsd
+  - name: DD_STATSD_FORWARD_PORT
+    value: "9125"
+
+agents:
+  useHostNetwork: false
+  image:
+    repository: datadog/agent
+#  tolerations:

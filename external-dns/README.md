@@ -20,6 +20,16 @@ annotations:
   external-dns.alpha.kubernetes.io/exclude: 'true'
 ```
 
+### Troubleshooting
+failed to sync cache: timed out waiting for the condition
+* check the source from args to see if custom resources are installed
+```yaml
+      - args:
+        - --source=service
+        - --source=ingress
+```
+* check clusterrole to see if the permission is correct
+
 ## Reference
 * [external-dns](https://github.com/kubernetes-sigs/external-dns)
 * [external-dns alibabacloud tutorial](https://github.com/kubernetes-sigs/external-dns/blob/master/docs/tutorials/alibabacloud.md)

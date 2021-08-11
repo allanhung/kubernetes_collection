@@ -1,0 +1,44 @@
+image:
+  repository: proxysql/proxysql
+  tag: "2.2.0"
+
+# Default number of ProxySQL replicas
+numReplicas: 1
+
+# Default admin username
+proxysql:
+  admin:
+    username: admin
+    password: admin
+    # Connect on this port to administer ProxySQL, view stats, etc.
+    iface: "0.0.0.0"
+    port: 6032
+  dataDir: "/var/lib/proxysql"
+
+# MySQL Settings
+mysql:
+  # Applications connect on this port to run queries
+  iface: "0.0.0.0"
+  port: 3306
+  # This is the monitor user, just needs usage rights on the databases
+  monitor:
+    username: monitor
+    password: monitor
+  server:
+    host: 127.0.0.1
+    port: 3306
+    username: root
+    password: insecurepassword
+
+# Resource requests and limits
+resources: {}
+#resources:
+#  requests:
+#    memory: "128Mi"
+#    cpu: "100m"
+#  limits:
+#    memory: "512Mi"
+#    cpu: "500m"
+
+# Optional tolerations
+tolerations: {}

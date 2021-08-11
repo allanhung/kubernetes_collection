@@ -44,3 +44,5 @@ curl -X POST --data '{"jwt": "'$(cat /var/run/secrets/kubernetes.io/serviceaccou
 
 ### Reference
 * [vault-helm](https://github.com/hashicorp/vault-helm)
+* [process memory](https://github.com/hashicorp/vault/issues/1446)
+* [secret is missing inline_policies internal data](https://github.com/hashicorp/vault-plugin-secrets-alicloud/issues/49)

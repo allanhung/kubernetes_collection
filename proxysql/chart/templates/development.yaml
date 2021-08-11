@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    {{- include "proxysql.labels" . | nindent 4 }}
+  name: {{ template "proxysql.fullname" . }}
+spec:
+  replicas: {{ .Values.numReplicas }}
+  selector:
+    matchLabels:
+      {{- include "proxysql.matchLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "proxysql.matchLabels" . | nindent 8 }}
+    spec:
+      restartPolicy: Always
+      containers:
+        - image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          name: proxysql
+          imagePullPolicy: "Always"
+          ports:
+            - containerPort: {{ .Values.mysql.port }}
+              name: proxysql-mysql
+            - containerPort: {{ .Values.proxysql.admin.port }}
+              name: proxysql-admin
+          volumeMounts:
+            - mountPath: /etc/proxysql.cnf
+              name: proxysql
+              subPath: proxysql.cnf
+          {{- if .Values.resources }}
+          resources:
+            {{- toYaml .Values.resources | indent 12 }}
+          {{- end }}
+      volumes:
+        - name: proxysql
+          configMap:
+            name: {{ template "proxysql.fullname" . }}
+      {{- if .Values.tolerations }}
+      tolerations:
+        {{- toYaml .Values.tolerations | indent 8 }}
+      {{- end }}

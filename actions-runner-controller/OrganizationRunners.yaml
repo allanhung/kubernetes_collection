@@ -1,0 +1,24 @@
+apiVersion: actions.summerwind.dev/v1alpha1
+kind: RunnerDeployment
+metadata:
+  name: organization-runner
+spec:
+  template:
+    spec:
+      organization: myorg
+---
+apiVersion: actions.summerwind.dev/v1alpha1
+kind: HorizontalRunnerAutoscaler
+metadata:
+  name: organization-runner-autoscaler
+spec:
+  scaleTargetRef:
+    name: organization-runner
+  minReplicas: 1
+  maxReplicas: 5
+  metrics:
+  - type: PercentageRunnersBusy
+    scaleUpThreshold: '0.75'    # The percentage of busy runners at which the number of desired runners are re-evaluated to scale up
+    scaleDownThreshold: '0.3'   # The percentage of busy runners at which the number of desired runners are re-evaluated to scale down
+    scaleUpAdjustment: 1        # The scale up runner count added to desired count
+    scaleDownAdjustment: 1      # The scale down runner count subtracted from the desired count

@@ -31,4 +31,4 @@ alerts1='[
   }
 ]'
 curl -XPOST -d"$alerts1" http://po-kube-prometheus-stack-alertmanager:9093/api/v1/alerts
-echo -e "\nresolved alert: ./alert_test.sh $SEVERITY $CLUSTER $ENV $INSTANCENUM resolved $KEY $VALUE"
+echo -e "\nresolved alert: $0 $SEVERITY $CLUSTER $ENV $INSTANCENUM resolved $KEY $VALUE"

@@ -1,0 +1,19 @@
+fullnameOverride: coredns
+
+image:
+  repository: coredns/coredns
+  tag: "1.8.4"
+  pullPolicy: IfNotPresent
+
+replicaCount: 2
+
+isClusterService: true
+
+prometheus:
+  service:
+    enabled: true
+  monitor:
+    enabled: true
+    additionalLabels:
+      release: po
+    namespace: kube-system

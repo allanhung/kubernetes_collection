@@ -41,3 +41,4 @@ set ETCD_INITIAL_CLUSTER_STATE=new
 ### Reference
 * [loki distributed](https://github.com/grafana/helm-charts/tree/main/charts/loki-distributed)
 * [loki debug](https://www.jianshu.com/p/6b24340c2cf1)
+* [Loki Community Meeting 2021-07-01](https://www.youtube.com/watch?v=ppUrF7OMyks)

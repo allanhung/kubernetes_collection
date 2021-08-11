@@ -1,0 +1,17 @@
+apiVersion: v2
+name: proxysql
+version: 1.0.1
+appversion: 2.0.2
+description: Chart for ProxySQL
+keywords:
+- mysql
+- database
+- proxysql
+- cluster
+home: http://www.proxysql.com/
+sources:
+- https://github.com/sysown/proxysql
+maintainers:
+- email: hung.allan@gmail.com
+  name: allanhung
+engine: gotpl

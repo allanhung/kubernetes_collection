@@ -11,5 +11,10 @@ helm upgrade --install \
   prometheus-msteams/prometheus-msteams
 ```        
 
+### Test teams channel
+```bash
+curl -H 'Content-Type: application/json' -d '{"text": "Test Message"}' <YOUR WEBHOOK URL>
+```
+
 ### Reference
 * [prometheus-msteams](https://github.com/prometheus-msteams/prometheus-msteams)

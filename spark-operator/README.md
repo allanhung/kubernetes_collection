@@ -78,6 +78,13 @@ executor:
       port: 8090
 ```
 
+### Spark memory
+* `memory size` =  `memory`  + `memoryOverhead`
+* memoryOverhead could be specified in config or calculate with memoryOverheadFactor
+```bash
+memoryOverhead = memory * memoryOverheadFactor
+```
+
 Reference:
 * [Pod annotations supported by ECI](https://www.alibabacloud.com/help/doc-detail/144561.htm)
 * [Initial job has not accepted any resources](https://github.com/GoogleCloudPlatform/spark-on-k8s-operator/issues/895)

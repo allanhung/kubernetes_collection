@@ -1,0 +1,61 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  labels:
+    {{- include "proxysql.labels" . | nindent 4 }}
+  name: {{ template "proxysql.fullname" . }}
+data:
+  proxysql.cnf: |
+    datadir="{{ .Values.proxysql.dataDir }}"
+
+    admin_variables =
+    {
+      admin_credentials="{{ .Values.proxysql.admin.username}}:{{ .Values.proxysql.admin.password }}"
+      mysql_ifaces="{{ .Values.proxysql.admin.iface }}:{{ .Values.proxysql.admin.port }}"
+      {{- if .Values.proxysql.queryCacheSizeMb }}
+      query_cache_size_MB="{{ .Values.proxysql.queryCacheSizeMb }}"
+      {{- end }}
+    }
+
+    mysql_variables =
+    {
+        threads=4
+        max_connections=2048
+        default_query_delay=0
+        default_query_timeout=36000000
+        {{- if .Values.proxysql.queryCacheSizeMb }}
+        query_cache_size_MB="{{ .Values.proxysql.queryCacheSizeMb }}"
+        {{- end }}
+        have_compress=true
+        poll_timeout=2000
+        interfaces="{{ .Values.mysql.iface }}:{{ .Values.mysql.port }};/tmp/proxysql.sock"
+        stacksize=1048576
+        connect_timeout_server=3000
+        monitor_username="{{ .Values.mysql.monitor.username }}"
+        monitor_password="{{ .Values.mysql.monitor.password }}"
+        monitor_history=600000
+        monitor_connect_interval=60000
+        monitor_ping_interval=10000
+        commands_stats=true
+        sessions_sort=true
+    }
+
+    mysql_servers =
+    (
+      { 
+        address="{{ .Values.mysql.server.host }}"
+        port="{{ .Values.mysql.server.port | default "3306" }}",
+        hostgroup=0,
+        max_connections="{{ .Values.mysql.server.max_connections | default "2000" }}"
+      }
+    )
+
+    mysql_users =
+    (
+      {
+        username = "{{ .Values.mysql.server.username }}",
+        password = "{{ .Values.mysql.server.password }}",
+        default_hostgroup = 0,
+        active = 1
+      }
+    )
