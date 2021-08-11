@@ -2,7 +2,7 @@ authSecret:
   create: true
   name: "controller-manager"
   ### GitHub PAT Configuration
-  github_token: "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"
+  github_token: "xxxxxxxxxxxxxxxxxxxxxxxx"
 
 metrics:
   serviceMonitor: true
