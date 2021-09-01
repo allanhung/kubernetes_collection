@@ -14,8 +14,9 @@
 +{{- end }}
 --- a/release/manifests/charts/gateways/istio-ingress/templates/deployment.yaml
 +++ b/release/manifests/charts/gateways/istio-ingress/templates/deployment.yaml
-@@ -1,6 +1,10 @@
+@@ -1,7 +1,11 @@
  {{- $gateway := index .Values "gateways" "istio-ingressgateway" }}
+ {{- if eq $gateway.injectionTemplate "" }}
  apiVersion: apps/v1
 +{{- if $gateway.daemonsetEnabled }}
 +kind: DaemonSet
@@ -23,9 +24,9 @@
  kind: Deployment
 +{{- end }}
  metadata:
-   name: {{ $gateway.name | default "istio-ingressgateway" }}
+   name: {{ $gateway.name }}
    namespace: {{ .Release.Namespace }}
-@@ -11,7 +15,7 @@
+@@ -12,7 +16,7 @@
      install.operator.istio.io/owning-resource: {{ .Values.ownerName | default "unknown" }}
      operator.istio.io/component: "IngressGateways"
  spec:
@@ -34,7 +35,7 @@
  {{- if $gateway.replicaCount }}
    replicas: {{ $gateway.replicaCount }}
  {{- end }}
-@@ -19,10 +23,17 @@
+@@ -20,10 +24,17 @@
    selector:
      matchLabels:
  {{ $gateway.labels | toYaml | indent 6 }}
@@ -52,15 +53,16 @@
    template:
      metadata:
        labels:
-@@ -207,7 +218,11 @@
+@@ -193,7 +204,11 @@
            - name: ISTIO_META_WORKLOAD_NAME
-             value: {{ $gateway.name | default "istio-ingressgateway" }}
+             value: {{ $gateway.name }}
            - name: ISTIO_META_OWNER
-+          {{- if $gateway.daemonsetEnabled }}
+-            value: kubernetes://apis/apps/v1/namespaces/{{ .Release.Namespace }}/deployments/{{ $gateway.name }}
++            {{- if $gateway.daemonsetEnabled }}
 +            value: kubernetes://apis/apps/v1/namespaces/{{ .Release.Namespace }}/daemonsets/{{ $gateway.name | default "istio-ingressgateway" }}
-+          {{- else }}
-             value: kubernetes://apis/apps/v1/namespaces/{{ .Release.Namespace }}/deployments/{{ $gateway.name | default "istio-ingressgateway" }}
-+          {{- end }}
++            {{- else }}
++            value: kubernetes://apis/apps/v1/namespaces/{{ .Release.Namespace }}/deployments/{{ $gateway.name | default "istio-ingressgateway" }}
++            {{- end }}
            {{- if $.Values.global.meshID }}
            - name: ISTIO_META_MESH_ID
              value: "{{ $.Values.global.meshID }}"

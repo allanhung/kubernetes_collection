@@ -19,3 +19,4 @@ kubectl apply -f alertrule.yaml -n monitoring
 * [awesome-prometheus-alerts](https://awesome-prometheus-alerts.grep.to/rules#redis)
 * [awesome-prometheus-alerts github](https://github.com/samber/awesome-prometheus-alerts/blob/master/_data/rules.yml)
 * [Relabelconfig](https://coreos.com/operators/prometheus/docs/latest/api.html#relabelconfig)
+* [redis_memory_max_bytes always return 0](https://github.com/oliver006/redis_exporter/issues/300)

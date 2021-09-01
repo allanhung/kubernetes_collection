@@ -19,6 +19,13 @@ kubectl get ns |grep Terminating | awk {'print $1'}|xargs  -I {} sh -c "kubectl 
 
 ### too many pods
 * terway driver use one eni instance per ip
+```bash
+export NODEIP=10.22.34.186
+export PODKEYWORD=consul
+kubectl get pods -A -o wide |grep us-east-1.${NODEIP}|awk {'print $7'} | grep -v ${NODEIP} | wc -l
+kubectl get pods -A -o wide |grep ${PODKEYWORD} | awk {'print $7'} | uniq | sort
+kubectl get nodes
+```
 
 ### no backend server with loadbalancer
 * terway not supporting string targetPort

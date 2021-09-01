@@ -1,0 +1,17 @@
+apiVersion: v2
+appVersion: 0.15.0
+description: clickhouse-operator Helm chart for Kubernetes
+home: https://github.com/kubernetes_collection/clickhouse
+keywords:
+- operator
+- clickhouse
+- database
+maintainers:
+- email: hung.allan@gmail.com
+  name: Allan Hung
+  url: https://allanhung.github.io/
+name: clickhouse-operator
+sources:
+- https://github.com/kubernetes_collection/clickhouse/chart/clickhouse-operator
+type: application
+version: 0.1.0

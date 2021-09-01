@@ -1,8 +1,7 @@
 # Prepare
 ## setup parameter
 ```bash
-export ISTIO_VER=1.9.0
-export ISTIO_TM_VER=1.7.6
+export ISTIO_VER=1.11.0
 export ISTIO_SRC_DIR=~/Downloads/git/kubernetes_collection
 export OS=osx
 mkdir -p ${ISTIO_SRC_DIR}/istio/charts
@@ -13,6 +12,7 @@ mkdir -p ${ISTIO_SRC_DIR}/istio/${ISTIO_VER}/config
 ```
 ## download istio-telemetry from istio 1.7.6
 ```bash
+export ISTIO_TM_VER=1.7.6
 curl -L -o ${ISTIO_SRC_DIR}/istio/download/istio-${ISTIO_TM_VER}-linux-arm64.tar.gz https://github.com/istio/istio/releases/download/${ISTIO_TM_VER}/istio-${ISTIO_TM_VER}-linux-arm64.tar.gz
 tar -zxvf ${ISTIO_SRC_DIR}/istio/download/istio-${ISTIO_TM_VER}-linux-arm64.tar.gz -C ${ISTIO_SRC_DIR}/istio/${ISTIO_TM_VER}
 mv ${ISTIO_SRC_DIR}/istio/${ISTIO_TM_VER}/istio-${ISTIO_TM_VER} ${ISTIO_SRC_DIR}/istio/${ISTIO_TM_VER}/release
@@ -113,8 +113,8 @@ helm upgrade --install istio-ingress-internal \
     ${ISTIO_SRC_DIR}/istio/${ISTIO_VER}/release/manifests/charts/gateways/istio-ingress
 
 helm upgrade --install istio-ingress-external \
-    --set global.hub=my-docker-io-proxy/istio \
     --namespace istio-system \
+    --set global.hub=my-docker-io-proxy/istio \
     --set global.meshID=vpc1-mesh \
     --set global.multiCluster.clusterName=cluster1-us-east-1 \
     --set global.network=vpc1.us-east-1 \
@@ -135,7 +135,6 @@ helm upgrade --install istio-ingress-external \
 ```bash
 helm upgrade --install istio-servicemonitor \
     --namespace istio-system \
-    --set global.telemetryNamespace=istio-system \
     --set serviceMonitor.labels.release=po \
     ${ISTIO_SRC_DIR}/istio/charts/prometheusOperator
 ```

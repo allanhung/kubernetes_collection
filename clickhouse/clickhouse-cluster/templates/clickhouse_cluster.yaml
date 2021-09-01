@@ -1,0 +1,127 @@
+{{- $username := (index $.Values.clickhouse.user 0).username }}
+{{- $password := (index $.Values.clickhouse.user 0).password }}
+{{- $zkreplicas := int .Values.zookeeper.replicaCount }}
+{{- $zkname := .Values.zookeeper.fullnameOverride }}
+{{- $zkinstance := "" }}
+{{- $name :=  .Release.Name }}
+{{- $namespace := .Release.Namespace }}
+---
+apiVersion: "clickhouse.altinity.com/v1"
+kind: "ClickHouseInstallation"
+metadata:
+  name: {{ .Release.Name }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  defaults:
+    templates:
+      podTemplate: pod-template-with-volume
+      serviceTemplate: chi-service-template
+      {{- if .Values.clickhouse.persistence.enabled }}
+      dataVolumeClaimTemplate: data-volumeclaim-template
+      {{- end }}
+  configuration:
+    zookeeper:
+      nodes:
+      {{- if .Values.clickhouse.externalZookeeper }}
+      {{- with .Values.clickhouse.externalZookeeper }}
+      {{- toYaml . | nindent 6 }}
+      {{- end }}
+      {{- else }}
+      {{- range untilStep 0 $zkreplicas 1 }}
+        {{- $zkinstance = printf "%s-%d" $zkname . }}
+      - host: {{ $zkinstance }}.{{ $zkname }}-headless.{{ $namespace }}
+        port: 2181
+      {{- end }}
+      {{- end }}
+      root: /{{ $name }}
+    users:
+      {{ $username }}/profile: default
+      {{ $username }}/password: {{ $password }}
+      {{ $username }}/networks/ip:
+        {{- range $ipIndex, $ip := (index $.Values.clickhouse.user 0).networks }}
+        - {{ $ip }}
+        {{- end }}
+      {{ $username }}/quotas: default
+    {{- with .Values.clickhouse.profiles }}
+    profiles:
+      {{- toYaml . | nindent 6 }}
+    {{- end }}
+    {{- with .Values.clickhouse.quotas }}
+    quotas:
+      {{- toYaml . | nindent 6 }}
+    {{- end }}
+    {{- with .Values.clickhouse.settings }}
+    settings:
+      {{- toYaml . | nindent 6 }}
+    {{- end }}
+    {{- with .Values.clickhouse.files }}
+    files: 
+      {{- toYaml . | nindent 6 }}
+    {{- end }}
+    clusters:
+      - name: {{ .Values.clickhouse.clusterName }}
+        # Templates are specified for this cluster explicitly
+        templates:
+          podTemplate: pod-template-with-volume
+        layout:
+          shardsCount: {{ .Values.clickhouse.shardscount }} 
+          replicasCount: {{ .Values.clickhouse.replicascount }}
+  templates:
+    serviceTemplates:
+      - name: chi-service-template
+        spec:
+          ports:
+            - name: http
+              port: {{ $.Values.clickhouse.ports.http }}
+            - name: tcp
+              port: {{ $.Values.clickhouse.ports.tcp }}
+          type: {{ $.Values.clickhouse.serviceType }}
+
+    podTemplates:
+      - name: pod-template-with-volume
+        spec:
+          securityContext:
+            fsGroup: 101
+          containers:
+            - name: clickhouse
+              securityContext:
+                runAsUser: 101
+                runAsGroup: 101
+                capabilities:
+                  add:
+                  - CAP_NET_ADMIN
+                  - CAP_IPC_LOCK
+                  - CAP_SYS_NICE
+              image: {{ .Values.clickhouse.image.name }}:{{ .Values.clickhouse.image.tag }}
+              imagePullPolicy: {{ .Values.clickhouse.imagePullPolicy }}
+              command:
+                - /bin/bash
+                - -c
+                - /usr/bin/clickhouse-server --config-file=/etc/clickhouse-server/config.xml
+              ports:
+                - name: http
+                  containerPort: 8123
+                - name: client
+                  containerPort: 9000
+                - name: interserver
+                  containerPort: 9009
+              {{- if .Values.clickhouse.persistence.enabled }}
+              volumeMounts:
+                - name: data-volumeclaim-template
+                  mountPath: /var/lib/clickhouse
+              {{- end }}
+              {{- with .Values.clickhouse.resources }}
+              resources: {{ toYaml . | nindent 16 }}
+              {{- end }}
+
+    {{- if .Values.clickhouse.persistence.enabled }}
+    volumeClaimTemplates:
+      - name: data-volumeclaim-template
+        spec:
+          storageClassName: {{ .Values.clickhouse.persistence.storageClass }}
+          accessModes:
+            - ReadWriteOnce
+          resources:
+            requests:
+              storage: {{ .Values.clickhouse.persistence.size }}
+    {{- end }}

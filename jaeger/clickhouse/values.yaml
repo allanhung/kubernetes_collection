@@ -1,0 +1,66 @@
+provisionDataStore:
+  cassandra: false
+  elasticsearch: false
+  kafka: false
+
+storage:
+  type: clickhouse
+  clickhouse:
+    address: tcp://clickhouse-ch-cluster:9000
+    username: admin
+    password: c1ickh0use
+    spans_table: jaeger_spans_v2
+    spans_index_table: jaeger_index_v2
+    operations_table: jaeger_operations_v2
+
+ingester:
+  enabled: false
+
+agent:
+  enabled: true
+  image: docker-proxy.mydomain.com/jaegertracing/jaeger-agent
+  serviceMonitor:
+    additionalLabels:
+      release: po
+    enabled: true
+
+collector:
+  image: docker-proxy.mydomain.com/jaegertracing/jaeger-collector
+  enabled: true
+  service:
+    zipkin:
+      port: 9411
+  ingress:
+    enabled: false
+  serviceMonitor:
+    enabled: true
+    additionalLaibels:
+      release: po
+
+query:
+  image: docker-proxy.mydomain.com/jaegertracing/jaeger-query
+  enabled: true
+  oAuthSidecar:
+    image: quay.io/oauth2-proxy/oauth2-proxy:v7.1.0
+    enabled: false
+  agentSidecar:
+    enabled: true
+  ingress:
+    enabled: true
+    annotations:
+      kubernetes.io/ingress.class: nginx-internal
+      kubernetes.io/tls-acme: "true"
+    hosts:
+      - jaeger-query.mydomain.com
+    tls:
+      - secretName: tls-jaeger-query.mydomain.com
+        hosts:
+          - jaeger-query.mydomain.com
+  serviceMonitor:
+    enabled: true
+    additionalLabels:
+      release: po
+
+spark:
+  image: docker-proxy.mydomain.com/jaegertracing/spark-dependencies
+  enabled: true

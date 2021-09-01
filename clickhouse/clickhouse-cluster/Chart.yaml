@@ -1,0 +1,25 @@
+apiVersion: v2
+appVersion: "21.7"
+name: clickhouse-cluster
+Version: 0.1.0
+description: Helm Chart for deploying a sharded and replicated ClickHouse cluster
+home: https://github.com/allanhung/kubernetes_collection/clickhouse
+type: application
+keywords:
+  - clickhouse
+maintainers:
+- email: hung.allan@gmail.com
+  name: Allan Hung
+  url: https://allanhung.github.io/
+sources:
+- https://github.com/allanhung/kubernetes_collection/clickhouse/chart/clickhouse-cluster
+
+dependencies:
+- name: "zookeeper"
+  condition: zookeeper.enabled
+  repository: "https://charts.bitnami.com/bitnami"
+  version: "6.5.3"
+- name: "zoonavigator"
+  condition: zoonavigator.enabled
+  repository: "https://lowess.github.io/helm-charts"
+  version: "^0.1.1"

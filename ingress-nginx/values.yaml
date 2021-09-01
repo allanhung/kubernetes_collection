@@ -1,11 +1,26 @@
 controller:
   image:
     repository: k8s.gcr.io/ingress-nginx/controller
-    tag: "v0.43.0"
   config:
+    enable-modsecurity: "true"
+    enable-opentracing: "true"
+    enable-owasp-modsecurity-crs: "true"
+    gzip-types: "*"
     proxy-body-size: 100m
     proxy-buffers-number: "4"
     proxy-buffer-size: 16k
+    proxy_read_timeout: "360"
+    proxy_send_timeout: "360"
+    use-gzip: "true"
+    zipkin-collector-host: jaeger-collector.infra
+    zipkin-collector-port: "9411"
+  addHeaders:
+    Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
+    Referrer-Policy: origin
+    X-XSS-Protection: 1; mode=block
+    X-Frame-Options: SAMEORIGIN
+    X-Content-Type-Options: nosniff
+    Permissions-Policy: geolocation=(),midi=(),sync-xhr=(),microphone=(),camera=(),magnetometer=(),gyroscope=(),fullscreen=(self),payment=()
   electionID: ingress-controller-leader
   ingressClass: nginx-internal
   publishService:

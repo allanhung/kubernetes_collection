@@ -4,9 +4,10 @@ helm repo add kiali https://kiali.org/helm-charts
 helm repo update
 
 kubectl create secret generic kiali --from-literal="oidc-secret=$CLIENT_SECRET" -n istio-system
+export KIALIVERSION=1.38.1
 
-helm pull kiali/kiali-server --version 1.34.0 --untar 
-patch -p1 < kiali.patch
+helm pull kiali/kiali-server --version ${KIALIVERSION} --untar 
+patch -p1 < kiali.${KIALIVERSION}.patch
 
 helm upgrade --install kiali \
     --namespace istio-system \
@@ -24,7 +25,8 @@ kubectl create secret generic ca-bundle --from-file=ca-bundle.trust.crt
 ```
 ### get server ca by openssl command
 ```bash
-openssl s_client -showcerts -connect oidc-proxy.my-domian:443 < /dev/null
+openssl s_client -showcerts -connect oidc-proxy.my-domian:443 -servername oidc-proxy.my-domian < /dev/null
+openssl s_client -showcerts -connect kiali-proxy.my-domain:443 -servername kiali-proxy.my-domain < /dev/null
 ```
 
 ## Build for debug

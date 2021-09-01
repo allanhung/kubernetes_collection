@@ -46,3 +46,5 @@ Events:
 [Ingress Controller Name](https://github.com/kubernetes/ingress-nginx/blob/master/internal/k8s/main.go)
 [IngressClass](https://github.com/kubernetes/ingress-nginx/issues/5593#issuecomment-721562875)
 [Ingress Class not work](https://github.com/nginxinc/kubernetes-ingress/issues/1283#issuecomment-746701219)
+[Nginx Opentracing](https://github.com/opentracing-contrib/nginx-opentracing)
+[NGINX Ingress Controller - Opentracing](https://kubernetes.github.io/ingress-nginx/user-guide/third-party-addons/opentracing/)

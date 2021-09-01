@@ -41,13 +41,8 @@
 +{{- end -}}
 --- a/consul/templates/server-service-loadbalancer.yaml
 +++ b/consul/templates/server-service-loadbalancer.yaml
-@@ -0,0 +1,39 @@
+@@ -0,0 +1,49 @@
 +{{- if (and (.Values.server.loadBalancer.enabled) (or (and (ne (.Values.server.enabled | toString) "-") .Values.server.enabled) (and (eq (.Values.server.enabled | toString) "-") .Values.global.enabled))) }}
-+# Headless service for Consul server DNS entries. This service should only
-+# point to Consul servers. For access to an agent, one should assume that
-+# the agent is installed locally on the node and the NODE_IP should be used.
-+# If the node can't run a Consul agent, then this service can be used to
-+# communicate directly to a server agent.
 +apiVersion: v1
 +kind: Service
 +metadata:
@@ -76,6 +71,21 @@
 +      port: 8501
 +      targetPort: 8501
 +    {{- end }}
++    - name: serflan-tcp
++      protocol: "TCP"
++      port: 8301
++      targetPort: 8301
++    - name: serfwan-tcp
++      protocol: "TCP"
++      port: 8302
++      targetPort: 8302
++    - name: server
++      port: 8300
++      targetPort: 8300
++    - name: dns-tcp
++      protocol: "TCP"
++      port: 8600
++      targetPort: dns-tcp
 +  selector:
 +    app: {{ template "consul.name" . }}
 +    release: "{{ .Release.Name }}"

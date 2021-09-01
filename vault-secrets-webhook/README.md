@@ -11,3 +11,4 @@ helm upgrade vault-secrets-webhook banzaicloud-stable/vault-secrets-webhook --in
 
 ### Reference
 * [vault-secrets-webhook](https://github.com/banzaicloud/bank-vaults/tree/master/charts/vault-secrets-webhook)
+* [Error fetching image manifest](https://github.com/banzaicloud/bank-vaults/issues/1193)

@@ -1,0 +1,200 @@
+--- a/jaeger/Chart.yaml
++++ b/jaeger/Chart.yaml
+@@ -1,5 +1,5 @@
+ apiVersion: v2
+-appVersion: 1.22.0
++appVersion: 1.25.0
+ dependencies:
+ - condition: provisionDataStore.cassandra
+   name: cassandra
+--- /dev/null
++++ b/jaeger/templates/clickhouse-secret.yaml
+@@ -0,0 +1,11 @@
++{{ if (eq .Values.storage.type "clickhouse") -}}
++apiVersion: v1
++kind: Secret
++metadata:
++  name: {{ include "jaeger.fullname" . }}-clickhouse
++  labels:
++    {{- include "jaeger.labels" . | nindent 4 }}
++type: Opaque
++data:
++  config.yaml: {{ toYaml .Values.storage.clickhouse | b64enc }}
++{{- end }}
+--- a/jaeger/templates/collector-deploy.yaml
++++ b/jaeger/templates/collector-deploy.yaml
+@@ -42,6 +42,15 @@ spec:
+       imagePullSecrets:
+         {{- toYaml . | nindent 8 }}
+       {{- end }}
++      {{- if (eq .Values.storage.type "clickhouse") }}
++      initContainers:
++      - image: {{ .Values.clickhouse.image.name }}:{{ .Values.clickhouse.image.tag }}
++        imagePullPolicy: {{ .Values.clickhouse.pullPolicy }}
++        name: install-plugin
++        volumeMounts:
++        - mountPath: /plugin
++          name: plugin-volume
++      {{- end }}
+       containers:
+       - name: {{ template "jaeger.collector.name" . }}
+         securityContext:
+@@ -59,6 +68,11 @@ spec:
+           {{- if not .Values.ingester.enabled -}}
+           {{- include "storage.cmdArgs" . | nindent 10 }}
+           {{- end }}
++          {{- if (eq .Values.storage.type "clickhouse") }}
++          - --grpc-storage-plugin.binary=/plugin/jaeger-clickhouse
++          - --grpc-storage-plugin.configuration-file=/plugin-config/config.yaml
++          - --grpc-storage-plugin.log-level={{ .Values.clickhouse.logLevel }}
++          {{- end }}
+         env:
+           {{- if .Values.collector.service.zipkin }}
+           - name: COLLECTOR_ZIPKIN_HOST_PORT
+@@ -82,7 +96,11 @@ spec:
+             value: {{ .Values.storage.kafka.authentication }}
+           {{ else }}
+           - name: SPAN_STORAGE_TYPE
++            {{- if (eq .Values.storage.type "clickhouse") }}
++            value: grpc-plugin
++            {{- else }}
+             value: {{ .Values.storage.type }}
++            {{- end }}
+           {{- include "storage.env" . | nindent 10 }}
+           {{- end }}
+           {{- if .Values.collector.samplingConfig}}
+@@ -145,6 +163,12 @@ spec:
+           - name: strategies
+             mountPath: /etc/conf/
+         {{- end }}
++        {{- if (eq .Values.storage.type "clickhouse") }}
++          - name: plugin-volume
++            mountPath: /plugin
++          - name: plugin-config
++            mountPath: /plugin-config
++        {{- end }}
+       dnsPolicy: {{ .Values.collector.dnsPolicy }}
+       restartPolicy: Always
+       volumes:
+@@ -168,6 +192,13 @@ spec:
+           secret:
+             secretName: {{ .Values.storage.cassandra.tls.secretName }}
+       {{- end }}
++      {{- if (eq .Values.storage.type "clickhouse") }}
++        - name: plugin-volume
++          emptyDir: {}
++        - name: plugin-config
++          secret:
++            secretName: {{ include "jaeger.fullname" . }}-clickhouse
++      {{- end }}
+     {{- with .Values.collector.nodeSelector }}
+       nodeSelector:
+         {{- toYaml . | nindent 8 }}
+--- a/jaeger/templates/query-deploy.yaml
++++ b/jaeger/templates/query-deploy.yaml
+@@ -44,6 +44,15 @@ spec:
+       imagePullSecrets:
+         {{- toYaml . | nindent 8 }}
+       {{- end }}
++      {{- if (eq .Values.storage.type "clickhouse") }}
++      initContainers:
++      - image: {{ .Values.clickhouse.image.name }}:{{ .Values.clickhouse.image.tag }}
++        imagePullPolicy: {{ .Values.clickhouse.pullPolicy }}
++        name: install-plugin
++        volumeMounts:
++        - mountPath: /plugin
++          name: plugin-volume
++      {{- end }}
+       containers:
+       - name: {{ template "jaeger.query.name" . }}
+         securityContext:
+@@ -59,12 +68,21 @@ spec:
+           {{- end }}
+           {{- end }}
+           {{- include "storage.cmdArgs" . | nindent 10 }}
++          {{- if (eq .Values.storage.type "clickhouse") }}
++          - --grpc-storage-plugin.binary=/plugin/jaeger-clickhouse
++          - --grpc-storage-plugin.configuration-file=/plugin-config/config.yaml
++          - --grpc-storage-plugin.log-level={{ .Values.clickhouse.logLevel }}
++          {{- end }}
+         env:
+         {{- if .Values.query.extraEnv }}
+           {{- toYaml .Values.query.extraEnv | nindent 10 }}
+         {{- end }}
+           - name: SPAN_STORAGE_TYPE
++            {{- if (eq .Values.storage.type "clickhouse") }}
++            value: grpc-plugin
++            {{- else }}
+             value: {{ .Values.storage.type }}
++            {{- end }}
+           {{- include "storage.env" . | nindent 10 }}
+           {{- if .Values.query.basePath }}
+           - name: QUERY_BASE_PATH
+@@ -116,6 +134,12 @@ spec:
+           - name: ui-configuration
+             mountPath: /etc/conf/
+         {{- end }}
++        {{- if (eq .Values.storage.type "clickhouse") }}
++          - name: plugin-volume
++            mountPath: /plugin
++          - name: plugin-config
++            mountPath: /plugin-config
++        {{- end }}        
+         livenessProbe:
+           httpGet:
+             path: /
+@@ -236,6 +260,13 @@ spec:
+           secret:
+             secretName: {{ .Values.storage.cassandra.tls.secretName }}
+       {{- end }}
++      {{- if (eq .Values.storage.type "clickhouse") }}
++        - name: plugin-volume
++          emptyDir: {}
++        - name: plugin-config
++          secret:
++            secretName: {{ include "jaeger.fullname" . }}-clickhouse
++      {{- end }}      
+ {{- if .Values.query.oAuthSidecar.enabled }}
+       {{- range .Values.query.oAuthSidecar.extraConfigmapMounts }}
+         - name: {{ .name }}
+--- a/jaeger/values.yaml
++++ b/jaeger/values.yaml
+@@ -14,8 +14,8 @@ nameOverride: ""
+ fullnameOverride: ""
+ 
+ storage:
+-  # allowed values (cassandra, elasticsearch)
+-  type: cassandra
++  # allowed values (cassandra, elasticsearch, clickhouse)
++  type: clickhouse
+   cassandra:
+     host: cassandra
+     port: 9042
+@@ -44,6 +44,13 @@ storage:
+       # cassandra.port: 9042
+       # cassandra.keyspace: jaeger_v1_test
+       # cassandra.tls.enabled: "false"
++  clickhouse:
++    address: tcp://clickhouse-ch-cluster:9000
++    username: admin
++    password: c1ickh0use
++    spans_table: jaeger_spans_v2
++    spans_index_table: jaeger_index_v2
++    operations_table: jaeger_operations_v2
+   elasticsearch:
+     scheme: http
+     host: elasticsearch-master
+@@ -141,6 +148,13 @@ schema:
+ # https://github.com/elastic/helm-charts/tree/master/elasticsearch#configuration
+ elasticsearch: {}
+ 
++clickhouse:
++  logLevel: debug
++  image:
++    name: ghcr.io/jaegertracing/jaeger-clickhouse
++    tag: 0.7.0
++  pullPolicy: IfNotPresent
++
+ ingester:
+   enabled: false
+   podSecurityContext: {}

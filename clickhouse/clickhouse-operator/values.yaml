@@ -1,0 +1,9 @@
+operator:
+  image: 
+    name: altinity/clickhouse-operator
+    tag: 0.15.0
+
+metrics_exporter:
+  image:
+    name: altinity/metrics-exporter      
+    tag: 0.15.0

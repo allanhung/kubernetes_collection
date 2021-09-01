@@ -5,8 +5,20 @@ debug: false
 image:
   repository: banzaicloud/vault-secrets-webhook
 
-env:
-  VAULT_IMAGE: vault:1.5.2
+vaultEnv:
+  repository: banzaicloud/vault-env
 
 podDisruptionBudget:
-  enabled: false  
+  enabled: false
+
+
+podsFailurePolicy: Fail
+configmapFailurePolicy: Fail
+secretsFailurePolicy: Fail
+
+configMapMutation: true
+
+# enable github action
+customResourceMutations:
+- RunnerDeployment
+- Runner

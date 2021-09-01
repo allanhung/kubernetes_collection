@@ -41,6 +41,23 @@ spec:
   vaultRole: my-vault-role
 EOF
 ```
+* Json paser
+```bash
+apiVersion: kubernetes-client.io/v1
+kind: ExternalSecret
+metadata:
+  name: my-secret
+spec:
+  backendType: vault
+  kvVersion: 1
+  data:
+  - name: secretKey
+    key: secret/my-secret-path
+    property: secretKey
+  template:
+    stringData:
+      my-key: <%= JSON.parse(data.secretKey).my-key-field %>
+```
 
 ### Reference
 * [Kubernetes External Secrets](https://tw.godaddy.com/engineering/2019/04/16/kubernetes-external-secrets)

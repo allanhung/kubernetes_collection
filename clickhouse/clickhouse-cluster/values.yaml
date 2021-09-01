@@ -1,0 +1,151 @@
+# Configuration for the ClickHouse cluster to be started
+clickhouse:
+  # default cluster name
+  clusterName: ch-cluster
+  shardscount: 1
+  replicascount: 1
+
+  image:
+    name: yandex/clickhouse-server
+    tag: 21.8
+  imagePullPolicy: Always
+
+  resources:
+    requests:
+      cpu: 0.1
+      memory: 64Mi
+    limits:
+      cpu: 0.5
+      memory: 1Gi
+
+  persistence:
+    enabled: true
+    storageClass: mystorage-class
+    size: 20Gi
+
+  # User Configuration
+  user:
+  - username: admin
+    password: c1ickh0use
+    networks:
+    - "0.0.0.0/0"
+     
+  files:
+    events.proto: |
+      syntax = "proto3";
+      message Event {
+        string uuid = 1;
+        string event = 2;
+        string properties = 3;
+        string timestamp = 4;
+        uint64 team_id = 5;
+        string distinct_id = 6;
+        string created_at = 7;
+        string elements_chain = 8;
+      }
+
+  profiles:
+    default/allow_experimental_window_functions: "1"
+    default/max_memory_usage: "7000000000"
+
+  quotas:
+    default/interval/duration: "3600"
+
+  settings:
+    compression/case/method: zstd
+    disable_internal_dns_cache: "1"
+    logger/level: information
+
+  ports:
+    tcp: 9000
+    http: 8123
+
+  serviceType: ClusterIP
+
+  externalZookeeper: []
+#    - host: my-zookeeper
+#      port: 2181
+
+# zookeeper configuration
+zookeeper:
+  enabled: true
+
+  fullnameOverride: ch-zk
+
+  image:
+    registry: docker.io
+    repository: bitnami/zookeeper
+
+  auth:
+    enabled: false
+
+  serviceAccount:
+    create: false
+
+  replicaCount: 3
+
+  persistence:
+    enabled: true
+    storageClass: mystorage-class
+    size: 20Gi
+
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+      selector:
+        release: po
+    prometheusRule:
+      enabled: true
+      selector:
+        app: kube-prometheus-stack
+        release: po
+      rules:
+        - alert: ZookeeperSyncedFollowers
+          annotations:
+            message: The number of synced followers for the leader node in Zookeeper deployment my-release is less than 2.
+              This usually means that some of the Zookeeper nodes aren't communicating properly. If it doesn't resolve
+              itself you can try killing the pods (one by one).
+          expr: max(synced_followers{service="zookeeper-metrics"}) < 2
+          for: 5m
+          labels:
+            severity: critical
+        - alert: ZookeeperOutstandingRequests
+          annotations:
+            message: The number of outstanding requests for Zookeeper pod {{ $labels.pod }} is greater than 10. This can
+              indicate a performance issue with the Pod or cluster a whole.
+          expr: outstanding_requests{service="zookeeper-metrics"} > 10
+          for: 5m
+          labels:
+            severity: critical
+
+# zoonavigator configuration
+zoonavigator:
+  enabled: true
+
+  replicaCount: 1
+  
+  image:
+    repository: elkozmon/zoonavigator
+    tag: 1.1.0
+  
+  serviceAccount:
+    create: false
+
+  zoonavigator:
+    env:
+      CONNECTION_ZK_CONN: ch-zk-headless:2181
+      CONNECTION_ZK_NAME: ch-zk
+  ingress:
+    enabled: true
+    annotations:
+      kubernetes.io/ingress.class: nginx-internal
+      kubernetes.io/tls-acme: "true"
+    hosts:
+    - host: zoonavigator.mydomain.com
+      paths:
+      - /
+    tls:
+    - secretName: tls-zoonavigator.mydomain.com
+      hosts:
+      - zoonavigator.mydomain.com

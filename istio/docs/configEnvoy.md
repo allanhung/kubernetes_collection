@@ -11,15 +11,8 @@ dispatch error: http/1.1 protocol error: both 'Content-Length' and 'Transfer-Enc
 ```
 remove the Content-Length header
 ```
-#### dump config
-```bash
-kubectl exec -it ${POD} -- curl -X POST localhost:15000/config_dump
-```
-#### Verify envoy version
-```bash
-kubectl exec -it ${POD} -c istio-proxy  -- pilot-agent request GET server_info --log_as_json | jq {version}
-```
 
+### Workaround
 ### Config envoy through EnvoyFilter
 #### Networkfilter
 ```yaml
@@ -63,6 +56,16 @@ spec:
       value:
         http_protocol_options:
           allow_chunked_length: true
+```
+
+#### dump config
+```bash
+kubectl exec -it ${POD} -- curl -X POST localhost:15000/config_dump
+```
+
+#### Verify envoy version
+```bash
+kubectl exec -it ${POD} -c istio-proxy  -- pilot-agent request GET server_info --log_as_json | jq {version}
 ```
 
 ### Reference
