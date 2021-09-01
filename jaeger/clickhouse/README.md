@@ -9,3 +9,4 @@ patch -p1 < clickhouse.patch
 
 ### Reference
 [jaeger clickhouse patch](https://github.com/allanhung/helm-charts-3)
+[dependency store](https://github.com/jaegertracing/jaeger-clickhouse/issues/30)

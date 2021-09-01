@@ -63,4 +63,4 @@ query:
 
 spark:
   image: docker-proxy.mydomain.com/jaegertracing/spark-dependencies
-  enabled: true
+  enabled: false
