@@ -12,7 +12,7 @@ docker push allanhung/subspace:v1.5.0 .
 helm upgrade --install subspace \
   -n infra \
   --create-namespace \
-  -f ./values.yaml \
+  -f ./chart/values.yaml \
   ./chart
 ```
 
