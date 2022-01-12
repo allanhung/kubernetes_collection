@@ -1,0 +1,129 @@
+diff --git a/pkg/result/result.go b/pkg/result/result.go
+index 65962475e..4fc1041c2 100644
+--- a/pkg/result/result.go
++++ b/pkg/result/result.go
+@@ -157,9 +157,9 @@ func (c Client) getPrimaryURL(vulnID string, refs []string, source string) strin
+ func (c Client) Filter(ctx context.Context, vulns []types.DetectedVulnerability, misconfs []types.DetectedMisconfiguration,
+ 	severities []dbTypes.Severity, ignoreUnfixed, includeNonFailures bool, ignoreFile, policyFile string) (
+ 	[]types.DetectedVulnerability, *report.MisconfSummary, []types.DetectedMisconfiguration, error) {
+-	ignoredIDs := getIgnoredIDs(ignoreFile)
++	ignoredIDs, excludedSeveritySources := parseIgnoreFile(ignoreFile)
+ 
+-	filteredVulns := filterVulnerabilities(vulns, severities, ignoreUnfixed, ignoredIDs)
++	filteredVulns := filterVulnerabilities(vulns, severities, ignoreUnfixed, ignoredIDs, excludedSeveritySources)
+ 	misconfSummary, filteredMisconfs := filterMisconfigurations(misconfs, severities, includeNonFailures, ignoredIDs)
+ 
+ 	if policyFile != "" {
+@@ -175,7 +175,7 @@ func (c Client) Filter(ctx context.Context, vulns []types.DetectedVulnerability,
+ }
+ 
+ func filterVulnerabilities(vulns []types.DetectedVulnerability, severities []dbTypes.Severity,
+-	ignoreUnfixed bool, ignoredIDs []string) []types.DetectedVulnerability {
++	ignoreUnfixed bool, ignoredIDs []string, excludedSeveritySources []string) []types.DetectedVulnerability {
+ 	uniqVulns := make(map[string]types.DetectedVulnerability)
+ 	for _, vuln := range vulns {
+ 		if vuln.Severity == "" {
+@@ -192,6 +192,8 @@ func filterVulnerabilities(vulns []types.DetectedVulnerability, severities []dbT
+ 				continue
+ 			} else if utils.StringInSlice(vuln.VulnerabilityID, ignoredIDs) {
+ 				continue
++			} else if utils.StringInSlice(vuln.SeveritySource, excludedSeveritySources) {
++				continue
+ 			}
+ 
+ 			// Check if there is a duplicate vulnerability
+@@ -318,14 +320,13 @@ func evaluate(ctx context.Context, query rego.PreparedEvalQuery, input interface
+ 	return ignore, nil
+ }
+ 
+-func getIgnoredIDs(ignoreFile string) []string {
++func parseIgnoreFile(ignoreFile string) (ignoredIDs []string, excludedSeveritySources []string) {
+ 	f, err := os.Open(ignoreFile)
+ 	if err != nil {
+ 		// trivy must work even if no .trivyignore exist
+-		return nil
++		return nil, nil
+ 	}
+ 
+-	var ignoredIDs []string
+ 	scanner := bufio.NewScanner(f)
+ 	for scanner.Scan() {
+ 		line := scanner.Text()
+@@ -333,9 +334,16 @@ func getIgnoredIDs(ignoreFile string) []string {
+ 		if strings.HasPrefix(line, "#") || line == "" {
+ 			continue
+ 		}
+-		ignoredIDs = append(ignoredIDs, line)
++		// Check if the line is CVE that should be filtered.
++		if strings.HasPrefix(line, "CVE") {
++			cve := line
++			ignoredIDs = append(ignoredIDs, cve)
++		} else if strings.HasPrefix(line, "SeveritySource:") { // Check if the line is severity source that should be filtered.
++			severitySource := strings.TrimSpace(line[len("SeveritySource:"):])
++			excludedSeveritySources = append(excludedSeveritySources, severitySource)
++		}
+ 	}
+-	return ignoredIDs
++	return ignoredIDs, excludedSeveritySources
+ }
+ 
+ func shouldOverwrite(old, new types.DetectedVulnerability) bool {
+
+From f2607e6181a2364e2003ce33b3f95ad685a4cfdf Mon Sep 17 00:00:00 2001
+From: Lior Kesten <kestenlior@gmail.com>
+Date: Mon, 20 Dec 2021 19:33:18 +0200
+Subject: [PATCH 2/2] Updated README
+
+---
+ docs/vulnerability/examples/filter.md | 13 +++++++++++++
+ pkg/result/result.go                  | 11 ++++++-----
+ 2 files changed, 19 insertions(+), 5 deletions(-)
+
+diff --git a/docs/vulnerability/examples/filter.md b/docs/vulnerability/examples/filter.md
+index 072c24b12..92d49b63e 100644
+--- a/docs/vulnerability/examples/filter.md
++++ b/docs/vulnerability/examples/filter.md
+@@ -143,6 +143,19 @@ Total: 0 (UNKNOWN: 0, LOW: 0, MEDIUM: 0, HIGH: 0, CRITICAL: 0)
+ 
+ </details>
+ 
++## By Severity Sources
++
++Use `.trivyignore`.
++
++```bash
++$ cat .trivyignore
++# Accept the severity source - the prefix is needed.
++SeveritySource: python-safety-db
++
++$ trivy image python:3.4-alpine3.9
++```
++
++
+ ## By Type
+ Use `--vuln-type` option.
+ 
+diff --git a/pkg/result/result.go b/pkg/result/result.go
+index 4fc1041c2..5e4ee31e6 100644
+--- a/pkg/result/result.go
++++ b/pkg/result/result.go
+@@ -334,13 +334,14 @@ func parseIgnoreFile(ignoreFile string) (ignoredIDs []string, excludedSeveritySo
+ 		if strings.HasPrefix(line, "#") || line == "" {
+ 			continue
+ 		}
+-		// Check if the line is CVE that should be filtered.
+-		if strings.HasPrefix(line, "CVE") {
+-			cve := line
+-			ignoredIDs = append(ignoredIDs, cve)
+-		} else if strings.HasPrefix(line, "SeveritySource:") { // Check if the line is severity source that should be filtered.
++
++		// Check if the line is severity source that should be filtered.
++		if strings.HasPrefix(line, "SeveritySource:") {
+ 			severitySource := strings.TrimSpace(line[len("SeveritySource:"):])
+ 			excludedSeveritySources = append(excludedSeveritySources, severitySource)
++		} else { // Default is ignored ids (relevant for ignored vulnerabilities and ignored misconfigurations).
++			ignoredID := line
++			ignoredIDs = append(ignoredIDs, ignoredID)
+ 		}
+ 	}
+ 	return ignoredIDs, excludedSeveritySources

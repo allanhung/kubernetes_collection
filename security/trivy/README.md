@@ -71,3 +71,5 @@ EOF
 * [Better detection of Python and Node packages](https://github.com/aquasecurity/trivy/issues/1039)
 * [Supported OS](https://aquasecurity.github.io/trivy/latest/vuln-detection/os)
 * [Application Dependencies](https://aquasecurity.github.io/trivy/latest/vuln-detection/library)
+* [Added capability to filter data sources](https://github.com/aquasecurity/trivy/pull/1467)
+* [add_filter_data_sources](https://github.com/liorkesten/trivy/tree/liorkesten/add_filter_data_sources)

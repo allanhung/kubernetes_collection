@@ -19,3 +19,4 @@ helm upgrade --install statsd-exporter \
 * [vault-exporter](https://github.com/kubevault/vault_exporter)
 * [Forward DogStatsD Metrics to Prometheus](https://marselester.com/prometheus-via-dogstatsd.html)
 * [mapping ttl](https://github.com/prometheus/statsd_exporter/blob/master/pkg/mapper/mapper.go#L228-L229)
+* [timed-decorator](https://github.com/prometheus/statsd_exporter#timed-decorator)
