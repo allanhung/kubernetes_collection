@@ -1,0 +1,59 @@
+global:
+  storageClass: topology-aware-cloud-efficiency
+
+fullnameOverride: backend-redis
+
+architecture: standalone
+
+auth:
+  enabled: false
+podLabels:
+  stack: redis
+  role: server
+master:
+  persistence:
+    enabled: true
+    size: 40Gi
+metrics:
+  enabled: true
+  serviceMonitor:
+    enabled: true
+    additionalLabels:
+      release: po 
+  prometheusRule:
+    enabled: true
+    additionalLabels:
+      app: kube-prometheus-stack
+      release: po
+    rules:
+    - alert: RedisDown
+      expr: redis_up{service="{{ template "common.names.fullname" . }}-metrics"} == 0
+      for: 2m
+      labels:
+        severity: error
+      annotations:
+        summary: Redis instance {{ "{{ $labels.instance }}" }} down
+        description: Redis instance {{ "{{ $labels.instance }}" }} is down
+#    - alert: RedisMemoryHigh
+#      expr: >
+#         redis_memory_used_bytes{service="{{ template "common.names.fullname" . }}-metrics"} * 100
+#         /
+#         redis_memory_max_bytes{service="{{ template "common.names.fullname" . }}-metrics"}
+#         > 90
+#      for: 2m
+#      labels:
+#        severity: error
+#      annotations:
+#        summary: Redis instance {{ "{{ $labels.instance }}" }} is using too much memory
+#        description: |
+#           Redis instance {{ "{{ $labels.instance }}" }} is using {{ "{{ $value }}" }}% of its available memory.
+    - alert: RedisKeyEviction
+      expr: |
+         increase(redis_evicted_keys_total{service="{{ template "common.names.fullname" . }}-metrics"}[5m]) > 0
+      for: 1s
+      labels:
+        severity: error
+      annotations:
+        summary: Redis instance {{ "{{ $labels.instance }}" }} has evicted keys
+        description: |
+           Redis instance {{ "{{ $labels.instance }}" }} has evicted {{ "{{ $value }}" }} keys in the last 5 minutes.minutes.```

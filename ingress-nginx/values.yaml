@@ -3,9 +3,18 @@ controller:
     repository: k8s.gcr.io/ingress-nginx/controller
   config:
     enable-modsecurity: "true"
+    modsecurity-snippet: |
+      SecAuditLog /dev/stdout
+      SecAuditLogFormat JSON
+      SecDebugLog /var/log/modsec_debug.log
+      SecDebugLogLevel 9
+      SecRequestBodyLimitAction ProcessPartial
+      SecRuleRemoveById 920350
     enable-opentracing: "true"
     enable-owasp-modsecurity-crs: "true"
     gzip-types: "*"
+    client-body-buffer-size: 64m
+    large-client-header-buffers: "4 16k"
     proxy-body-size: 100m
     proxy-buffers-number: "4"
     proxy-buffer-size: 16k
@@ -20,7 +29,7 @@ controller:
     X-XSS-Protection: 1; mode=block
     X-Frame-Options: SAMEORIGIN
     X-Content-Type-Options: nosniff
-    Permissions-Policy: geolocation=(),midi=(),sync-xhr=(),microphone=(),camera=(),magnetometer=(),gyroscope=(),fullscreen=(self),payment=()
+    Permissions-Policy: geolocation=(),midi=(),sync-xhr=(self),microphone=(),camera=(),magnetometer=(),gyroscope=(),fullscreen=(self),payment=()
   electionID: ingress-controller-leader
   ingressClass: nginx-internal
   publishService:

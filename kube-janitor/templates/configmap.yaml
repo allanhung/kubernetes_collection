@@ -1,0 +1,11 @@
+{{- if .Values.config -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  labels:
+    {{- include "kube-janitor.labels" . | nindent 4 }}
+  name: {{ include "kube-janitor.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+data:
+  {{- tpl (toYaml .Values.config) . | nindent 2 }}
+{{- end -}}

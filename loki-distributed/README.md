@@ -31,6 +31,10 @@ kubectl delete statefulset loki-loki-distributed-querier --cascade=orphan -n log
 etcdctl get "" --prefix --keys-only
 etcdctl del "" --from-key=true
 ```
+* prober detected unhealthy status
+```bash
+etcdctl member remove <member_id>
+```
 
 ### Reset etcd cluster
 ```bash
@@ -42,3 +46,4 @@ set ETCD_INITIAL_CLUSTER_STATE=new
 * [loki distributed](https://github.com/grafana/helm-charts/tree/main/charts/loki-distributed)
 * [loki debug](https://www.jianshu.com/p/6b24340c2cf1)
 * [Loki Community Meeting 2021-07-01](https://www.youtube.com/watch?v=ppUrF7OMyks)
+* [Loki ruler not evaluting rules (err wrong chunk metadata)](https://github.com/grafana/loki/issues/3609#issuecomment-822168648)

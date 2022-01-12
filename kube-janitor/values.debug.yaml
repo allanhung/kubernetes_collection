@@ -1,0 +1,5 @@
+args:
+- --dry-run
+- --debug
+- --interval=60
+- --rules-file=/config/rules.yaml

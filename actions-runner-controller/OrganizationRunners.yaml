@@ -22,3 +22,10 @@ spec:
     scaleDownThreshold: '0.3'   # The percentage of busy runners at which the number of desired runners are re-evaluated to scale down
     scaleUpAdjustment: 1        # The scale up runner count added to desired count
     scaleDownAdjustment: 1      # The scale down runner count subtracted from the desired count
+  scaleUpTriggers:
+  - githubEvent:
+      checkRun:
+        types: ["created"]
+        status: "queued"
+    amount: 1
+    duration: "30s"

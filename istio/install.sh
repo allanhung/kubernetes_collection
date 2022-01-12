@@ -1,4 +1,4 @@
-export ISTIO_VER=1.11.0
+export ISTIO_VER=1.10.4
 export ISTIO_SRC_DIR=~/Downloads/git/kubernetes_collection
 export OS=osx
 export CLUSTERNAME=develop-a
@@ -18,16 +18,6 @@ echo "# ------------------------------------------------------------------------
 curl -L -o ${ISTIO_SRC_DIR}/istio/download/istioctl-${ISTIO_VER}-${OS}.tar.gz https://github.com/istio/istio/releases/download/${ISTIO_VER}/istioctl-${ISTIO_VER}-${OS}.tar.gz
 tar -zxvf ${ISTIO_SRC_DIR}/istio/download/istioctl-${ISTIO_VER}-${OS}.tar.gz -C ${ISTIO_SRC_DIR}/istio/${ISTIO_VER}/bin/
 
-echo
-echo "# ---------------------------------------------------------------------------------------------------------------"
-echo "#  Generate certificate for mesh."
-echo "# ---------------------------------------------------------------------------------------------------------------"
-mkdir -p ${ISTIO_SRC_DIR}/istio/certs && cd ${ISTIO_SRC_DIR}/istio/certs
-if [ ! -f "${ISTIO_SRC_DIR}/istio/certs/root-ca.conf" ]; then
-  make -f ${ISTIO_SRC_DIR}/istio/${ISTIO_VER}/release/tools/certs/Makefile.selfsigned.mk root-ca
-fi
-make -f ${ISTIO_SRC_DIR}/istio/${ISTIO_VER}/release/tools/certs/Makefile.selfsigned.mk ${CLUSTERNAME}-${REGION}-cacerts
-
 if [ ! -f "${ISTIO_SRC_DIR}/istio/download/istio-${ISTIO_VER}-linux-arm64.tar.gz" ]; then
   echo
   echo "# ---------------------------------------------------------------------------------------------------------------"
@@ -42,6 +32,16 @@ if [ ! -f "${ISTIO_SRC_DIR}/istio/download/istio-${ISTIO_VER}-linux-arm64.tar.gz
   echo "# ---------------------------------------------------------------------------------------------------------------"
   cd ${ISTIO_SRC_DIR}/istio/${ISTIO_VER} && patch -p1 < ${ISTIO_SRC_DIR}/istio/patch/istio-ingress.patch
 fi
+
+echo
+echo "# ---------------------------------------------------------------------------------------------------------------"
+echo "#  Generate certificate for mesh."
+echo "# ---------------------------------------------------------------------------------------------------------------"
+mkdir -p ${ISTIO_SRC_DIR}/istio/certs && cd ${ISTIO_SRC_DIR}/istio/certs
+if [ ! -f "${ISTIO_SRC_DIR}/istio/certs/root-ca.conf" ]; then
+  make -f ${ISTIO_SRC_DIR}/istio/${ISTIO_VER}/release/tools/certs/Makefile.selfsigned.mk root-ca
+fi
+make -f ${ISTIO_SRC_DIR}/istio/${ISTIO_VER}/release/tools/certs/Makefile.selfsigned.mk ${CLUSTERNAME}-${REGION}-cacerts
 
 echo
 echo "# ---------------------------------------------------------------------------------------------------------------"

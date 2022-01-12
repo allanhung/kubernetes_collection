@@ -1,18 +1,64 @@
+fullnameOverride: argo-workflows
+
 controller:
+  # -- parallelism dictates how many workflows can be running at the same time
+  parallelism:
+  # -- Globally limits the rate at which pods are created.
+  # This is intended to mitigate flooding of the Kubernetes API server by workflows with a large amount of
+  # parallel nodes.
+  resourceRateLimit: {}
+    # limit: 10
+    # burst: 1
+  # -- Limits the maximum number of incomplete workflows in a namespace
+  namespaceParallelism:
   containerRuntimeExecutor: k8sapi
+  metricsConfig:
+    enabled: true
+  telemetryConfig:
+    enabled: true
+  serviceMonitor:
+    enabled: true
+    additionalLabels:
+      release: po
   # it's for reducing the time gap between steps
   extraEnv:
     - name: DEFAULT_REQUEUE_TIME
       value: "2s"
-      
+  persistence:
+    connectionPool:
+      maxIdleConns: 100
+      maxOpenConns: 0
+      connMaxLifetime: 0s
+    nodeStatusOffLoad: true
+    archive: true
+    archiveTTL: 60d
+    mysql:
+      host: localhost
+      port: 3306
+      database: argo
+      tableName: argo_workflows
+      userNameSecret:
+        name: argo-mysql-config
+        key: username
+      passwordSecret:
+        name: argo-mysql-config
+        key: password
+  workflowNamespaces:
+    - default
+
 server:
   extraArgs:
     - --auth-mode=sso
+    - --auth-mode=server
   ingress:
     enabled: true
     annotations:
       kubernetes.io/ingress.class: nginx-internal
       kubernetes.io/tls-acme: "true"
+  serviceAccount:
+    annotations:
+      workflows.argoproj.io/rbac-rule: "'argo-group1' in groups or 'argo-group2' in groups"
+      workflows.argoproj.io/rbac-rule-precedence: "1"
   sso:
     clientId:
       name: argo-workflows-sso
@@ -20,3 +66,20 @@ server:
     clientSecret:
       name: argo-workflows-sso
       key: client-secret
+    scopes:
+       - groups
+    rbac:
+      enabled: true
+
+useDefaultArtifactRepo: true
+artifactRepository:
+  archiveLogs: true
+  oss:
+    accessKeySecret:
+      key: accessKey
+      name: argo-artifact-credential
+    secretKeySecret:
+      key: secretKey
+      name: argo-artifact-credential
+    endpoint: "http://oss-us-east-1-internal.aliyuncs.com"
+    keyFormat: "{{workflow.creationTimestamp.Y}}/{{workflow.creationTimestamp.m}}/{{workflow.creationTimestamp.d}}/{{workflow.namespace}}/{{workflow.name}}/{{pod.name}}"

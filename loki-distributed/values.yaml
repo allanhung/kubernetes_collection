@@ -180,7 +180,7 @@ loki-distributed:
           heartbeat_timeout: 10s
           num_tokens: 128
         rule_path: /tmp/loki/scratch
-        alertmanager_url: https://alertmanager.monitoring.svc.cluster.local
+        alertmanager_url: http://po-kube-prometheus-stack-alertmanager.monitoring.svc.cluster.local:9093
         external_url: {{ .Values.alertmanager_external_url }}
   
   serviceMonitor:
@@ -259,8 +259,8 @@ loki-distributed:
       size: 20Gi
       storageClass: my-storage-class
     directories:
-      kube-system:
-        rules.txt: |
+      fake:
+        rule1.yaml: |
           groups:
             - name: should_fire
               rules:
@@ -271,6 +271,15 @@ loki-distributed:
                     severity: critical
                   annotations:
                     summary: logs error count > 5 in kube-system
+            - name: OOMKilled
+              rules:
+                - alert: OOMKilled
+                  expr: count_over_time({app="eventrouter"} |= "OOMKilled"[5m]) > 0
+                  for: 5m
+                  labels:
+                    severity: warning
+                  annotations:
+                    summary: OOMKilled occurred in the last 5 minutes.
   
   memcached:
     image:

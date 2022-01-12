@@ -62,6 +62,24 @@ kubectl patch certs ${MYCERTS} --type=json -p='[{"op": "replace", "path": "/spec
 kubectl patch certs ${MYCERTS} --type=json -p='[{"op": "remove", "path": "/spec/renewBefore"}]'
 ```
 
+### check cert
+```
+openssl s_client -connect example.com:443 -servername example.com -showcerts
+CONNECTED(00000005)
+depth=1 O = Digital Signature Trust Co., CN = DST Root CA X3
+verify error:num=10:certificate has expired
+notAfter=Sep 30 14:01:15 2021 GMT
+verify return:0
+depth=1 O = Digital Signature Trust Co., CN = DST Root CA X3
+verify error:num=10:certificate has expired
+notAfter=Sep 30 14:01:15 2021 GMT
+verify return:0
+depth=3 O = Digital Signature Trust Co., CN = DST Root CA X3
+verify error:num=10:certificate has expired
+notAfter=Sep 30 14:01:15 2021 GMT
+verify return:0
+```
+
 ### Dashboard
 * [11001](https://grafana.com/grafana/dashboards/11001)
 

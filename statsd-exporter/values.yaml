@@ -3,8 +3,24 @@ image:
   # Overrides the image tag whose default is the chart appVersion.
   tag: "" 
 
+fullnameOverride: prom-statsd
+
 serviceMonitor:
   enabled: true
   namespace: monitoring
   additionalLabels:
     release: po
+
+statsd:
+  udpPort: 9125
+  tcpPort: 9126
+  mappingConfig: |-
+    mappings:
+    - match: "(.*)\\_counter"
+      match_type: regex
+      name: "${1}_count"
+      ttl: 0
+    - match: "(.*)"
+      match_type: regex
+      name: "${1}"
+      ttl: 30s

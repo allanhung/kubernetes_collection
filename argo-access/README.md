@@ -1,7 +1,7 @@
 ### Upgrade / Install
 ```bash
 helm upgrade --install argo-access \
-  -n argo-workflow \
+  -n argo-workflows \
   --create-namespace \
   --set env=example \
   -f values.yaml \

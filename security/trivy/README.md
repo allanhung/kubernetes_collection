@@ -16,17 +16,20 @@ cache:
 
 ### Local test
 ```bash
-curl -LO https://github.com/aquasecurity/trivy/releases/download/v0.18.3/trivy_0.18.3_macOS-64bit.tar.gz
-tar -zxf trivy_0.18.3_macOS-64bit.tar.gz && rm -f trivy_0.18.3_macOS-64bit.tar.gz
-mv trivy /usr/local/bin
+export VERSION=$(curl --silent "https://api.github.com/repos/aquasecurity/trivy/releases/latest" | grep '"tag_name":' | sed -E 's/.*"v([^"]+)".*/\1/')
+curl -LO https://github.com/aquasecurity/trivy/releases/download/v${VERSION}/trivy_${VERSION}_macOS-64bit.tar.gz
+mkdir -p tmp && tar -zxf trivy_${VERSION}_macOS-64bit.tar.gz -C tmp/ && rm -f trivy_${VERSION}_macOS-64bit.tar.gz
+mv tmp/trivy /usr/local/bin && rm -rf tmp
 trivy image python:3.4-alpine
 ```
+trivy ghcr.io/christophetd/log4shell-vulnerable-app
 ```bash
 cat > Dockerfile.trivy.
 docker run -d --rm --name=python centos tail -f /dev/null
 docker exec -ti python bash
-curl -LO https://github.com/aquasecurity/trivy/releases/download/v0.18.3/trivy_0.18.3_Linux-64bit.tar.gz
-tar -zxf trivy_0.18.3_Linux-64bit.tar.gz && rm -f trivy_0.18.3_Linux-64bit.tar.gz
+export VERSION=$(curl --silent "https://api.github.com/repos/aquasecurity/trivy/releases/latest" | grep '"tag_name":' | sed -E 's/.*"v([^"]+)".*/\1/')
+curl -LO https://github.com/aquasecurity/trivy/releases/download/v${VERSION}/trivy_${VERSION}_Linux-64bit.tar.gz
+tar -zxf trivy_${VERSION}_Linux-64bit.tar.gz && rm -f trivy_${VERSION}_Linux-64bit.tar.gz
 mv trivy /usr/local/bin
 ```
 dnf install -y python3-pip
@@ -36,6 +39,16 @@ pipenv install urllib3==1.22
 
 docker cp python:/Pipfile.lock .
 trivy fs Pipfile.lock
+
+### Scan all image in kubernetes
+kubectl get pods --all-namespaces -o jsonpath="{.items[*].spec.containers[*].image}" |\tr -s '[[:space:]]' '\n' |\sort |\uniq > podlist
+while read line; do echo $line; done < /tmp/podlist
+cat > podlist << EOF
+python:3.4-alpine
+ghcr.io/christophetd/log4shell-vulnerable-app
+EOF
+xargs -I {} sh -c "(trivy {} |grep CVE-2021-44228 && echo {}) > podscan.result" < podlist
+
 
 ### Safety DB
 curl -LO https://github.com/pyupio/safety-db/raw/master/data/insecure_full.json

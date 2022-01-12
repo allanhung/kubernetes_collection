@@ -9,19 +9,26 @@ helm repo update
 
 #### Upgrade / Install
 ```bash
-helm pull argo/argo --untar
-patch -p1 < artifact.patch
+helm pull argo/argo-workflows --untar
+patch -p1 < artifact.patch.v3
 
-helm upgrade --install argo \
-  -n infra \
+kubectl apply -f argo-workflows/crds/
+
+helm upgrade --install argo-workflows \
+  -n argo \
   --create-namespace \
   -f ./values.yaml \
   -f ./values.example.yaml \
   --set artifactRepository.oss.bucket=argo-bucket \
-  ./argo
+  --set controller.persistence.mysql.host=mysqlhost \
+  ./argo-workflows
 
-rm -rf ./argo
+rm -rf ./argo-workflows
 ```
+
+### Dashboard
+* [14136](https://grafana.com/grafana/dashboards/14136)
+* [13927](https://grafana.com/grafana/dashboards/13927)
 
 ### Reference
 * [argo helm chart](https://github.com/argoproj/argo-helm)

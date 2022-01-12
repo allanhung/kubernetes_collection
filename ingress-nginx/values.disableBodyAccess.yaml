@@ -1,0 +1,8 @@
+controller:
+  config:
+    enable-modsecurity: "true"
+    enable-owasp-modsecurity-crs: "true"
+    modsecurity-snippet: |
+      SecAuditLog /dev/stdout
+      SecAuditLogFormat JSON
+      SecRequestBodyAccess Off

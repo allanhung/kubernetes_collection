@@ -204,3 +204,4 @@ hal deploy apply
 * [kubernetes - Breaking Update API versions](https://github.com/spinnaker/clouddriver/commit/01f415f318a15970729b4415167e64eafeca9593)
 * [clouddriver kubernetes deployment support version](https://github.com/spinnaker/clouddriver/blob/master/clouddriver-kubernetes/src/main/java/com/netflix/spinnaker/clouddriver/kubernetes/op/handler/KubernetesDeploymentHandler.java#L20)
 * [clouddriver v7.3.5 kubernetes deployment support version](https://github.com/spinnaker/clouddriver/blob/version-7.3.5/clouddriver-kubernetes/src/main/java/com/netflix/spinnaker/clouddriver/kubernetes/op/handler/KubernetesDeploymentHandler.java#L20-L23)
+* [Zombie Executions](https://spinnaker.io/docs/guides/runbooks/orca-zombie-executions/)

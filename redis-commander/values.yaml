@@ -1,0 +1,7 @@
+fullnameOverride: redis-commander
+
+ingress:
+  enabled: true
+  annotations:
+    kubernetes.io/ingress.class: nginx-internal
+    kubernetes.io/tls-acme: "true"
