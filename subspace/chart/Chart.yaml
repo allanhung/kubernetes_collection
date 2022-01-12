@@ -1,0 +1,8 @@
+apiVersion: v2
+name: subspace
+description: A Helm chart for subspace
+type: application
+version: 0.1.0
+appVersion: v1.5.0
+sources:
+- https://github.com/subspacecommunity/subspace

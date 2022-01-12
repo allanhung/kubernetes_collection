@@ -1,0 +1,74 @@
+diff --git a/subspace/Dockerfile b/subspace/Dockerfile
+index 5c7aab1..37437f7 100644
+--- a/subspace/Dockerfile
++++ b/subspace/Dockerfile
+@@ -18,9 +18,15 @@ ENV GODEBUG="netdns=go http2server=0"
+ 
+ RUN make build BUILD_VERSION=${BUILD_VERSION}
+ 
+-FROM alpine:3.13.4
++FROM centos:7
+ LABEL maintainer="github.com/subspacecommunity/subspace"
+ 
++RUN yum install -y iproute https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
++RUN curl -o /etc/yum.repos.d/jdoss-wireguard-epel-7.repo https://copr.fedorainfracloud.org/coprs/jdoss/wireguard/repo/epel-7/jdoss-wireguard-epel-7.repo
++RUN curl -s https://packagecloud.io/install/repositories/imeyer/runit/script.rpm.sh | bash
++RUN yum install -y wireguard-dkms wireguard-tools runit dnsmasq socat
++RUN echo "#define ipv6_dst_lookup_flow(a, b, c, d) ipv6_dst_lookup(a, b, &dst, c) + (void *)0 ?: dst" >> /usr/src/wireguard-$(dkms status |grep wireguard | awk -F':' '{print $1}' | awk -F'/' '{print $2}')/compat/compat.h
++
+ COPY --from=build  /src/subspace /usr/bin/subspace
+ COPY entrypoint.sh /usr/local/bin/entrypoint.sh
+ COPY bin/my_init /sbin/my_init
+@@ -29,15 +35,6 @@ ENV DEBIAN_FRONTEND noninteractive
+ 
+ RUN chmod +x /usr/bin/subspace /usr/local/bin/entrypoint.sh /sbin/my_init
+ 
+-RUN apk add --no-cache \
+-    iproute2 \
+-    iptables \
+-    ip6tables \
+-    dnsmasq \
+-    socat  \
+-    wireguard-tools \
+-    runit
+-
+ ENTRYPOINT ["/usr/local/bin/entrypoint.sh" ]
+ 
+ CMD [ "/sbin/my_init" ]
+diff --git a/subspace/entrypoint.sh b/subspace/entrypoint.sh
+index 2d6cb8a..2fefaed 100644
+--- a/subspace/entrypoint.sh
++++ b/subspace/entrypoint.sh
+@@ -140,13 +140,22 @@ if [[ ${SUBSPACE_IPV6_NAT_ENABLED} -ne 0 ]]; then
+     /sbin/ip6tables --wait -t nat --append OUTPUT -s ${SUBSPACE_IPV6_POOL} -p tcp --dport 53 -j DNAT --to ${SUBSPACE_IPV6_GW}
+   fi
+ fi
++
++#
++# WireGuard (Load module)
++#
++find /host/usr/src/kernels -maxdepth 1 -mindepth 1 -type d | xargs -I {} ln -sf {} /usr/src/kernels/
++WG_VERSION=$(dkms status |grep wireguard | awk -F':' '{print $1}' | awk -F'/' '{print $2}')
++dkms build -m wireguard -v ${WG_VERSION}
++dkms install -m wireguard -v ${WG_VERSION}
++
+ #
+ # WireGuard (${SUBSPACE_IPV4_POOL})
+ #
+ umask_val=$(umask)
+ umask 0077
+ if ! test -d /data/wireguard; then
+-  mkdir /data/wireguard
++  mkdir -p /data/wireguard
+   cd /data/wireguard
+ 
+   mkdir clients
+@@ -227,7 +236,7 @@ fi
+ 
+ # subspace service
+ if ! test -d /etc/service/subspace; then
+-  mkdir /etc/service/subspace
++  mkdir -p /etc/service/subspace
+   cat <<RUNIT >/etc/service/subspace/run
+ #!/bin/sh
+ source /etc/envvars

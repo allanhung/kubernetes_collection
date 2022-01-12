@@ -1,0 +1,25 @@
+{{- if .Values.service.udp.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  {{- with .Values.service.udp.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  labels:
+    {{- include "subspace.labels" . | nindent 4 }}
+  name: {{ include "subspace.fullname" . }}-udp
+  namespace: {{ .Release.Namespace }}
+spec:
+  ports:
+  - name: {{ .Values.service.udp.portName | default "http" }}
+    port: {{ .Values.service.udp.port | default "80" }}
+    targetPort: {{ .Values.service.udp.targetPort | default .Values.service.udp.port | default "80" }}
+    protocol: UDP
+    {{- with .Values.service.udp.nodePort }}
+    nodePort: {{ . }}
+    {{- end }}
+  selector:
+    {{- include "subspace.matchLabels" . | nindent 4 }}
+  type: {{ .Values.service.udp.type }}
+{{- end }}

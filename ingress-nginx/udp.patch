@@ -1,0 +1,81 @@
+--- a/ingress-nginx/templates/controller-service.yaml
++++ b/ingress-nginx/templates/controller-service.yaml
+@@ -68,17 +68,6 @@
+     {{- end }}
+     {{- end }}
+   {{- end }}
+-  {{- range $key, $value := .Values.udp }}
+-    - name: {{ $key }}-udp
+-      port: {{ $key }}
+-      protocol: UDP
+-      targetPort: {{ $key }}-udp
+-    {{- if $.Values.controller.service.nodePorts.udp }}
+-    {{- if index $.Values.controller.service.nodePorts.udp $key }}
+-      nodePort: {{ index $.Values.controller.service.nodePorts.udp $key }}
+-    {{- end }}
+-    {{- end }}
+-  {{- end }}
+   selector:
+     {{- include "ingress-nginx.selectorLabels" . | nindent 4 }}
+     app.kubernetes.io/component: controller
+--- a/ingress-nginx/templates/controller-service-udp.yaml
++++ b/ingress-nginx/templates/controller-service-udp.yaml
+@@ -0,0 +1,58 @@
++{{- if .Values.udp -}}
++{{- if .Values.controller.service.enabled -}}
++apiVersion: v1
++kind: Service
++metadata:
++  annotations:
++  {{- range $key, $value := .Values.controller.service.udp.annotations }}
++    {{ $key }}: {{ $value | quote }}
++  {{- end }}
++  labels:
++    {{- include "ingress-nginx.labels" . | nindent 4 }}
++    app.kubernetes.io/component: controller
++  {{- if .Values.controller.service.labels }}
++    {{- toYaml .Values.controller.service.labels | nindent 4 }}
++  {{- end }}
++  name: {{ include "ingress-nginx.controller.fullname" . }}-udp
++  namespace: {{ .Release.Namespace }}
++spec:
++  type: {{ .Values.controller.service.type }}
++{{- if .Values.controller.service.clusterIP }}
++  clusterIP: {{ .Values.controller.service.clusterIP }}
++{{- end }}
++{{- if .Values.controller.service.externalIPs }}
++  externalIPs: {{ toYaml .Values.controller.service.externalIPs | nindent 4 }}
++{{- end }}
++{{- if .Values.controller.service.loadBalancerIP }}
++  loadBalancerIP: {{ .Values.controller.service.loadBalancerIP }}
++{{- end }}
++{{- if .Values.controller.service.loadBalancerSourceRanges }}
++  loadBalancerSourceRanges: {{ toYaml .Values.controller.service.loadBalancerSourceRanges | nindent 4 }}
++{{- end }}
++{{- if .Values.controller.service.externalTrafficPolicy }}
++  externalTrafficPolicy: {{ .Values.controller.service.externalTrafficPolicy }}
++{{- end }}
++{{- if .Values.controller.service.sessionAffinity }}
++  sessionAffinity: {{ .Values.controller.service.sessionAffinity }}
++{{- end }}
++{{- if .Values.controller.service.healthCheckNodePort }}
++  healthCheckNodePort: {{ .Values.controller.service.healthCheckNodePort }}
++{{- end }}
++  ports:
++  {{- $setNodePorts := (or (eq .Values.controller.service.type "NodePort") (eq .Values.controller.service.type "LoadBalancer")) }}
++  {{- range $key, $value := .Values.udp }}
++    - name: {{ $key }}-udp
++      port: {{ $key }}
++      protocol: UDP
++      targetPort: {{ $key }}-udp
++    {{- if $.Values.controller.service.nodePorts.udp }}
++    {{- if index $.Values.controller.service.nodePorts.udp $key }}
++      nodePort: {{ index $.Values.controller.service.nodePorts.udp $key }}
++    {{- end }}
++    {{- end }}
++  {{- end }}
++  selector:
++    {{- include "ingress-nginx.selectorLabels" . | nindent 4 }}
++    app.kubernetes.io/component: controller
++{{- end }}
++{{- end }}
