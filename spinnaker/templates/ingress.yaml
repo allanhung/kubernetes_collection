@@ -1,0 +1,46 @@
+{{- $apiIsStable := eq (include "halyard.ingress.isStable" .) "true" -}}
+{{- $pathType := .Values.ingress.pathType | default "Prefix" }}
+{{- $serviceName := include "halyard.fullname" . }}
+{{- $servicePort := .Values.service.port | default "80" }}
+{{- $ingressSupportsPathType := eq (include "halyard.ingress.supportsPathType" .) "true" }}
+{{- if and .Values.ingress.enabled .Values.service.enabled }}
+apiVersion: {{ include "halyard.ingress.apiVersion" . }}
+kind: Ingress
+metadata:
+  {{- with .Values.ingress.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  labels:
+    {{- include "halyard.labels" . | nindent 4 }}
+  name: {{ include "halyard.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  {{- if $apiIsStable }}
+  ingressClassName: {{ .Values.ingress.ingressClassName }}
+  {{- end }}
+  {{- if .Values.ingress.tls.enabled }}
+  tls:
+    - hosts:
+        - {{ .Values.ingress.host  }}
+      secretName: tls-{{ include "halyard.fullname" . }}
+  {{- end }}
+  rules:
+    - host: {{ .Values.ingress.host }}
+      http:
+        paths:
+          - path: {{ .Values.ingress.path | default "/" }}
+            {{- if $ingressSupportsPathType }}
+            pathType: {{ $pathType }}
+            {{- end }}
+            backend:
+              {{- if $apiIsStable }}
+              service:
+                name: {{ $serviceName }}
+                port:
+                  number: {{ $servicePort }}
+              {{- else }}              
+              serviceName: {{ $serviceName }}
+              servicePort: {{ $servicePort }}
+              {{- end }}
+{{- end }}

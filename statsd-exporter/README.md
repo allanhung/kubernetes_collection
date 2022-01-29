@@ -11,6 +11,28 @@ helm upgrade --install statsd-exporter \
     prometheus-community/prometheus-statsd-exporter
 ```        
 
+### Debug
+```bash
+# server
+curl -LO https://github.com/prometheus/statsd_exporter/releases/download/v0.22.4/statsd_exporter-0.22.4.darwin-amd64.tar.gz
+tar -zxf statsd_exporter-0.22.4.darwin-amd64.tar.gz
+rm -f statsd_exporter-0.22.4.darwin-amd64.tar.gz
+cat > mapping.yaml << EOF
+mappings:
+- match: "(.*)\\\\_counter"
+  match_type: regex
+  name: "\${1}_count"
+  ttl: 0
+- match: "(.*)"
+  match_type: regex
+  name: "\${1}"
+  ttl: 5s
+EOF
+./statsd_exporter-0.22.4.darwin-amd64/statsd_exporter --statsd.mapping-config=mapping.yaml --log.level=debug
+# clinet
+docker run -d --rm --name=statsd_client rockylinux tail -f /dev/null
+```
+
 ### Reference
 * [statsd-exporter](https://github.com/prometheus/statsd_exporter)
 * [statsd-exporter helm chart](https://github.com/niclic/helm-charts)

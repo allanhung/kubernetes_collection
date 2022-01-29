@@ -67,7 +67,7 @@
 +    - name: {{ $key }}-udp
 +      port: {{ $key }}
 +      protocol: UDP
-+      targetPort: {{ $key }}-udp
++      targetPort: {{ $key }}
 +    {{- if $.Values.controller.service.nodePorts.udp }}
 +    {{- if index $.Values.controller.service.nodePorts.udp $key }}
 +      nodePort: {{ index $.Values.controller.service.nodePorts.udp $key }}

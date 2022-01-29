@@ -14,10 +14,41 @@ helm upgrade --install nginx-internal \
 ### Dashboard
 * [9614](https://grafana.com/grafana/dashboards/9614)
 
+### Service Port Patch
+```bash
+helm pull ingress-nginx/ingress-nginx --version 3.40.0 --untar
+patch -p1 < port.patch
+
+helm upgrade --install nginx \
+    --namespace infra \
+    --create-namespace \
+    --version 3.40.0 \
+    -f ./values.yaml \
+    ./ingress-nginx
+
+rm -rf ./ingress-nginx
+```
+
 ### UDP Patch
 ```bash
-helm pull ingress-nginx/ingress-nginx --version 3.36.0 --untar
+helm pull ingress-nginx/ingress-nginx --version 3.40.0 --untar
 patch -p1 < udp.patch
+
+helm upgrade --install nginx \
+    --namespace infra \
+    --create-namespace \
+    --version 3.40.0 \
+    -f ./values.yaml \
+    ./ingress-nginx
+
+rm -rf ./ingress-nginx
+```
+
+### Fail to ensure loadbalancer, error Message: The specified Port must be between 1 and 65535..
+* In some cloud provider, it could only use the number as port and target port.
+```bash
+helm pull ingress-nginx/ingress-nginx --version 3.36.0 --untar
+patch -p1 < port.patch
 
 helm upgrade --install nginx \
     --namespace infra \

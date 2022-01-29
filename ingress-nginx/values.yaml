@@ -1,4 +1,5 @@
 controller:
+  allow-snippet-annotations: "false"
   image:
     repository: k8s.gcr.io/ingress-nginx/controller
   config:

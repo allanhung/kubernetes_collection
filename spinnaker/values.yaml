@@ -1,0 +1,154 @@
+# Overrides the chart's name
+nameOverride: null
+
+# Overrides the chart's computed fullname
+fullnameOverride: null
+
+kubeVersionOverride: 1.22.3
+
+# Number of replicas for the pod
+replicas: 1
+
+# The number of old replicaSets to retain to allow rollback
+revisionHistoryLimit: 2
+
+# Annotations for the pod
+podAnnotations: {}
+
+# The name of the ServiceAccount to use for the pod
+serviceAccountName: ""
+#serviceAccountName: '{{ include "halyard.fullname" . }}'
+
+# Image pull secrets for docker images
+imagePullSecrets: []
+
+# Pod anti-affinity
+affinity: {}
+
+# Tolerations for the pod
+tolerations: []
+
+# Node selector for the pod
+nodeSelector: {}
+
+# SecurityContext for the pod
+podSecurityContext: {}
+
+image:
+  # Docker image registry for the image
+  registry: us-docker.pkg.dev
+  # Docker image repository for the image
+  repository: spinnaker-community/docker/halyard
+  # Docker image tag for the image
+  tag: stable
+  # Docker image pull policy
+  pullPolicy: Always
+
+# Configures the liveness probe for the container
+livenessProbe: {}
+
+# Configures the readiness probe for the container
+readinessProbe: {}
+
+# Define command for the container
+command: 
+- sh
+- -c
+- cp -r /home/spinnaker/hal /home/spinnaker/.hal/ && /opt/halyard/bin/halyard
+
+# Define arguments for the container
+args: []
+
+# The SecurityContext for the container
+containerSecurityContext: {}
+
+# Environment variables to add to the pod (key: value)
+env: {}
+
+# Environment variables from secrets or configmaps to add to the pod
+envFrom: []
+
+# Volume mounts to add to the the pod
+volumeMounts: 
+- mountPath: /home/spinnaker/hal
+  name: config
+- mountPath: /home/spinnaker/hal/default/profiles
+  name: profiles
+- mountPath: /home/spinnaker/hal/default/service-settings
+  name: service-settings
+- mountPath: /home/spinnaker/hal/saml
+  name: saml
+
+# Resource requests and limits for the pod
+resources: {}
+
+# Volumes to add to the pod
+volumes: 
+- configMap:
+    defaultMode: 420
+    items:
+    - key: config
+      path: config
+    - key: kubeconfig.yml
+      path: kubeconfig.yml
+    name: hal
+  name: config
+- configMap:
+    defaultMode: 420
+    items:
+    - key: echo-local.yml
+      path: echo-local.yml
+    - key: gate-local.yml
+      path: gate-local.yml
+    name: hal
+  name: profiles
+- configMap:
+    defaultMode: 420
+    items:
+    - key: deck.yml
+      path: deck.yml
+    - key: gate.yml
+      path: gate.yml
+    - key: redis.yml
+      path: redis.yml
+    name: hal
+  name: service-settings
+- configMap:
+    defaultMode: 420
+    items:
+    - key: metadata.yaml
+      path: metadata.yml
+    - key: spinnaker.jks
+      path: spinnaker.jks
+    name: hal
+  name: saml
+
+config: ""
+
+service: 
+  enabled: false
+  udp:
+    enabled: false
+
+ingress: 
+  enable: false
+
+ingressList: 
+  - annotations:
+      kubernetes.io/tls-acme: 'true'
+    host: spinnaker.mydomain.com
+    ingressClassName: nginx-internal
+    service:
+      name: spin-deck
+      port: 9000
+    tls:
+      enabled: true
+  - annotations:
+      kubernetes.io/tls-acme: 'true'
+    host: spinnaker-api.mydomain.com
+    ingressClassName: nginx-internal
+    service:
+      name: spin-gate
+      port: 8084
+    tls:
+      enabled: true

@@ -1,191 +1,163 @@
-### Installation
-#### halyard
+## Installation
 ```bash
-mkdir -p ~/.hal
-docker run -d --name halyard --rm \
-    -v ~/.hal:/home/spinnaker/.hal \
-    -v ~/.kube:/home/spinnaker/.kube \
-    -p 8084:8084 -p 9000:9000 \
-    us-docker.pkg.dev/spinnaker-community/docker/halyard:stable
+helm upgrade --install halyard \
+  --namespace spinnaker \
+  --create-namespace \
+  -f values.yaml \
+  ./
 ```
 
-#### halyard in kubernetes
+## Restore
+### backup (Source)
+```
+export PODNAME=$(kubectl get pods -n spinnaker |grep halyard | awk {'print $1'})
+kubectl -n spinnaker exec -ti ${PODNAME} bash
+$ hal backup create
++ Create backup
+  Success
++ Successfully created a backup at location:
+/home/spinnaker/halyard-2022-01-27_08-05-08-349Z.tar
+$ exit
+export BAKFILE=halyard-2022-01-27_08-05-08-349Z.tar
+mkdir hal && cd hal
+kubectl -n spinnaker cp ${PODNAME}:/home/spinnaker/${BAKFILE} ${BAKFILE}
+kubectl -n spinnaker cp ${PODNAME}:/home/spinnaker/.hal/saml/metadata.xml metadata.xml
+kubectl -n spinnaker cp ${PODNAME}:/home/spinnaker/.hal/saml/spinnaker.jks spinnaker.jks
+tar -zxf ${BAKFILE}
+gsed -i -e "s/kubeconfigFile:.*/kubeconfigFile: kubeconfig.yml/g" config
+gsed -i -e "s#metadataLocal:.*#metadataLocal: saml/metadata.xml#g" config
+gsed -i -e "s#keyStore:.*#keyStore: saml/spinnaker.jks#g" config
+```
+### create configmap from backup (Target)
 ```bash
-cat << EOF | kubectl apply -f -
-apiVersion: extensions/v1beta1
-kind: Deployment
-metadata:
-  labels:
-    app.kubernetes.io/managed-by: Helm
-  name: halyard
-  namespace: spinnaker
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: halyard
-  template:
-    metadata:
-      labels:
-        app: halyard
-    spec:
-      containers:
-      - command:
-        - sh
-        - -c
-        - cp -r /home/spinnaker/hal /home/spinnaker/.hal/ && /opt/halyard/bin/halyard
-        image: us-docker.pkg.dev/spinnaker-community/docker/halyard:stable
-        imagePullPolicy: IfNotPresent
-        name: halyard
-        volumeMounts:
-        - mountPath: /home/spinnaker/hal
-          name: config
-        - mountPath: /home/spinnaker/hal/default/profiles
-          name: profiles
-        - mountPath: /home/spinnaker/hal/default/service-settings
-          name: service-settings
-      volumes:
-      - configMap:
-          items:
-          - key: config
-            path: config
-          - key: kubeconfig.yml
-            path: kubeconfig.yml
-          name: hal
-        name: config
-      - configMap:
-          items:
-          - key: echo-local.yml
-            path: echo-local.yml
-          - key: gate-local.yml
-            path: gate-local.yml
-          name: hal
-        name: profiles
-      - configMap:
-          items:
-          - key: deck.yml
-            path: deck.yml
-          - key: gate.yml
-            path: gate.yml
-          - key: redis.yml
-            path: redis.yml
-          name: hal
-        name: service-settings
-EOF
+kubectl create cm hal -n spinnaker --from-file=kubeconfig.yml --from-file=config --from-file=./default/service-settings/deck.yml --from-file=./default/profiles/echo-local.yml --from-file=./default/profiles/gate-local.yml --from-file=./default/service-settings/gate.yml --from-file=./default/service-settings/redis.yml --from-file=./metadata.xml --from-file=./spinnaker.jks
 ```
 
-#### create kubernetes account
+### setup kubernetes deploy target (Target)
+#### Get deploy account token in target kubernetes (Target)
 ```bash
-hal config provider kubernetes account add my-k8s-account --kubeconfig-file my-kube-config --context my-context
-hal config provider kubernetes account edit my-k8s-account --add-custom-resource SparkApplication
-# Set the deploy endpoint
-hal config deploy edit --type distributed --account-name my-k8s-account
-hal deploy apply
+kubectl get secret -n kube-system $(kubectl get sa spinnaker -n kube-system -o=jsonpath='{.secrets[0].name}') -o=jsonpath='{.data.token}' | base64 --decode
 ```
 
-### delete kubernetes account
+#### setup spinnaker acoount for kubernetes (Target)
 ```bash
-hal config provider kubernetes account delete my-k8s-account
-hal deploy apply
+$ export TOKEN=xxx
+$ export CLUSTER_NAME=ali-dr-shared
+$ export CLUSTER_API_SERVER=https://47.254.33.139:6443
+$ export KUBECONFIG=/home/spinnaker/.hal/kubeconfig.yml
+$ hal config provider kubernetes account list
+$ kubectl config set-cluster ${CLUSTER_NAME} --server=${CLUSTER_API_SERVER} --insecure-skip-tls-verify=true
+$ kubectl config set-credentials ${CLUSTER_NAME} --token=${TOKEN}
+$ kubectl config set-context ${CLUSTER_NAME} --cluster=${CLUSTER_NAME} --user=${CLUSTER_NAME}
+$ kubectl config use-context ${CLUSTER_NAME}
+$ hal config provider kubernetes account add ${CLUSTER_NAME} --provider-version v2 --context $(kubectl config current-context) --kubeconfig-file ${KUBECONFIG}
+$ hal config provider kubernetes account edit ${CLUSTER_NAME} --add-custom-resource SparkApplication
+$ hal config deploy edit --type distributed --account-name ${CLUSTER_NAME}
+$ hal config provider kubernetes account list
 ```
 
-### TroubleShooting
+### remove spinnaker acoount for kubernetes (Optional) (Target)
+```bash
+$ hal config provider kubernetes account list
+$ hal config provider kubernetes account delete ali-shared
+$ hal config provider kubernetes account list
+```
+
+### setup spinnaker deploy target (Target)
+```bash
+$ hal config deploy edit --account-name ali-dr-shared
+```
+
+### setup spinnaker endpoint (Target)
+```bash
+$ hal config security api edit --override-base-url https://spinnaker-api.mydomain.com
+$ hal config security ui edit --override-base-url https://spinnaker.mydomain.com
+$ hal config security authn oauth2 edit --pre-established-redirect-uri https://spinnaker-api.mydomain.com/login
+$ hal config security authn saml edit --service-address-url https://spinnaker-api.mydomain.com
+```
+
+### disable saml (Optional) (Target)
+```bash
+$ hal config security authn saml disable
+```
+
+### disable oauth2 (Optional) (Target)
+```bash
+$ hal config security authn oauth2 disable
+```
+
+### deploy spinnaker to target
+```bash
+$ hal deploy apply
+```
+
+## Config Spinnaker github artifact
+```bash
+$ hal config features edit –artifacts true
+$ hal config artifact github enable
+$ hal config artifact github account add $<account_name> --token <token>
+$ hal config artifact github account list
+$ hal config artifact github account edit <account_name> --token <token>
+$ hal deploy apply
+```
+
+## TroubleShooting
+* Log
 ```bash
 kubectl logs -l app.kubernetes.io/name=deck -c deck --tail=5 -f
 kubectl logs -l app.kubernetes.io/name=echo -c echo --tail=5 -f
 kubectl logs -l app.kubernetes.io/name=orca -c orca --tail=5 -f
 kubectl logs -l app.kubernetes.io/name=clouddriver -c clouddriver --tail=5 -f
 kubectl logs -l app.kubernetes.io/name=rosco -c rosco --tail=5 -f
-# delete execution
+```
+* delete execution
+```bash
 curl -X POST http://spin-orca.spinnaker.svc:8083/admin/queue/zombies/{executionId}:kill
-# cancel execution
+```
+* cancel execution
+```bash
 curl -X PUT http://spin-orca.spinnaker.svc:8083/pipelines/{executionId}/cancel
 ```
-Hang on Wait For Manifest To Stabilize
-Workaroud:
-```
-delete the pipeline and recreate.
-```
-
-### Config Spinnaker github artifact
+* Hang on Wait For Manifest To Stabilize
+Workaroud: delete the pipeline and recreate.
+* kuberntes api version not support by spinnaker clouddriver
+check:
 ```bash
-hal config artifact github account list
-hal config artifact github account edit <account_name> --token <token>
-hal deploy apply
+kubectl logs -l app.kubernetes.io/name=clouddriver -c clouddriver |grep -i unsupport |uniq
+No replicaSet is supported at api version extensions/v1beta1
+No deployment is supported at api version extensions/v1beta1
 ```
-
-### Add Spinnaker kubernetes account
+Workaroud: Downgrade clouddriver version
 ```bash
-kubectl apply -f rbac.yaml
-TOKEN=$(kubectl get secret -n kube-system $(kubectl get sa spinnaker -n kube-system -o=jsonpath='{.secrets[0].name}') -o=jsonpath='{.data.token}' | base64 --decode)
-CLUSTER=my-example-cluster
-CLUSTER_API_SERVER=https://127.0.0.1:6443
-
-hal config provider kubernetes account list
-export KUBECONFIG=/home/spinnaker/.hal/myconfig.yml
-kubectl config set-cluster ${CLUSTER} --server=${CLUSTER_API_SERVER} --insecure-skip-tls-verify=true
-kubectl config set-credentials ${CLUSTER} --token=${TOKEN}
-kubectl config set-context ${CLUSTER} --cluster=${CLUSTER} --user=${CLUSTER}
-kubectl config use-context ${CLUSTER}
-hal config provider kubernetes account add ${CLUSTER} --provider-version v2 --context $(kubectl config current-context) --kubeconfig-file myconfig.yml
-sed -i -e "s/kubeconfigFile:.*/kubeconfigFile: myconfig.yml/g" ~/.hal/config
-hal deploy apply
+kubectl set image deploy/spin-clouddriver clouddriver=us-docker.pkg.dev/spinnaker-community/docker/clouddriver:7.3.5-20210624040021 --record
 ```
 
-### Backup hal config
+## Backup hal config
 ```bash
-hal backup create
-kubectl -n spinnaker cp halyard-c79bb874-bc68g:/home/spinnaker/halyard-2021-08-06_07-13-32-717Z.tar halyard-2021-08-06_07-13-32-717Z.tar
+$ hal backup create
 ```
 
-### Restore
+## Restore from hal backup
 ```bash
-hal backup restore --backup-path <backup-name>.tar
+$ hal backup restore --backup-path <backup-file>
 ```
 
-### write hal config to configmap
-```
-mkdir hal && cd hal
-tar -zxf ../halyard-2021-08-06_07-13-32-717Z.tar
-gsed -i -e "s/kubeconfigFile:.*/kubeconfigFile: myconfig.yml/g" config
-kubectl delete cm hal
-kubectl create cm hal --from-file=myconfig.yml --from-file=config --from-file=./default/service-settings/deck.yml --from-file=./default/profiles/echo-local.yml --from-file=./default/profiles/gate-local.yml --from-file=./default/service-settings/gate.yml --from-file=./default/service-settings/redis.yml
-```
 
-### Upgrade spinnaker
+## Migrate spinnaker to specify version
+* upgrade halyard
 ```bash
-kubectl set image deployment halyard halyard=us-docker.pkg.dev/spinnaker-community/docker/halyard:stable --record
-kubectl exec -ti halyard-c79bb874-bc68g bash
-# confirm deploy target
-export KUBECONFIG=~/.hal/kubeconfig.yml
-kubectl config get-contexts
+kubectl -n spinnaker set image deployment halyard halyard=us-docker.pkg.dev/spinnaker-community/docker/halyard:stable --record
+```
+* upgrade spinnaker by hal
+```bash
+kubectl -n spinnaker exec -ti deploy/halyard bash
 hal version list
-export OLDVERSION=1.22.1
 export VERSION=1.26.6
 hal config version edit --version $VERSION
 hal deploy apply
 ```
 
-### check clouddriver log
-```bash
-kubectl logs spin-clouddriver-77f997798b-dpp4d |grep -i unsupport |uniq
-No replicaSet is supported at api version extensions/v1beta1
-No deployment is supported at api version extensions/v1beta1
-```
-
-### set component version
-```bash
-kubectl set image deploy/spin-clouddriver clouddriver=us-docker.pkg.dev/spinnaker-community/docker/clouddriver:7.3.5-20210624040021 --record
-```
-
-
-### Downgrade spinnaker
-```bash
-hal config version edit --version $VERSION
-hal deploy apply
-```
-
-### Enable teams
+## Enable teams
 ```bash
 cat >> /home/spinnaker/.hal/default/profiles/echo-local.yml << EOF
 
