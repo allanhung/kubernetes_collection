@@ -1,0 +1,42 @@
+statefulset:
+  enabled: false
+
+nexus:
+  env:
+    - name: INSTALL4J_ADD_VM_PARAMS
+      value: "-Xms1200M -Xmx1200M -XX:MaxDirectMemorySize=2G -XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap -Djavax.net.ssl.keyStore=/nexus-data/keystores/node/nexus.jks -Djavax.net.ssl.keyStorePassword=<keystore_password>"
+    - name: NEXUS_SECURITY_RANDOMPASSWORD
+      value: "false"
+  docker:
+    enabled: true
+  properties:
+    override: true
+    data:
+      nexus.licenseFile: /nexus-data/license/sonatype-license.lic
+  resources:
+    requests:
+      cpu: 250m
+      memory: 2560Mi
+  securityContext:
+    fsGroupChangePolicy: "OnRootMismatch"
+
+persistence:
+  enabled: false
+  storageClass: topology-aware-available
+  storageSize: 20Gi
+
+serviceAccount:
+  create: false
+
+ingress:
+  enabled: true
+  annotations:
+    kubernetes.io/tls-acme: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: 20000m
+    nginx.ingress.kubernetes.io/proxy-buffering: "off"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "360"
+    nginx.ingress.kubernetes.io/proxy-request-buffering: "off"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "120"
+  ingressClassName: nginx-external
+  hostPath: /

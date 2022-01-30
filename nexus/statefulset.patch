@@ -1,0 +1,80 @@
+--- a/nexus-repository-manager/templates/deployment.yaml
++++ b/nexus-repository-manager/templates/deployment.yaml
+@@ -1,5 +1,5 @@
+ apiVersion: apps/v1
+-kind: Deployment
++kind: StatefulSet
+ metadata:
+   name: {{ template "nexus.fullname" . }}
+   labels:
+@@ -14,9 +14,8 @@
+ {{ toYaml .Values.deployment.annotations | indent 4 }}
+ {{- end }}
+ spec:
++  podManagementPolicy: Parallel
+   replicas: 1
+-  strategy:
+-    type: {{ .Values.deploymentStrategy }}
+   selector:
+     matchLabels:
+       {{- include "nexus.selectorLabels" . | nindent 6 }}
+@@ -25,6 +24,7 @@
+           {{ toYaml . | indent 6 }}
+         {{- end }}
+       {{- end }}      
++  serviceName: {{ template "nexus.fullname" . }}
+   template:
+     metadata:
+       annotations:
+@@ -131,13 +131,10 @@
+ {{ toYaml .Values.nexus.securityContext | indent 8 }}
+       {{- end }}
+       volumes:
++        {{- if not .Values.persistence.enabled }}
+         - name: {{ template "nexus.name" . }}-data
+-          {{- if .Values.persistence.enabled }}
+-          persistentVolumeClaim:
+-            claimName: {{ .Values.persistence.existingClaim | default (printf "%s-%s" (include "nexus.fullname" .) "data") }}
+-          {{- else }}
+           emptyDir: {}
+-          {{- end }}
++        {{- end }}
+         {{- if .Values.config.enabled }}
+         - name: {{ template "nexus.name" . }}-conf
+           configMap:
+@@ -163,3 +160,23 @@
+       tolerations:
+ {{ toYaml . | indent 8 }}
+     {{- end }}
++{{- if .Values.persistence.enabled }}
++  volumeClaimTemplates:
++  - apiVersion: v1
++    kind: PersistentVolumeClaim
++    metadata:
++      name: {{ template "nexus.name" . }}-data
++    spec:
++      accessModes:
++        - {{ .Values.persistence.accessMode | quote }}
++      resources:
++        requests:
++          storage: {{ .Values.persistence.storageSize | quote }}
++    {{- if .Values.persistence.storageClass }}
++    {{- if (eq "-" .Values.persistence.storageClass) }}
++      storageClassName: ""
++    {{- else }}
++      storageClassName: "{{ .Values.persistence.storageClass }}"
++    {{- end }}
++    {{- end }}
++{{- end }}
+--- a/nexus-repository-manager/templates/pvc.yaml
++++ b/nexus-repository-manager/templates/pvc.yaml
+@@ -1,3 +1,4 @@
++{{- if not .Values.statefulset.enabled }}
+ {{- if and .Values.persistence.enabled (not .Values.persistence.existingClaim) }}
+ kind: PersistentVolumeClaim
+ apiVersion: v1
+@@ -28,3 +29,4 @@
+ {{- end }}
+ {{- end }}
+ {{- end }}
++{{- end }}

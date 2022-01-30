@@ -1,0 +1,24 @@
+kubeVersionOverride: 1.22.3
+
+statefulset: 
+  enabled: false
+
+nexus:
+  docker:
+    registries:
+    - host: docker.mydomain.com
+      port: 5006
+      secretName: tls-docker.mydomain.com
+
+persistence:
+  enabled: true
+  storageSize: 3000Gi
+  pdName: <disk_id>
+  fsType: xfs
+
+ingress:
+  hostRepo: nexus.mydomain.com
+  tls:
+  - secretName: tls-nexus.mydomain.com
+    hosts:
+    - nexus.mydomain.com

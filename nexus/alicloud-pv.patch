@@ -1,0 +1,14 @@
+--- a/nexus-repository-manager/templates/pv.yaml
++++ b/nexus-repository-manager/templates/pv.yaml
+@@ -19,8 +19,9 @@
+   claimRef:
+     namespace: {{ .Release.Namespace }}
+     name: {{ template "nexus.fullname" . }}-data
+-  gcePersistentDisk:
+-    pdName: {{ .Values.persistence.pdName }}
++  csi:
++    driver: diskplugin.csi.alibabacloud.com
++    volumeHandle: {{ .Values.persistence.pdName }}
+     fsType: {{ .Values.persistence.fsType }}
+ {{- end }}
+ {{- end }}

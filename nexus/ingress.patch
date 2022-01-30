@@ -1,0 +1,129 @@
+--- a/nexus-repository-manager/values.yaml
++++ b/nexus-repository-manager/values.yaml
+@@ -97,7 +97,7 @@
+ 
+ ingress:
+   enabled: false
+-  annotations: {kubernetes.io/ingress.class: nginx}
++  annotations: {}
+     # kubernetes.io/ingress.class: nginx
+     # kubernetes.io/tls-acme: "true"
+   hostPath: /
+--- a/nexus-repository-manager/templates/_helpers.tpl
++++ b/nexus-repository-manager/templates/_helpers.tpl
+@@ -61,3 +61,30 @@
+     {{ default "default" .Values.serviceAccount.name }}
+ {{- end -}}
+ {{- end -}}
++
++{/* Allow KubeVersion to be overridden. */}}
++{{- define "nexus.ingress.kubeVersion" -}}
++  {{- default .Capabilities.KubeVersion.Version .Values.kubeVersionOverride -}}
++{{- end -}}
++
++{{/* Get Ingress API Version */}}
++{{- define "nexus.ingress.apiVersion" -}}
++  {{- if and (.Capabilities.APIVersions.Has "networking.k8s.io/v1") (semverCompare ">= 1.19.x" (include "nexus.ingress.kubeVersion" .)) -}}
++      {{- print "networking.k8s.io/v1" -}}
++  {{- else if .Capabilities.APIVersions.Has "networking.k8s.io/v1beta1" -}}
++    {{- print "networking.k8s.io/v1beta1" -}}
++  {{- else -}}
++    {{- print "extensions/v1beta1" -}}
++  {{- end -}}
++{{- end -}}
++
++{{/* Check Ingress stability */}}
++{{- define "nexus.ingress.isStable" -}}
++  {{- eq (include "nexus.ingress.apiVersion" .) "networking.k8s.io/v1" -}}
++{{- end -}}
++
++{{/* Check Ingress supports pathType */}}
++{{/* pathType was added to networking.k8s.io/v1beta1 in Kubernetes 1.18 */}}
++{{- define "nexus.ingress.supportsPathType" -}}
++  {{- or (eq (include "nexus.ingress.isStable" .) "true") (and (eq (include "nexus.ingress.apiVersion" .) "networking.k8s.io/v1beta1") (semverCompare ">= 1.18.x" (include "nexus.ingress.kubeVersion" .))) -}}
++{{- end -}}
+--- a/nexus-repository-manager/templates/ingress.yaml
++++ b/nexus-repository-manager/templates/ingress.yaml
+@@ -1,8 +1,12 @@
++{{- $apiIsStable := eq (include "nexus.ingress.isStable" .) "true" -}}
++{{- $apiVersion := include "nexus.ingress.apiVersion" . }}
++{{- $pathType := .Values.ingress.pathType | default "Prefix" }}
++{{- $ingressSupportsPathType := eq (include "nexus.ingress.supportsPathType" .) "true" }}
+ {{- if .Values.ingress.enabled -}}
+ {{- $fullName := include "nexus.fullname" . -}}
+ {{- $svcPort := .Values.nexus.nexusPort -}}
+ {{- $ingressPath := .Values.ingress.path -}}
+-apiVersion: networking.k8s.io/v1beta1
++apiVersion: {{ $apiVersion }}
+ kind: Ingress
+ metadata:
+   name: {{ $fullName }}
+@@ -18,6 +22,9 @@
+     {{- toYaml . | nindent 4 }}
+   {{- end }}
+ spec:
++  {{- if $apiIsStable }}
++  ingressClassName: {{ .Values.ingress.ingressClassName }}
++  {{- end }}
+   {{- if .Values.ingress.tls }}
+   tls:
+     {{- range .Values.ingress.tls }}
+@@ -33,14 +40,25 @@
+       http:
+         paths:
+           - path: {{ .Values.ingress.hostPath }}
++            {{- if $ingressSupportsPathType }}
++            pathType: {{ $pathType }}
++            {{- end }}
+             backend:
++              {{- if $apiIsStable }}
++              service:
++                name: {{ $fullName }}
++                port:
++                  number: {{ $svcPort }}
++              {{- else }}
+               serviceName: {{ $fullName }}
+-              servicePort: 8081
++              servicePort: {{ $svcPort }}
++              {{- end }}
+ 
+ {{ if .Values.nexus.docker.enabled }}
+ {{ range $registry := .Values.nexus.docker.registries }}
++{{- $svcName := (printf "%s-%s-%d" ($fullName | trunc 49) "docker" ($registry.port | int)) -}}
+ ---
+-apiVersion: networking.k8s.io/v1beta1
++apiVersion: {{ $apiVersion }}
+ kind: Ingress
+ metadata:
+   name: {{ $fullName | trunc 49 }}-docker-{{ $registry.port }}
+@@ -56,6 +74,9 @@
+     {{- toYaml . | nindent 4 }}
+   {{- end }}
+ spec:
++  {{- if $apiIsStable }}
++  ingressClassName: {{ $.Values.ingress.ingressClassName }}
++  {{- end }}
+   tls:
+     - hosts:
+       - {{ $registry.host | quote }}
+@@ -65,9 +86,19 @@
+       http:
+         paths:
+           - path: /
++            {{- if $ingressSupportsPathType }}
++            pathType: {{ $pathType }}
++            {{- end }}
+             backend:
+-              serviceName: {{ $fullName | trunc 49 }}-docker-{{ $registry.port }}
++              {{- if $apiIsStable }}
++              service:
++                name: {{ $svcName }}
++                port:
++                  number: {{ $registry.port }}
++              {{- else }}
++              serviceName: {{ $svcName }}
+               servicePort: {{ $registry.port }}
++              {{- end }}            
+     {{- end }}
+ {{- end }}
+ {{- end }}
