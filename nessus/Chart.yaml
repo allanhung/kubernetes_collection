@@ -1,0 +1,9 @@
+apiVersion: v2
+name: nessus
+description: A Helm chart for nessus
+type: application
+version: 0.1.0
+appVersion: 10.0.2
+sources:
+- https://www.tenable.com/
+- https://hub.docker.com/r/tenableofficial/nessus

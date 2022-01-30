@@ -1,0 +1,112 @@
+# Overrides the chart's name
+nameOverride: null
+
+# Overrides the chart's computed fullname
+fullnameOverride: null
+
+kubeVersionOverride: 1.22.3
+
+# Number of replicas for the pod
+replicas: 1
+
+# The number of old replicaSets to retain to allow rollback
+revisionHistoryLimit: 2
+
+# Annotations for the pod
+podAnnotations: {}
+
+# The name of the ServiceAccount to use for the pod
+serviceAccountName: ""
+#serviceAccountName: '{{ include "nessus.fullname" . }}'
+
+# Image pull secrets for docker images
+imagePullSecrets: []
+
+# Pod anti-affinity
+affinity: {}
+
+# Tolerations for the pod
+tolerations: []
+
+# Node selector for the pod
+nodeSelector: {}
+
+# SecurityContext for the pod
+podSecurityContext: {}
+
+image:
+  # Docker image registry for the image
+  registry: null
+  # Docker image repository for the image
+  repository: tenableofficial/nessus
+  # Docker image tag for the image
+  tag: null
+  # Docker image pull policy
+  pullPolicy: Always
+
+# Configures the liveness probe for the container
+livenessProbe: {}
+
+# Configures the readiness probe for the container
+readinessProbe: {}
+
+# Define command for the container
+command: []
+
+# Define arguments for the container
+args: []
+
+# The SecurityContext for the container
+containerSecurityContext: {}
+
+# Environment variables to add to the pod (key: value)
+env: {}
+
+# Environment variables from secrets or configmaps to add to the pod
+envFrom:
+- secretRef:
+    name: '{{ include "nessus.fullname" . }}'
+
+# Volume mounts to add to the the pod
+volumeMounts: []
+#volumeMounts:
+#- name: nessus-config
+#  mountPath: /config
+
+# Resource requests and limits for the pod
+resources: {}
+
+# Volumes to add to the pod
+volumes: []
+#volumes:
+#- name: nessus-config
+#  configMap:
+#    name: nessus
+
+config: ""
+
+service: 
+  enabled: true
+  port: 8834
+  targetPort: 8834
+  type: ClusterIP
+  udp:
+    enabled: false
+
+ingress: 
+  annotations:
+    kubernetes.io/tls-acme: 'true'
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+  enabled: true
+  host: nessus.mydomain.com
+  ingressClassName: nginx-internal
+  tls:
+    enabled: true
+
+ingressList: []
+
+secrets:
+  data:
+    USERNAME: admin
+    PASSWORD: admin
+    ACTIVATION_CODE: 1234-5678-90AB-CDEF-1234

@@ -42,7 +42,7 @@ kubectl get secret -n kube-system $(kubectl get sa spinnaker -n kube-system -o=j
 #### setup spinnaker acoount for kubernetes (Target)
 ```bash
 $ export TOKEN=xxx
-$ export CLUSTER_NAME=ali-dr-shared
+$ export CLUSTER_NAME=my-cluster
 $ export CLUSTER_API_SERVER=https://47.254.33.139:6443
 $ export KUBECONFIG=/home/spinnaker/.hal/kubeconfig.yml
 $ hal config provider kubernetes account list
@@ -59,13 +59,13 @@ $ hal config provider kubernetes account list
 ### remove spinnaker acoount for kubernetes (Optional) (Target)
 ```bash
 $ hal config provider kubernetes account list
-$ hal config provider kubernetes account delete ali-shared
+$ hal config provider kubernetes account delete <cluster_name>
 $ hal config provider kubernetes account list
 ```
 
 ### setup spinnaker deploy target (Target)
 ```bash
-$ hal config deploy edit --account-name ali-dr-shared
+$ hal config deploy edit --account-name <cluster_name>
 ```
 
 ### setup spinnaker endpoint (Target)
@@ -99,37 +99,6 @@ $ hal config artifact github account add $<account_name> --token <token>
 $ hal config artifact github account list
 $ hal config artifact github account edit <account_name> --token <token>
 $ hal deploy apply
-```
-
-## TroubleShooting
-* Log
-```bash
-kubectl logs -l app.kubernetes.io/name=deck -c deck --tail=5 -f
-kubectl logs -l app.kubernetes.io/name=echo -c echo --tail=5 -f
-kubectl logs -l app.kubernetes.io/name=orca -c orca --tail=5 -f
-kubectl logs -l app.kubernetes.io/name=clouddriver -c clouddriver --tail=5 -f
-kubectl logs -l app.kubernetes.io/name=rosco -c rosco --tail=5 -f
-```
-* delete execution
-```bash
-curl -X POST http://spin-orca.spinnaker.svc:8083/admin/queue/zombies/{executionId}:kill
-```
-* cancel execution
-```bash
-curl -X PUT http://spin-orca.spinnaker.svc:8083/pipelines/{executionId}/cancel
-```
-* Hang on Wait For Manifest To Stabilize
-Workaroud: delete the pipeline and recreate.
-* kuberntes api version not support by spinnaker clouddriver
-check:
-```bash
-kubectl logs -l app.kubernetes.io/name=clouddriver -c clouddriver |grep -i unsupport |uniq
-No replicaSet is supported at api version extensions/v1beta1
-No deployment is supported at api version extensions/v1beta1
-```
-Workaroud: Downgrade clouddriver version
-```bash
-kubectl set image deploy/spin-clouddriver clouddriver=us-docker.pkg.dev/spinnaker-community/docker/clouddriver:7.3.5-20210624040021 --record
 ```
 
 ## Backup hal config
@@ -167,7 +136,58 @@ EOF
 hal deploy apply
 ```
 
-### Reference
+## Spinnaker Oauth Setup
+* OIDC
+```bash
+hal config security authn oauth2 edit \
+    --client-id $CLIENT_ID \
+    --client-secret $CLIENT_SECRET \
+    --provider $PROVIDER \
+    --user-info-requirements <key=value>
+```
+* SAML
+```bash
+hal config security authn saml edit \
+    --keystore ${KEYSTORE_FILE} \ # keytool -genkey -v -keystore ${KEYSTORE_FILE} -alias saml -keyalg RSA -keysize 2048 -validity 10000
+    --keystore-alias saml \
+    --keystore-password ${KEYSTORE_PASSWORD} \
+    --metadata ${METADATA_FILE} \ # metadata.xml from provider
+    --issuer-id ${ISSUER_ID} \
+    --service-address-url ${SPINNAKER_API_URL}
+```
+
+## TroubleShooting
+* Log
+```bash
+kubectl logs -l app.kubernetes.io/name=deck -c deck --tail=5 -f
+kubectl logs -l app.kubernetes.io/name=echo -c echo --tail=5 -f
+kubectl logs -l app.kubernetes.io/name=orca -c orca --tail=5 -f
+kubectl logs -l app.kubernetes.io/name=clouddriver -c clouddriver --tail=5 -f
+kubectl logs -l app.kubernetes.io/name=rosco -c rosco --tail=5 -f
+```
+* delete execution
+```bash
+curl -X POST http://spin-orca.spinnaker.svc:8083/admin/queue/zombies/{executionId}:kill
+```
+* cancel execution
+```bash
+curl -X PUT http://spin-orca.spinnaker.svc:8083/pipelines/{executionId}/cancel
+```
+* Hang on Wait For Manifest To Stabilize
+Workaroud: delete the pipeline and recreate.
+* kuberntes api version not support by spinnaker clouddriver
+check:
+```bash
+kubectl logs -l app.kubernetes.io/name=clouddriver -c clouddriver |grep -i unsupport |uniq
+No replicaSet is supported at api version extensions/v1beta1
+No deployment is supported at api version extensions/v1beta1
+```
+Workaroud: Downgrade clouddriver version
+```bash
+kubectl set image deploy/spin-clouddriver clouddriver=us-docker.pkg.dev/spinnaker-community/docker/clouddriver:7.3.5-20210624040021 --record
+```
+
+## Reference
 * [Install and Configure Spinnaker](https://spinnaker.io/setup/install/)
 * [disable configmap versioning](https://spinnaker.io/reference/providers/kubernetes-v2/#strategy)
 * [zombie-executions](https://spinnaker.io/guides/runbooks/orca-zombie-executions/)
