@@ -10,3 +10,4 @@ helm upgrade --install nessus \
 * [Tenable](https://www.tenable.com)
 * [Nessus Docker Hub](https://hub.docker.com/r/tenableofficial/nessus)
 * [Deploy Nessus as a Docker Image](https://docs.tenable.com/nessus/Content/DeployNessusDocker.htm)
+* [Host Discovery & Vulnerability Scanning With Nessus](https://www.youtube.com/watch?v=TA1rCRyHRsM)

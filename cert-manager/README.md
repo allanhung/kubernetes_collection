@@ -5,25 +5,36 @@
 helm repo add jetstack https://charts.jetstack.io
 helm repo update
 
-helm upgrade cert-manager jetstack/cert-manager --install \
+helm upgrade cert-manager --install  \
   --namespace cert-manager \
-  -f values.yaml
+  --create-namespace \
+  -f values.yaml \
+  --set ingressShim.defaultIssuerName=letsencrypt-issuer \
+  --set ingressShim.defaultIssuerKind=ClusterIssuer \
+  --set ingressShim.defaultIssuerGroup=cert-manager.io \
+  --set prometheus.servicemonitor.enabled=true \
+  --set prometheus.servicemonitor.prometheusInstance=kube-prometheus-stack \
+  --set prometheus.servicemonitor.labels.release=po \
+  --set extraArgs="{--dns01-recursive-nameservers=8.8.8.8:53,--dns01-recursive-nameservers-only=true}" \
+  --set installCRDs=true \
+  jetstack/cert-manager
 ```
 
 ### Install webhook (AliDns)
 ```bash
 # build docker image
-git clone https://github.com/allanhung/cert-manager-alidns-webhook
+git clone --depth 1 https://github.com/DEVmachine-fr/cert-manager-alidns-webhook
+
 cd cert-manager-alidns-webhook
 docker build -t cert-manager-alidns-webhook:my-tag .
 
 # create service account with DNSFullAccess in alicloud   
-kubectl create secret generic alidns-secrets --from-literal="access-token=yourtoken" --from-literal="secret-key=yoursecret"i -n cert-manager
+kubectl create secret generic alidns-secrets --from-literal="access-token=yourtoken" --from-literal="secret-key=yoursecret" -n cert-manager
 
 # create docker Registry Secret if necessary
 kubectl create secret docker-registry my-registry-secret --docker-server=my-docker-registry --docker-username=my-name --docker-password=my-password
 
-helm upgrade cert-manager-webhook-alidns ./alidns-webhook --install \
+helm upgrade cert-manager-webhook-alidns ./cert-manager-alidns-webhook/charts/alidns-webhook --install \
    --namespace cert-manager \
    --set image.repository=my-docker-registry/cert-manager-alidns-webhook \
    --set image.tag=my-tag \
