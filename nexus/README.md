@@ -3,8 +3,10 @@
 helm repo add sonatype https://sonatype.github.io/helm3-charts/
 helm repo update
 
-helm pull sonatype/nexus-repository-manager --untar
-patch -p1 < ingress.patch
+export VERSION=3.37.1
+
+helm pull sonatype/nexus-repository-manager --untar --version ${VERSION}
+patch -p1 < ingress.${VERSION}.patch
 patch -p1 < alicloud-pv.patch
 
 helm upgrade --install nxrm \

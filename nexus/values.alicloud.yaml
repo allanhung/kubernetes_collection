@@ -12,6 +12,7 @@ nexus:
 
 persistence:
   enabled: true
+  driver: csi
   storageSize: 3000Gi
   pdName: <disk_id>
   fsType: xfs

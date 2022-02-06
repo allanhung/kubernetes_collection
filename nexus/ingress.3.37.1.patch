@@ -1,14 +1,28 @@
 --- a/nexus-repository-manager/values.yaml
 +++ b/nexus-repository-manager/values.yaml
-@@ -97,7 +97,7 @@
+@@ -48,10 +48,7 @@
+   # Default the pods UID and GID to match the nexus3 container.
+   # Customize or remove these values from the securityContext as appropriate for
+   # your deployment environment.
+-  securityContext:
+-    runAsUser: 200
+-    runAsGroup: 200
+-    fsGroup: 200
++  securityContext: {}
+   podAnnotations: {}
+   livenessProbe:
+     initialDelaySeconds: 30
+@@ -102,8 +99,8 @@
  
  ingress:
    enabled: false
--  annotations: {kubernetes.io/ingress.class: nginx}
+-  annotations:
+-    kubernetes.io/ingress.class: "nginx"
++  ingressClassName: nginx
 +  annotations: {}
-     # kubernetes.io/ingress.class: nginx
-     # kubernetes.io/tls-acme: "true"
    hostPath: /
+   hostRepo: repo.demo
+   # tls:
 --- a/nexus-repository-manager/templates/_helpers.tpl
 +++ b/nexus-repository-manager/templates/_helpers.tpl
 @@ -61,3 +61,30 @@
@@ -53,7 +67,7 @@
  {{- $fullName := include "nexus.fullname" . -}}
  {{- $svcPort := .Values.nexus.nexusPort -}}
  {{- $ingressPath := .Values.ingress.path -}}
--apiVersion: networking.k8s.io/v1beta1
+-apiVersion: networking.k8s.io/v1
 +apiVersion: {{ $apiVersion }}
  kind: Ingress
  metadata:
@@ -68,37 +82,46 @@
    {{- if .Values.ingress.tls }}
    tls:
      {{- range .Values.ingress.tls }}
-@@ -33,14 +40,25 @@
+@@ -33,17 +40,25 @@
        http:
          paths:
            - path: {{ .Values.ingress.hostPath }}
+-            pathType: Prefix
 +            {{- if $ingressSupportsPathType }}
 +            pathType: {{ $pathType }}
 +            {{- end }}
              backend:
 +              {{- if $apiIsStable }}
-+              service:
-+                name: {{ $fullName }}
-+                port:
+               service:
+                 name: {{ $fullName }}
+                 port:
+-                  number: 8081
 +                  number: {{ $svcPort }}
 +              {{- else }}
-               serviceName: {{ $fullName }}
--              servicePort: 8081
++              serviceName: {{ $fullName }}
 +              servicePort: {{ $svcPort }}
 +              {{- end }}
  
  {{ if .Values.nexus.docker.enabled }}
  {{ range $registry := .Values.nexus.docker.registries }}
-+{{- $svcName := (printf "%s-%s-%d" ($fullName | trunc 49) "docker" ($registry.port | int)) -}}
++{{- $svcName := (printf "%s-%s-%d" ($fullName | trunc 49) "docker" ($registry.port | int)) }}
  ---
--apiVersion: networking.k8s.io/v1beta1
+-apiVersion: networking.k8s.io/v1
 +apiVersion: {{ $apiVersion }}
  kind: Ingress
  metadata:
    name: {{ $fullName | trunc 49 }}-docker-{{ $registry.port }}
-@@ -56,6 +74,9 @@
-     {{- toYaml . | nindent 4 }}
-   {{- end }}
+@@ -54,11 +69,14 @@
+         {{ toYaml . | indent 4 }}
+       {{- end }}
+     {{- end }}
+-    {{- with $.Values.ingress.annotations }}
++  {{- with $.Values.ingress.annotations }}
+   annotations:
+-      {{- toYaml . | nindent 4 }}
+-    {{- end }}
++    {{- toYaml . | nindent 4 }}
++  {{- end }}
  spec:
 +  {{- if $apiIsStable }}
 +  ingressClassName: {{ $.Values.ingress.ingressClassName }}
@@ -106,24 +129,25 @@
    tls:
      - hosts:
        - {{ $registry.host | quote }}
-@@ -65,9 +86,19 @@
+@@ -68,12 +86,19 @@
        http:
          paths:
            - path: /
+-            pathType: Prefix
 +            {{- if $ingressSupportsPathType }}
 +            pathType: {{ $pathType }}
 +            {{- end }}
              backend:
--              serviceName: {{ $fullName | trunc 49 }}-docker-{{ $registry.port }}
 +              {{- if $apiIsStable }}
-+              service:
+               service:
+-                name: {{ $fullName | trunc 49 }}-docker-{{ $registry.port }}
 +                name: {{ $svcName }}
-+                port:
-+                  number: {{ $registry.port }}
+                 port:
+                   number: {{ $registry.port }}
 +              {{- else }}
 +              serviceName: {{ $svcName }}
-               servicePort: {{ $registry.port }}
++              servicePort: {{ $registry.port }}
 +              {{- end }}            
-     {{- end }}
- {{- end }}
- {{- end }}
+ {{- end }} {{- /* range of nexus.docker.registries */ -}}
+ {{- end }} {{- /* nexus.docker.enabled */ -}}
+ {{- end }} {{- /* ingress.enabled */ -}}

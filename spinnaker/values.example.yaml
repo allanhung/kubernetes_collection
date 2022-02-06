@@ -1,0 +1,43 @@
+minio:
+  persistence:
+    enabled: true
+
+  consoleIngress:
+    ingressClassName: nginx-internal
+    hosts:
+      - minio-console.mydomain.com
+    tls:
+     - secretName: tls-minio-console.mydomain.com
+       hosts:
+       - minio-console.mydomain.com
+
+keydb:
+  persistence:
+    enabled: true
+
+kubeVersionOverride: 1.22.3
+
+persistence:
+  enabled: true
+  pdName: d-rj912lyp1f13z69vtrfe
+  fsType: ext4
+
+ingressList: 
+  - annotations:
+      kubernetes.io/tls-acme: 'true'
+    host: spinnaker.mydomain.com
+    ingressClassName: nginx-internal
+    service:
+      name: spin-deck
+      port: 9000
+    tls:
+      enabled: true
+  - annotations:
+      kubernetes.io/tls-acme: 'true'
+    host: spinnaker-api.mydomain.com
+    ingressClassName: nginx-internal
+    service:
+      name: spin-gate
+      port: 8084
+    tls:
+      enabled: true

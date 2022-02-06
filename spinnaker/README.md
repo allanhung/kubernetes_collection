@@ -1,9 +1,16 @@
 ## Installation
 ```bash
+kubectl -n spinnaker create secret generic minio --from-literal=rootUser=<rootUser> --from-literal=rootPassword=<rootPassword>
+
+helm dep update
 helm upgrade --install halyard \
   --namespace spinnaker \
   --create-namespace \
   -f values.yaml \
+  -f values.${ENV}.yaml \
+  --set env.TOKEN=$(kubectl get secret -n kube-system $(kubectl get sa <spinnaker_service_account> -n kube-system -o=jsonpath='{.secrets[0].name}') -o=jsonpath='{.data.token}' | base64 --decode) \
+  --set minio.users[0].accessKey=<rootUser> \
+  --set minio.users[0].secretKey=<rootPassword> \
   ./
 ```
 

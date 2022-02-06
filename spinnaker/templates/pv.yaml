@@ -1,0 +1,20 @@
+{{- if .Values.persistence.pdName -}}
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  labels:
+    {{- include "halyard.labels" . | nindent 4 }}
+  name: {{ .Values.persistence.pdName }}
+spec:
+  capacity:
+    storage: {{ .Values.persistence.storageSize }}
+  accessModes:
+    - ReadWriteOnce
+  claimRef:
+    namespace: {{ .Release.Namespace }}
+    name: {{ template "halyard.fullname" . }}-data
+  csi:
+    driver: diskplugin.csi.alibabacloud.com
+    volumeHandle: {{ .Values.persistence.pdName }}
+    fsType: {{ .Values.persistence.fsType }}
+{{- end }}

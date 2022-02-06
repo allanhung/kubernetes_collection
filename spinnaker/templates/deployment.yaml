@@ -86,10 +86,20 @@ spec:
         resources: 
           {{- toYaml . | nindent 10 }}
         {{- end }}
+        volumeMounts:
+        {{- if .Values.persistence.enabled }}
+        - name: {{ template "halyard.fullname" . }}-data
+          mountPath: /home/spinnaker/.hal
+        {{- end }}
         {{- with .Values.volumeMounts }}
-        volumeMounts: {{ tpl (toYaml .) $ | nindent 8 }}
+        {{ tpl (toYaml .) $ | nindent 8 }}
+        {{- end }}
+      volumes: 
+      - name: {{ template "halyard.fullname" . }}-data
+        {{- if .Values.persistence.enabled }}
+        persistentVolumeClaim:
+          claimName: {{ .Values.persistence.existingClaim | default (printf "%s-%s" (include "halyard.fullname" .) "data") }}
         {{- end }}
       {{- with .Values.volumes }}
-      volumes: 
       {{- tpl (toYaml .) $ | nindent 6 }}
       {{- end }}

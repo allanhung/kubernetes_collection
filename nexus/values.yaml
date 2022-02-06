@@ -18,6 +18,9 @@ nexus:
       cpu: 250m
       memory: 2560Mi
   securityContext:
+    runAsUser: 200
+    runAsGroup: 200
+    fsGroup: 200
     fsGroupChangePolicy: "OnRootMismatch"
 
 persistence:

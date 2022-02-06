@@ -8,6 +8,7 @@
 {{- $pathType := $ingress.pathType | default "Prefix" }}
 {{- $serviceName := $ingress.service.name | default $fullname }}
 {{- $servicePort := $ingress.service.port | default "80" }}
+---
 apiVersion: {{ $apiVersion }}
 kind: Ingress
 metadata:

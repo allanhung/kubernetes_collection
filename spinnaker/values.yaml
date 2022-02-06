@@ -1,3 +1,46 @@
+minio:
+  mode: standalone
+
+  existingSecret: minio
+
+  environment:
+    MINIO_PROMETHEUS_URL: http://po-kube-prometheus-stack-prometheus.infra.svc:9090
+
+  persistence:
+    size: 20Gi
+    storageClass: "-"
+
+  resources:
+    requests:
+      memory: 256Mi
+
+  ingress:
+    enabled: false
+
+  consoleIngress:
+    enabled: true
+    annotations:
+      kubernetes.io/tls-acme: "true"
+    path: /
+
+  users:
+  - accessKey: console
+    secretKey: console123
+    policy: consoleAdmin
+
+  metrics:
+    serviceMonitor:
+      enabled: true
+      public: true
+      additionalLabels:
+        release: po
+
+keydb:
+  image: docker-mirror.quid.com/eqalpha/keydb:x86_64_v6.2.2
+  persistentVolume:
+    size: 20Gi
+    storageClass: topology-aware-cloud-efficiency
+
 # Overrides the chart's name
 nameOverride: null
 
@@ -51,10 +94,7 @@ livenessProbe: {}
 readinessProbe: {}
 
 # Define command for the container
-command: 
-- sh
-- -c
-- cp -r /home/spinnaker/hal /home/spinnaker/.hal/ && /opt/halyard/bin/halyard
+command: [] 
 
 # Define arguments for the container
 args: []
@@ -63,65 +103,26 @@ args: []
 containerSecurityContext: {}
 
 # Environment variables to add to the pod (key: value)
-env: {}
+env:
+  MINIO_ENDPOINT: 'http://{{ include "halyard.fullname" . }}-minio:9000'
+  REDIS_ENDPOINT: 'redis://{{ include "halyard.fullname" . }}-keydb:6379'
+
+ # Environment variables from secrets or configmaps to add to the pod
+envFrom:
+- secretRef:
+    name: minio
 
 # Environment variables from secrets or configmaps to add to the pod
 envFrom: []
 
 # Volume mounts to add to the the pod
-volumeMounts: 
-- mountPath: /home/spinnaker/hal
-  name: config
-- mountPath: /home/spinnaker/hal/default/profiles
-  name: profiles
-- mountPath: /home/spinnaker/hal/default/service-settings
-  name: service-settings
-- mountPath: /home/spinnaker/hal/saml
-  name: saml
+volumeMounts: [] 
 
 # Resource requests and limits for the pod
 resources: {}
 
 # Volumes to add to the pod
-volumes: 
-- configMap:
-    defaultMode: 420
-    items:
-    - key: config
-      path: config
-    - key: kubeconfig.yml
-      path: kubeconfig.yml
-    name: hal
-  name: config
-- configMap:
-    defaultMode: 420
-    items:
-    - key: echo-local.yml
-      path: echo-local.yml
-    - key: gate-local.yml
-      path: gate-local.yml
-    name: hal
-  name: profiles
-- configMap:
-    defaultMode: 420
-    items:
-    - key: deck.yml
-      path: deck.yml
-    - key: gate.yml
-      path: gate.yml
-    - key: redis.yml
-      path: redis.yml
-    name: hal
-  name: service-settings
-- configMap:
-    defaultMode: 420
-    items:
-    - key: metadata.yaml
-      path: metadata.yml
-    - key: spinnaker.jks
-      path: spinnaker.jks
-    name: hal
-  name: saml
+volumes: [] 
 
 config: ""
 
@@ -152,3 +153,9 @@ ingressList:
       port: 8084
     tls:
       enabled: true
+
+persistence:
+  enabled: true
+  accessMode: ReadWriteOnce
+  storageClass: topology-aware-available
+  storageSize: 20Gi
