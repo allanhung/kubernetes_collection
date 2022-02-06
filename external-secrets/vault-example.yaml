@@ -1,0 +1,31 @@
+apiVersion: external-secrets.io/v1alpha1
+kind: ClusterSecretStore
+metadata:
+  name: vault-backend-v2
+spec:
+  provider:
+    vault:
+      server: "https://vault.mydomain.com"
+      path: "mypath"
+      version: "v2"
+      auth:
+        kubernetes:
+          mountPath: "kubernetes"
+          role: "application"
+---
+apiVersion: external-secrets.io/v1alpha1
+kind: ExternalSecret
+metadata:
+  name: estest
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    name: vault-backend-v2
+    kind: ClusterSecretStore
+  target:
+    name: estest
+  data:
+  - secretKey: db_user
+    remoteRef:
+      key: myfolder/mykey
+      property: username

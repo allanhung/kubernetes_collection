@@ -1,0 +1,6 @@
+replicaCount: 2
+
+leaderElect: true
+
+prometheus:
+  enabled: true

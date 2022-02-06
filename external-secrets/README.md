@@ -1,6 +1,6 @@
 ### Installation
 ```bash
-helm repo add external-secrets https://external-secrets.github.io/external-secrets
+helm repo add external-secrets https://charts.external-secrets.io
 helm repo update
 
 helm upgrade --install external-secrets \
