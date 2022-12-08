@@ -22,13 +22,13 @@ spec:
         image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
         imagePullPolicy: Always
         args:
-          - "--app-port=8181"
-          - "--iptables=true"
-          - "--host-ip=$(HOST_IP)"
-          - "--host-interface={{ .Values.host_interface }}"
-          - "--verbose"
-          - "--auto-discover-default-role"
-          - "--auto-discover-base-arn"
+        - "--app-port=8181"
+        - "--iptables=true"
+        - "--host-ip=$(HOST_IP)"
+        - "--host-interface={{ .Values.host_interface }}"
+        - "--verbose"
+        - "--auto-discover-default-role"
+        - "--auto-discover-base-arn"
         env:
         - name: HOST_IP
           valueFrom:

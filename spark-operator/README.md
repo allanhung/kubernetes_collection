@@ -90,3 +90,4 @@ Reference:
 * [Initial job has not accepted any resources](https://github.com/GoogleCloudPlatform/spark-on-k8s-operator/issues/895)
 * [Dockerfile for spark image](https://github.com/GoogleCloudPlatform/spark-on-k8s-operator/blob/master/Dockerfile)
 * [custom spark image](https://github.com/GoogleCloudPlatform/spark-on-k8s-operator/tree/master/spark-docker)
+* [using-secrets-as-environment-variables](https://github.com/GoogleCloudPlatform/spark-on-k8s-operator/blob/master/docs/user-guide.md#using-secrets-as-environment-variables)

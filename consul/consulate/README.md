@@ -1,8 +1,8 @@
 ## Docker image
 ```bash
 docker build -t consulate .
-docker run -d --rm --name consulate -v $(pwd):/data consulate
-docker run -ti consulate bash
+docker run -d --rm --name consulate -v $(pwd):/data consulate tail -f /dev/null
+docker exec -ti consulate bash
 ```
 
 ## Backup consul kv store

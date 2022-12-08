@@ -65,6 +65,8 @@ EOF
 * [trivy](https://github.com/aquasecurity/Trivy)
 * [trivy with travis ci](https://aquasecurity.github.io/trivy/latest/integrations/travis-ci/)
 * [trivy commercial usage](https://github.com/aquasecurity/trivy/issues/491)
+* [trivy commercial usage](https://github.com/aquasecurity/trivy/pull/1641)
+* [trivy commercial usage](https://github.com/aquasecurity/trivy/issues/1798)
 * [depend on safety-db](https://github.com/aquasecurity/trivy/issues/344)
 * [Add github security advisory](https://github.com/aquasecurity/trivy-db/pull/28)
 * [More generic support for Python](https://github.com/aquasecurity/trivy/issues/492)
@@ -73,3 +75,4 @@ EOF
 * [Application Dependencies](https://aquasecurity.github.io/trivy/latest/vuln-detection/library)
 * [Added capability to filter data sources](https://github.com/aquasecurity/trivy/pull/1467)
 * [add_filter_data_sources](https://github.com/liorkesten/trivy/tree/liorkesten/add_filter_data_sources)
+

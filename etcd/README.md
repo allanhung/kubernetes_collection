@@ -40,6 +40,12 @@ etcdctl member remove <member_id>
 rm -f /bitnami/etcd/data/*
 ```
 
+* workaround for /opt/bitnami/scripts/libetcd.sh: line 732: ETCD_ACTIVE_ENDPOINTS: unbound variable
+```bash
+etcdctl member add etcd-2 --peer-urls http://etcd-2.etcd-headless.infra.svc.cluster.local:2379
+echo "${MEMBER_ID}" > /var/lib/kubelet/pods/${POD_ID}/volumes/kubernetes.io~csi/${DISK_ID}/mount/data/member_id
+```
+
 ### Reference
 * [etcd](https://github.com/bitnami/charts/tree/master/bitnami/etcd)
 * [loki-etcd](https://www.jianshu.com/p/f9ab6296ff29)

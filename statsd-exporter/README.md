@@ -31,6 +31,10 @@ EOF
 ./statsd_exporter-0.22.4.darwin-amd64/statsd_exporter --statsd.mapping-config=mapping.yaml --log.level=debug
 # clinet
 docker run -d --rm --name=statsd_client rockylinux tail -f /dev/null
+echo "test_end_with_timestamp:1|g" | nc -w 1 -u prom-statsd 9125
+curl http://prom-statsd:9102/metrics |grep test_end_with_timestamp
+curl 'http://po-kube-prometheus-stack-prometheus:9090/api/v1/query?query=test_end_with_timestamp[5m]'
+curl 'http://po-kube-prometheus-stack-prometheus:9090/api/v1/query?query=test_end_with_timestamp[5m]&time=2022-05-31T02:35:00.000Z'
 ```
 
 ### Reference

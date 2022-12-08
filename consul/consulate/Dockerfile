@@ -1,4 +1,4 @@
-from centos:8
+from quay.io/centos/centos:stream9
 
 RUN dnf install -y python3-pip git vim
 RUN pip3 install consulate

@@ -26,6 +26,18 @@ helm upgrade --install argo-workflows \
 rm -rf ./argo-workflows
 ```
 
+#### Manage CRD by helm chart
+```
+export ARGOWF_NAMESPACE="argo"
+export ARGOWF_RELEASENAME="argo-workflow"
+
+for crd in "clusterworkflowtemplates.argoproj.io" "cronworkflows.argoproj.io" "workfloweventbindings.argoproj.io" "workflows.argoproj.io" "workflowtaskresults.argoproj.io" "workflowtasksets.argoproj.io" "workflowtemplates.argoproj.io"; do
+  kubectl label --overwrite crd $crd app.kubernetes.io/managed-by=Helm
+  kubectl annotate --overwrite crd $crd meta.helm.sh/release-namespace="$ARGOWF_NAMESPACE"
+  kubectl annotate --overwrite crd $crd meta.helm.sh/release-name="$ARGOWF_RELEASENAME"
+done
+```
+
 ### Dashboard
 * [14136](https://grafana.com/grafana/dashboards/14136)
 * [13927](https://grafana.com/grafana/dashboards/13927)
@@ -38,3 +50,4 @@ rm -rf ./argo-workflows
 * [Automation of Everything](https://www.youtube.com/watch?v=XNXJtxkUKeY)
 * [token not valid for running mode](https://github.com/argoproj/argo-workflows/issues/4991)
 * [auth mode](https://github.com/argoproj/argo-workflows/blob/master/docs/argo-server-auth-mode.md)
+* [Remove non-Emissary executors](https://github.com/argoproj/argo-workflows/issues/7829)

@@ -1,22 +1,26 @@
 --- a/nexus-repository-manager/templates/pv.yaml
 +++ b/nexus-repository-manager/templates/pv.yaml
-@@ -19,8 +19,17 @@
+@@ -19,8 +19,23 @@
    claimRef:
      namespace: {{ .Release.Namespace }}
      name: {{ template "nexus.fullname" . }}-data
--  gcePersistentDisk:
--    pdName: {{ .Values.persistence.pdName }}
++{{- if eq .Values.persistence.driver "gce" }}
+   gcePersistentDisk:
+     pdName: {{ .Values.persistence.pdName }}
+     fsType: {{ .Values.persistence.fsType }}
+ {{- end }}
 +{{- if eq .Values.persistence.driver "flexVolume" }}
 +  flexVolume:
 +    driver: alicloud/disk
-     fsType: {{ .Values.persistence.fsType }}
++    fsType: {{ .Values.persistence.fsType }}
 +    options:
 +      VolumeId: {{ .Values.persistence.pdName }}
 +{{- end }}
 +{{- if eq .Values.persistence.driver "csi" }}
 +  csi:
 +    driver: diskplugin.csi.alibabacloud.com
++    fsType: {{ .Values.persistence.fsType }}
 +    volumeHandle: {{ .Values.persistence.pdName }}
 +{{- end }}
- {{- end }}
++{{- end }}
  {{- end }}

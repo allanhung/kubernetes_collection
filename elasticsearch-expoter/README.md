@@ -33,7 +33,17 @@ gsed -i -e '/Elastic_UP/,+7 d' \
 ### Dashboard
 * [6483](https://grafana.com/grafana/dashboards/6483)
 
+### add indices health collector
+```
+git clone https://github.com/prometheus-community/elasticsearch_exporter/
+cd elasticsearch_exporter
+git checkout v1.5.0
+curl -LO https://patch-diff.githubusercontent.com/raw/prometheus-community/elasticsearch_exporter/pull/599.patch
+patch < 599.patch
+```
+
 ### Reference
 * [helm chart](https://github.com/helm/charts/tree/master/stable/elasticsearch-exporter)
 * [elasticsearch exporter](https://github.com/justwatchcom/elasticsearch_exporter)
 * [alertrule](https://awesome-prometheus-alerts.grep.to/rules#elasticsearch)
+* [add indices health collector](https://github.com/prometheus-community/elasticsearch_exporter/pull/599)

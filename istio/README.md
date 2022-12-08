@@ -1,7 +1,7 @@
 # Prepare
 ## setup parameter
 ```bash
-export ISTIO_VER=1.11.0
+export ISTIO_VER=1.14.0
 export ISTIO_SRC_DIR=~/Downloads/git/kubernetes_collection
 export OS=osx
 mkdir -p ${ISTIO_SRC_DIR}/istio/charts

@@ -78,6 +78,20 @@ data:
   <keep origin config>
 EOF
 ```
+### patch with jq
+```
+jq '
+{
+  "cniVersion": "0.3.1",
+  "name": "terway-chainer",
+  "plugins": [
+      del(.name,.cniVersion),
+      {
+         "type": "cilium-cni"
+      }
+   ]
+}' < /etc/eni/10-terway.conf > /etc/cni/net.d/10-terway.conflist
+```
 ### patch terway daemonset
 ```bash
 kubectl -n kube-system patch ds terway-eniip --record --type='json' -p '[
@@ -108,6 +122,8 @@ spec:
       labels:
         app: hostport
     spec:
+      nodeSelector:
+        kubernetes.io/hostname: mynodename
       containers:
       - name: nginx
         image: nginx
@@ -127,6 +143,26 @@ kubectl delete ds hostport-test
 telnet <node_ip> 10080
 ```
 
+### patch portmap
+```
+docker run -d --rm --name=go --entrypoint tail golang -f /dev/null
+docker cp portmap.patch go:/tmp
+docker exec -ti go bash
+apt-get update && apt-get install -y patch
+git clone --depth 1 https://github.com/containernetworking/plugins cni-plugins
+cp cni-plugins
+patch -p1 < /tmp/portmap.patch
+export GOOS=linux
+export GOFLAGS=" -mod=vendor"
+go build -o portmap ./plugins/meta/portmap
+```
+### Copy binary into host
+```
+# Copy binary through daemonset (example: kube2ram)
+patch -p1 < daemonset.initcontainer.patch
+```
+
 ## Reference
 * [kube-flannel.yml](https://github.com/coreos/flannel/blob/master/Documentation/kube-flannel.yml)
 * [calico install-cni-plugin](https://docs.projectcalico.org/getting-started/kubernetes/hardway/install-cni-plugin)
+* [Skip known non-sandbox interfaces](https://github.com/containernetworking/plugins/pull/28)

@@ -42,8 +42,13 @@ kubectl edit statefulset/loki-etcd
 set ETCD_INITIAL_CLUSTER_STATE=new
 ```
 
+### Replace stdout F
+* using cri parser
+
 ### Reference
 * [loki distributed](https://github.com/grafana/helm-charts/tree/main/charts/loki-distributed)
 * [loki debug](https://www.jianshu.com/p/6b24340c2cf1)
 * [Loki Community Meeting 2021-07-01](https://www.youtube.com/watch?v=ppUrF7OMyks)
 * [Loki ruler not evaluting rules (err wrong chunk metadata)](https://github.com/grafana/loki/issues/3609#issuecomment-822168648)
+* [Loki as Prometheus data source is no longer supported](https://github.com/grafana/grafana/pull/34650)
+* [promtail configuration for cri](https://grafana.com/docs/loki/latest/clients/promtail/configuration/#cri)

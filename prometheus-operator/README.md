@@ -58,6 +58,16 @@ bash dashboard.sh 763 admin:admin http://grafana:3000 "Database" "DS_PROM"
 kubectl set env ds/flexvolume ENABLE_METRICS_DISK=true -n kube-system
 ```
 
+### Query
+$ curl 'http://po-kube-prometheus-stack-prometheus:9090/api/v1/query?query=up&time=2022-05-31T02:00:00.000Z'
+$ curl 'http://prometheus-server.infra.svc/api/v1/query?query=pretax_gross_amount&time=2022-08-22T16:00:00.000Z'
+
+### Apiserver client certificate expiring
+```
+openssl x509 -in <cert_file> -text
+tcpdump "tcp port 6443 and (tcp[((tcp[12] & 0xf0) >>2)] = 0x16) && (tcp[((tcp[12] & 0xf0) >>2)+5] = 0x01)" -w client-hello.pcap
+```
+
 ### Reference
 * [alertmanager api](https://raw.githubusercontent.com/prometheus/alertmanager/master/api/v2/openapi.yaml)
 * [missing kubelet_volume volume metrics](https://github.com/rook/rook/issues/1659)
@@ -67,3 +77,5 @@ kubectl set env ds/flexvolume ENABLE_METRICS_DISK=true -n kube-system
 * [Prometheus Crash Loop on Kubernetes since Jaeger added](https://github.com/prometheus/prometheus/issues/7286)
 * [JAEGER_AGENT_PORT invalid syntax](https://github.com/helm/charts/issues/22769)
 * [Prometheus Query](https://www.youtube.com/watch?v=09bR9kJczKM)
+* [Memory usage spikes during WAL replay](https://github.com/prometheus/prometheus/issues/6934)
+* [Shows apiserver client certificate expiring](https://github.com/prometheus-operator/kube-prometheus/issues/1089)

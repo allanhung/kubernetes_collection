@@ -74,8 +74,27 @@ rejecting vote request since we have a leader
 Workaround:
 consul leave in consul server
 
+### Backup and restore
+```bash
+consul snapshot save backup.snap
+consul snapshot restore backup.snap
+```
+
+### Remove service
+```bash
+curl http://localhost:8500/v1/catalog/service/SERVICE_NAME
+cat > /tmp/service.json << EOF
+{
+  "Datacenter": "",
+  "Node": "NODE_NAME",
+  "ServiceID": "SERVICE_NAME"
+}
+EOF
+curl -XPUT -d @/tmp/service.json http://localhost:8500/v1/catalog/deregister
+```
 ### Reference
 * [consul-helm](https://github.com/hashicorp/consul-helm)
 * [service-registration-external-services](https://learn.hashicorp.com/tutorials/consul/service-registration-external-services)
 * [UDP port 8301 does not work with client.exposeGossipPort set to true](https://github.com/hashicorp/consul-helm/issues/389)
 * [network may be misconfigured](https://github.com/hashicorp/consul/issues/5195)
+* [backup and restore](https://learn.hashicorp.com/tutorials/consul/backup-and-restore)

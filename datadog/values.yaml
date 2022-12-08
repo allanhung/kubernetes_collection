@@ -12,22 +12,39 @@ datadog:
   apiKeyExistingSecret: datadog-key
   appKeyExistingSecret: datadog-key
   apm:
-    enabled: true
+    enabled: false
+    portEnabled: true
+    socketEnabled: false
   clusterChecks:
-    enabled: true
-  confd: 
-    kubernetes_state.yaml: ""
+    enabled: false
+  collectEvents: false
+  leaderElection: false
+  kubelet:
+    host: null
+  kubeStateMetricsEnabled: false
+  networkMonitoring:
+    enabled: false
+  nonLocalTraffic: true
   orchestratorExplorer:
-    enabled: true
+    enabled: false
+  processAgent:
+    enabled: false
   resources:
     requests:
       memory: 400Mi
     limits:
       memory: 400Mi
+  securityAgent:
+    runtime:
+      enabled: false
+      fimEnabled: false
   serviceTopology:
     enabled: false
+  systemProbe:
+    enabled: false
+    enableTCPQueueLength: false
   dogstatsd:
-    useHostPort: true
+    useHostPort: false
     nonLocalTraffic: true
   logLevel: INFO
   env:
@@ -39,7 +56,33 @@ datadog:
     value: "9125"
 
 agents:
-  useHostNetwork: false
+  affinity:
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+      - podAffinityTerm:
+          labelSelector:
+            matchExpressions:
+            - key: app
+              operator: In
+              values:
+              - datadog
+          topologyKey: kubernetes.io/hostname
+        weight: 100
+  customAgentConfig:
+    apm_config:
+      apm_non_local_traffic: true
+      max_memory: 0
+      max_cpu_percent: 0
+    autoconfig_exclude_features:
+    - kubernetes
+    jmx_use_container_support: true    
   image:
     repository: datadog/agent
+  localService:
+    forceLocalServiceEnabled: true
+  rbac:
+    create: false
+  replicas: 1
+  useConfigMap: true
+  useHostNetwork: true
 #  tolerations:

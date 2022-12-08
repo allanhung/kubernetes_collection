@@ -119,6 +119,11 @@ Events:
   Warning  Failed              109s (x246 over 63m)  service-controller  Fail to ensure loadbalancer, error Message: The specified Port must be between 1 and 65535.. k8s/0/echo-server/debug/c22d473d33fed4328a89602bdb857032f
 ```
 
+### export config
+```
+kubectl ingress-nginx conf --pod ingress-nginx-controller-plgtw > /tmp/nginx.conf
+```
+
 ## Reference
 [helm chart](https://github.com/kubernetes/ingress-nginx/tree/master/charts/ingress-nginx)
 [nginx ingress configmap](https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/configmap)
@@ -138,3 +143,4 @@ Events:
 [SecRequestBodyAccess off skips the phase:2 rules](https://github.com/SpiderLabs/ModSecurity/issues/2465)
 [ModSecurity 3 Leads to Complete Bypass](https://coreruleset.org/20210302/disabling-request-body-access-in-modsecurity-3-leads-to-complete-bypass/)
 [Json Support](https://www.trustwave.com/en-us/resources/blogs/spiderlabs-blog/modsecurity-advanced-topic-of-the-week-json-support/)
+[Kubectl Plugin for Kubernetes Ingress Controller ingress-nginx](https://shopify.engineering/kubectl-plugin-kubernetes-ingress-controller-ingress-nginx)

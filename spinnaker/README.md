@@ -193,6 +193,27 @@ Workaroud: Downgrade clouddriver version
 ```bash
 kubectl set image deploy/spin-clouddriver clouddriver=us-docker.pkg.dev/spinnaker-community/docker/clouddriver:7.3.5-20210624040021 --record
 ```
+* Error fetching new jobs from Travis
+Test travis api
+```bash
+export GITHUB_TOKEN=mytoken
+export TRAVIS_TOKEN=$(curl -s -X POST "https://api.travis-ci.com/auth/github?github_token=${GITHUB_TOKEN}" | jq -r '.access_token')
+curl -X GET 'https://api.travis-ci.com/jobs?state=passed,started,errored,failed,canceled&include=job.build,build.log_complete&limit=100&offset=0' -H "Travis-API-Version: 3" -H "Authorization: token ${TRAVIS_TOKEN}"| jq -r '.jobs[].build | (.repository.slug +"/"+ .branch.name)' | sort | uniq
+```
+
+* Timeouts for Bake stage
+```
+cat >> ./default/profiles/orca-local.yml << EOF
+okHttpClient:
+  connectTimeoutMs: 1200000
+  readTimeoutMs: 1200000
+EOF
+cat >> ./default/profiles/rosco-local.yml << EOF
+okHttpClient:
+  connectTimeoutMs: 1200000
+  readTimeoutMs: 1200000
+EOF
+```
 
 ## Reference
 * [Install and Configure Spinnaker](https://spinnaker.io/setup/install/)
@@ -204,3 +225,6 @@ kubectl set image deploy/spin-clouddriver clouddriver=us-docker.pkg.dev/spinnake
 * [clouddriver kubernetes deployment support version](https://github.com/spinnaker/clouddriver/blob/master/clouddriver-kubernetes/src/main/java/com/netflix/spinnaker/clouddriver/kubernetes/op/handler/KubernetesDeploymentHandler.java#L20)
 * [clouddriver v7.3.5 kubernetes deployment support version](https://github.com/spinnaker/clouddriver/blob/version-7.3.5/clouddriver-kubernetes/src/main/java/com/netflix/spinnaker/clouddriver/kubernetes/op/handler/KubernetesDeploymentHandler.java#L20-L23)
 * [Zombie Executions](https://spinnaker.io/docs/guides/runbooks/orca-zombie-executions/)
+* [Authentication statement is too old](https://github.com/spinnaker/spinnaker/issues/5539)
+* [Change Spinnaker's Login Session Timeout](https://support.armory.io/support?id=kb_article_view&sysparm_article=KB0010060&sys_kb_id=8207b5781bb9fc1013d4fe6fdc4bcbaf&spa=1)
+* [Allow setting Timeouts for Bake stage](https://github.com/spinnaker/spinnaker/issues/5518)

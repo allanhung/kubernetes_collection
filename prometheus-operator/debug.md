@@ -13,10 +13,7 @@ spec:
     - tail
     - -f
     - /dev/null
-    env:
-    - name: JAEGER_AGENT_PORT
-      value: "5755"
-    image: centos
+    image: quay.io/centos/centos:stream9
     name: promdebug
     resources: {}
   restartPolicy: Never
@@ -26,13 +23,13 @@ EOF
 ### build from source
 ```bash
 kubectl exec -ti promdebug bash
-yum install -y golang git python3-pip vim make
+yum install -y golang git python3-pip vim make findutils bzip2
 pip3 install yamllint
 curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.35.3/install.sh | bash
 source ~/.bash_profile
 nvm install v16.13.0
 
-git clone -b v2.31.1 --depth 1 https://github.com/prometheus/prometheus
+git clone -b v2.38.0 --depth 1 https://github.com/prometheus/prometheus
 cd prometheus/
 make build
 # build only

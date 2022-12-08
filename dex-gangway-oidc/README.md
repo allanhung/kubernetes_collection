@@ -10,7 +10,7 @@ cluster_name: my-cluster
 dex:
   issuer: https://my-issuer.my-domain.com
   clientID: my-client-id
-  clientSecret: my-client-password
+  clientSecret: my-client-password # openssl rand -hex 16
   url: dex.my-domain.com
 
 gangway:

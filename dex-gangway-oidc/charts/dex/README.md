@@ -10,5 +10,10 @@ helm upgrade --install dex \
     dex/dex
 ``` 
 
+### Secret generate function
+```bash
+openssl rand -hex 16
+```
+
 ### Reference
 * [dex helm charts](https://github.com/dexidp/helm-charts)
