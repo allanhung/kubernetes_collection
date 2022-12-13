@@ -1,0 +1,30 @@
+--- a/templates/daemonset.yaml
++++ b/templates/daemonset.yaml
+@@ -17,6 +17,18 @@
+     {{- if .Values.imagePullSecrets }}
+       imagePullSecrets: {{ toYaml .Values.imagePullSecrets | nindent 8 }}
+     {{- end }}
++      initContainers:
++      - name: portmap
++        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
++        imagePullPolicy: Always
++        command:
++        - /bin/cp
++        - -f
++        - /usr/local/bin/portmap
++        - /opt/cni/bin/portmap
++        volumeMounts:
++        - mountPath: /opt/cni/bin/
++          name: cni-bin
+       containers:
+       - name: kube2ram
+         image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+@@ -46,3 +58,8 @@
+           privileged: true
+       hostNetwork: true
+       serviceAccountName: kube2ram
++      volumes:
++      - hostPath:
++          path: /opt/cni/bin
++          type: Directory
++        name: cni-bin

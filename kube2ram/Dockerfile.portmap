@@ -1,0 +1,29 @@
+FROM golang:1.17.0 AS build
+ENV ARCH=linux
+ENV CGO_ENABLED=0
+RUN apt-get update && apt-get install -y patch
+RUN mkdir -p /go/src/github.com/AliyunContainerService
+RUN cd /go/src/github.com/AliyunContainerService && git clone https://github.com/AliyunContainerService/kube2ram
+WORKDIR /go/src/github.com/AliyunContainerService/kube2ram
+COPY kube2ram.patch .
+COPY go.mod .
+RUN patch -p1 < kube2ram.patch
+RUN sed -i -e "s#STSEndpoint = .*#STSEndpoint = \"https://sts.us-east-1.aliyuncs.com\"#g" ram/ram.go
+RUN rm -rf vendor glide.*
+RUN go mod tidy
+RUN go build -o kube2ram cmd/main.go
+RUN mkdir -p /go/src/github.com/containernetworking
+RUN cd /go/src/github.com/containernetworking && git clone -b v1.1.1 https://github.com/containernetworking/plugins
+WORKDIR /go/src/github.com/containernetworking/plugins
+COPY portmap.patch .
+RUN patch -p1 < portmap.patch
+RUN GOOS=linux go build -o portmap -ldflags '-extldflags -static -X github.com/containernetworking/plugins/pkg/utils/buildversion.BuildVersion=v1.1.1-quid' ./plugins/meta/portmap
+
+FROM alpine:3.12.1
+RUN apk --no-cache add \
+    ca-certificates \
+    tzdata \
+    iptables
+COPY --from=build /go/src/github.com/AliyunContainerService/kube2ram/kube2ram /bin/kube2ram
+COPY --from=build /go/src/github.com/containernetworking/plugins/portmap /usr/local/bin/portmap
+ENTRYPOINT ["/bin/kube2ram"]
