@@ -172,6 +172,10 @@ kubectl logs -l app.kubernetes.io/name=orca -c orca --tail=5 -f
 kubectl logs -l app.kubernetes.io/name=clouddriver -c clouddriver --tail=5 -f
 kubectl logs -l app.kubernetes.io/name=rosco -c rosco --tail=5 -f
 ```
+* clear spinnaker session
+```bash
+redis-cli -h spin-redis.spinnaker keys "spring:session*" | xargs redis-cli -h spin-redis.spinnaker del
+```
 * delete execution
 ```bash
 curl -X POST http://spin-orca.spinnaker.svc:8083/admin/queue/zombies/{executionId}:kill
@@ -199,6 +203,10 @@ Test travis api
 export GITHUB_TOKEN=mytoken
 export TRAVIS_TOKEN=$(curl -s -X POST "https://api.travis-ci.com/auth/github?github_token=${GITHUB_TOKEN}" | jq -r '.access_token')
 curl -X GET 'https://api.travis-ci.com/jobs?state=passed,started,errored,failed,canceled&include=job.build,build.log_complete&limit=100&offset=0' -H "Travis-API-Version: 3" -H "Authorization: token ${TRAVIS_TOKEN}"| jq -r '.jobs[].build | (.repository.slug +"/"+ .branch.name)' | sort | uniq
+```
+* Setup travis baseurl (spin-igor)
+```bash
+hal config ci travis master edit myci --base-url https://app.travis-ci.com
 ```
 
 * Timeouts for Bake stage

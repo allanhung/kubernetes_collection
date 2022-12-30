@@ -26,6 +26,7 @@
 ```
 * Create a User for Vault with the previous custom policy and get the access keypair
 * Upload the access keypair to Vault configuration
+* If key is set in environment variable, it will use environment instead of config.
 ```
 vault write alicloud/config \
             access_key=<ALICLOUD_ACCESS_KEY_ID> \
@@ -61,6 +62,10 @@ vault write alicloud/creds/myrole
 * Generate a new access key by reading from the /creds
 ```
 vault read alicloud/creds/myrole
+```
+* revoke
+```
+vault lease revoke alicloud/creds/myrole/rlFExR4RGsBkYlIUS06nh0TK
 ```
 
 ### Reference

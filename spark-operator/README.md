@@ -16,6 +16,14 @@ helm upgrade --install spark-operator \
   spark-operator/spark-operator
 ```
 
+### Patch spark operator image from admission v1beta1 to admission v1 (Kubernetes v1.22 admissionregistration.k8s.io/v1beta1 api removal)
+```bash
+git clone https://github.com/GoogleCloudPlatform/spark-on-k8s-operator
+git checkout v1beta2-1.2.0-3.0.0
+patch -p1 < spark-operator-webhook.patch
+docker build --build-arg SPARK_IMAGE=gcr.io/spark-operator/spark:v2.4.5 -t spark-operator:v1beta2-1.2.0-2.4.5 .
+```
+
 ### Build custom spark image
 After build the image, you have to specify image in sparkapplication
 #### With monitoring
@@ -91,3 +99,6 @@ Reference:
 * [Dockerfile for spark image](https://github.com/GoogleCloudPlatform/spark-on-k8s-operator/blob/master/Dockerfile)
 * [custom spark image](https://github.com/GoogleCloudPlatform/spark-on-k8s-operator/tree/master/spark-docker)
 * [using-secrets-as-environment-variables](https://github.com/GoogleCloudPlatform/spark-on-k8s-operator/blob/master/docs/user-guide.md#using-secrets-as-environment-variables)
+* [Updating API version of admissionregistration.k8s.io](https://github.com/GoogleCloudPlatform/spark-on-k8s-operator/pull/1401)
+* [Resolves an error when deploying the webhook](https://github.com/GoogleCloudPlatform/spark-on-k8s-operator/pull/1413)
+

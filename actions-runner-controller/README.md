@@ -40,3 +40,4 @@ https://github.com/organizations/myorg/settings/installations/19358472
 * [actions-runner-controller](https://github.com/actions-runner-controller/actions-runner-controller/)
 * [PAT Permission](https://github.com/actions-runner-controller/actions-runner-controller#deploying-using-pat-authentication)
 * [Deploying Using GitHub App Authentication](https://github.com/actions-runner-controller/actions-runner-controller#deploying-using-github-app-authentication)
+* [actions-runner helm chart](https://github.com/actions/actions-runner-controller/tree/master/contrib/examples/actions-runner)
