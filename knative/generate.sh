@@ -25,8 +25,11 @@ fi
 
 # generate configmap
 generate_cm() {
+  # helm doesn't allow hyphens in variable names
+  VARNAME=$(echo $2 | sed "s/-//")
+  COMPNAME=$(echo $3 | sed "s/-//")
   cat > templates/$4.yaml << EOF
-{{- if .Values.$3.config.$2 -}}
+{{- if .Values.$COMPNAME.config.$VARNAME -}}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -37,7 +40,7 @@ metadata:
     app.kubernetes.io/name: knative-serving
     app.kubernetes.io/version: v$1
 data:
-  {{- tpl (toYaml .Values.$3.config.$2) . | nindent 2 }}
+  {{- tpl (toYaml .Values.$COMPNAME.config.$VARNAME) . | nindent 2 }}
 {{- end -}}
 EOF
 }
@@ -82,4 +85,7 @@ grep -e '^kind: ConfigMap' -A 2 sources/net-istio.yaml | grep -e '^  name:'| sor
 
 grep -e '^kind: ConfigMap' -A 2 sources/cert-manager.yaml | grep -e '^  name:'| sort | uniq | awk -F"config-" {'print $2'} | xargs -I{} bash -c "generate_cm ${KNATIVE_VERSION} {} cert-manager cert-manager-ConfigMap-{}"
 
-yq -i -e 'select(.metadata.name == "webhook") | .spec.template.spec.containers[0].livenessProbe.initialDelaySeconds = "{{ .Values.knative.webhook.initialDelaySeconds }}"' templates/Deployment.yaml
+yq -i -e 'select(.metadata.name == "webhook") .spec.template.spec.containers[0].livenessProbe.initialDelaySeconds = "{{ .Values.knative.webhook.initialDelaySeconds }}"' templates/Deployment.yaml
+
+yq -i -e 'select(.spec.selector.istio == "ingressgateway") .spec.selector.istio = "{{ .Values.netistio.selector }}"' templates/net-istio-Service.yaml
+yq -i -e 'select(.spec.selector.istio == "ingressgateway") .spec.selector.istio = "{{ .Values.netistio.selector }}"' templates/net-istio-Gateway.yaml

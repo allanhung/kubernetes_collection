@@ -1,0 +1,8 @@
+apiVersion: v2
+name: knative-serving 
+description: A Helm chart for knative-serving
+type: application
+version: 0.7.6
+appVersion: 1.11.0
+sources:
+- https://github.com/knative/serving

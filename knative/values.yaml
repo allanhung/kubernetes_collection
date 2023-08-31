@@ -1,0 +1,186 @@
+knative:
+  config:
+    autoscaler: {}
+#      container-concurrency-target-percentage: "70"
+#      container-concurrency-target-default: "100"
+#      requests-per-second-target-default: "200"
+#      target-burst-capacity: "211"
+#      stable-window: "60s"
+#      panic-window-percentage: "10.0"
+#      panic-threshold-percentage: "200.0"
+#      max-scale-up-rate: "1000.0"
+#      max-scale-down-rate: "2.0"
+#      enable-scale-to-zero: "true"
+#      scale-to-zero-grace-period: "30s"
+#      scale-to-zero-pod-retention-period: "0s"
+#      pod-autoscaler-class: "kpa.autoscaling.knative.dev"
+#      activator-capacity: "100.0"
+#      initial-scale: "1"
+#      allow-zero-initial-scale: "false"
+#      min-scale: "0"
+#      max-scale: "0"
+#      scale-down-delay: "0s"
+#      max-scale-limit: "0"
+    defaults: {}
+#      revision-timeout-seconds: "300"  # 5 minutes
+#      max-revision-timeout-seconds: "600"  # 10 minutes
+#      revision-response-start-timeout-seconds: "300"
+#      revision-idle-timeout-seconds: "0"  # infinit
+#      revision-cpu-request: "400m"  # 0.4 of a CPU (aka 400 milli-CPU)
+#      revision-memory-request: "100M"  # 100 megabytes of memory
+#      revision-ephemeral-storage-request: "500M"  # 500 megabytes of storage
+#      revision-cpu-limit: "1000m"  # 1 CPU (aka 1000 milli-CPU)
+#      revision-memory-limit: "200M"  # 200 megabytes of memory
+#      revision-ephemeral-storage-limit: "750M"  # 750 megabytes of storage
+#      container-name-template: "user-container"
+#      init-container-name-template: "init-container"
+#      container-concurrency: "0"
+#      container-concurrency-max-limit: "1000"
+#      allow-container-concurrency-zero: "true"
+#      enable-service-links: "false"
+    deployment:
+      queueSidecarImage: gcr.io/knative-releases/knative.dev/serving/cmd/queue@sha256:987f53e3ead58627e3022c8ccbb199ed71b965f10c59485bab8015ecf18b44af
+#      registries-skipping-tag-resolving: "kind.local,ko.local,dev.local"
+#      digest-resolution-timeout: "10s"
+#      progress-deadline: "600s"
+#      queue-sidecar-cpu-request: "25m"
+#      queue-sidecar-cpu-limit: "1000m"
+#      queue-sidecar-memory-request: "400Mi"
+#      queue-sidecar-memory-limit: "800Mi"
+#      queue-sidecar-ephemeral-storage-request: "512Mi"
+#      queue-sidecar-ephemeral-storage-limit: "1024Mi"
+#      concurrency-state-endpoint: ""
+#      queue-sidecar-rootca: ""
+    domain: {}
+#      svc.cluster.local: |
+#        selector:
+#          app: secret
+#      example.com: |
+#      example.org: |
+#        selector:
+#          app: nonprofit
+    features: {}
+#      secure-pod-defaults: "disabled"
+#      multi-container: "enabled"
+#      kubernetes.podspec-affinity: "enabled"
+#      kubernetes.podspec-topologyspreadconstraints: "disabled"
+#      kubernetes.podspec-hostaliases: "disabled"
+#      kubernetes.podspec-nodeselector: "disabled"
+#      kubernetes.podspec-tolerations: "disabled"
+#      kubernetes.podspec-fieldref: "disabled"
+#      kubernetes.podspec-runtimeclassname: "disabled"
+#      kubernetes.podspec-dnspolicy: "disabled"
+#      kubernetes.podspec-dnsconfig: "disabled"
+#      kubernetes.podspec-securitycontext: "disabled"
+#      kubernetes.podspec-priorityclassname: "disabled"
+#      kubernetes.podspec-schedulername: "disabled"
+#      kubernetes.containerspec-addcapabilities: "disabled"
+#      kubernetes.podspec-dryrun: "allowed"
+#      tag-header-based-routing: "disabled"
+#      autodetect-http2: "disabled"
+#      kubernetes.podspec-volumes-emptydir: "disabled"
+#      kubernetes.podspec-init-containers: "disabled"
+#      kubernetes.podspec-persistent-volume-claim: "disabled"
+#      kubernetes.podspec-persistent-volume-write: "disabled"
+#      queueproxy.mount-podinfo: "disabled"
+#      queueproxy.resource-defaults: "disabled"
+    gc: {}
+#      retain-since-create-time: "48h"
+#      retain-since-last-active-time: "15h"
+#      min-non-active-revisions: "20"
+#      max-non-active-revisions: "1000"
+    leaderelection: {}
+#      lease-duration: "60s"
+#      renew-deadline: "40s"
+#      retry-period: "10s"
+#      buckets: "1"
+    logging: {}
+#      zap-logger-config: |
+#        {
+#          "level": "info",
+#          "development": false,
+#          "outputPaths": ["stdout"],
+#          "errorOutputPaths": ["stderr"],
+#          "encoding": "json",
+#          "encoderConfig": {
+#            "timeKey": "timestamp",
+#            "levelKey": "severity",
+#            "nameKey": "logger",
+#            "callerKey": "caller",
+#            "messageKey": "message",
+#            "stacktraceKey": "stacktrace",
+#            "lineEnding": "",
+#            "levelEncoder": "",
+#            "timeEncoder": "iso8601",
+#            "durationEncoder": "",
+#            "callerEncoder": ""
+#          }
+#        }
+#  
+#      # Log level overrides
+#      # For all components except the queue proxy,
+#      # changes are picked up immediately.
+#      # For queue proxy, changes require recreation of the pods.
+#      loglevel.controller: "info"
+#      loglevel.autoscaler: "info"
+#      loglevel.queueproxy: "info"
+#      loglevel.webhook: "info"
+#      loglevel.activator: "info"
+#      loglevel.hpaautoscaler: "info"
+#      loglevel.net-certmanager-controller: "info"
+#      loglevel.net-istio-controller: "info"
+#      loglevel.net-contour-controller: "info"
+#      loglevel.net-kourier-controller: "info"
+#      loglevel.net-gateway-api-controller: "info"
+    network:
+#      ingress-class: "istio.ingress.networking.knative.dev"
+#      certificate-class: "cert-manager.certificate.networking.knative.dev"
+#      namespace-wildcard-cert-selector: ""
+      domain-template: '{{ "{{.Name}}.{{.Namespace}}.{{.Domain}}" }}'
+#      tag-template: "{{.Tag}}-{{.Name}}"
+#      auto-tls: Enabled
+#      http-protocol: Redirected
+#      rollout-duration: "0"
+#      autocreate-cluster-domain-claims: "false"
+#      enable-mesh-pod-addressability: "false"
+#      mesh-compatibility-mode: "auto"
+#      default-external-scheme: "http"
+#      internal-encryption: "false"
+#      dataplane-trust: "disabled"
+#      controlplane-trust: "disabled"
+    observability: {}
+#      logging.enable-var-log-collection: "false"
+#      logging.revision-url-template: "http://logging.example.com/?revisionUID=${REVISION_UID}"
+#      logging.request-log-template: '{"httpRequest": {"requestMethod": "{{.Request.Method}}", "requestUrl": "{{js .Request.RequestURI}}", "requestSize": "{{.Request.ContentLength}}", "status": {{.Response.Code}}, "responseSize": "{{.Response.Size}}", "userAgent": "{{js .Request.UserAgent}}", "remoteIp": "{{js .Request.RemoteAddr}}", "serverIp": "{{.Revision.PodIP}}", "referer": "{{js .Request.Referer}}", "latency": "{{.Response.Latency}}s", "protocol": "{{.Request.Proto}}"}, "traceId": "{{index .Request.Header "X-B3-Traceid"}}"}'
+#      logging.enable-request-log: "false"
+#      logging.enable-probe-request-log: "false"
+#      metrics.backend-destination: prometheus
+#      metrics.reporting-period-seconds: "5"
+#      metrics.request-metrics-backend-destination: prometheus
+#      metrics.request-metrics-reporting-period-seconds: "5"
+#      profiling.enable: "false"      
+    tracing: {}
+#      backend: "none"
+#      zipkin-endpoint: "http://zipkin.istio-system.svc.cluster.local:9411/api/v2/spans"
+#      debug: "false"
+#      sample-rate: "0.1"
+  webhook:
+    initialDelaySeconds: 120
+
+netistio:
+  selector: ingressgateway
+  config:
+    istio: {}
+#      gateway.knative-serving.knative-ingress-gateway: "istio-ingressgateway.istio-system.svc.cluster.local"
+#      local-gateway.knative-serving.knative-local-gateway: "knative-local-gateway.istio-system.svc.cluster.local"
+#      enable-virtualservice-status: "false"
+
+certmanager:
+  config:
+    certmanager: {}
+#      issuerRef: |
+#        kind: ClusterIssuer
+#        name: letsencrypt-issuer
+#      clusterInternalIssuerRef: |
+#        kind: ClusterIssuer
+#        name: knative-internal-encryption-issuer
