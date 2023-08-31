@@ -27,3 +27,18 @@ spec:
     port: 9092
     protocol: TCP
     targetPort: 9092
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  labels:
+    release: po
+  name: kafka
+spec:
+  endpoints:
+  - interval: 30s
+    port: metrics
+    scrapeTimeout: 25s
+  selector:
+    matchLabels:
+      app: kafka

@@ -1,0 +1,39 @@
+mode: standalone
+
+rootUser: admin
+rootPassword: admin123
+
+environment:
+  MINIO_PROMETHEUS_URL: http://po-kube-prometheus-stack-prometheus.infra.svc:9090
+
+persistence:
+  enabled: false
+
+ingress:
+  enabled: false
+
+consoleIngress:
+  enabled: true
+  ingressClassName: nginx-internal
+  annotations:
+    kubernetes.io/tls-acme: "true"
+  path: /
+  hosts:
+    - minio-console.develop.in.quid.com
+  tls:
+   - secretName: tls-minio-console.develop.in.quid.com
+     hosts:
+     - minio-console.develop.in.quid.com
+
+users:
+- accessKey: console
+  secretKey: console123
+  policy: consoleAdmin
+
+metrics:
+  serviceMonitor:
+    enabled: true
+    public: true
+    additionalLabels:
+      release: po
+

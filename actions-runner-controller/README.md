@@ -41,3 +41,5 @@ https://github.com/organizations/myorg/settings/installations/19358472
 * [PAT Permission](https://github.com/actions-runner-controller/actions-runner-controller#deploying-using-pat-authentication)
 * [Deploying Using GitHub App Authentication](https://github.com/actions-runner-controller/actions-runner-controller#deploying-using-github-app-authentication)
 * [actions-runner helm chart](https://github.com/actions/actions-runner-controller/tree/master/contrib/examples/actions-runner)
+* [failed to connect containerd.sock](https://github.com/actions/actions-runner-controller/issues/1341#issuecomment-1097622182)
+* [runner version](https://github.com/actions/actions-runner-controller/blob/v0.26.0/test/e2e/e2e_test.go#L43)

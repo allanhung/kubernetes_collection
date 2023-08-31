@@ -1,0 +1,39 @@
+k8gb:
+  deployCrds: true
+  deployRbac: true
+  dnsZone: "gslb.example.com"
+  dnsZoneNegTTL: 300
+  edgeDNSZone: "example.com"
+  edgeDNSServers:
+  - 8.8.8.8
+  - 8.8.4.4
+  - 1.1.1.1
+  clusterGeoTag: "eu"
+  extGslbClustersGeoTags: "us"
+  log:
+    format: simple # log format (simple,json)
+    level: info    
+
+coredns:
+  serviceType: LoadBalancer
+
+infoblox:
+  enabled: false
+
+route53:
+  enabled: false
+
+ns1:
+  enabled: false
+
+openshift:
+  enabled: false
+
+rfc2136:
+  enabled: false
+
+tracing:
+  enabled: false
+
+extdns:
+  enabled: false

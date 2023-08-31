@@ -31,6 +31,34 @@ helm upgrade --install etcd \
   bitnami/etcd
 ```
 
+### Backup and Restore
+```bash
+ETCDCTL_API=3 etcdctl snapshot save snapshot.db
+ETCDCTL_API=3 etcdctl snapshot status snapshot.db
+ETCDCTL_API=3 etcdctl snapshot restore snapshot.db
+```
+
+### start etcd server with database file and create snapshot
+```bash
+# file: /var/lib/etcd/member/snap/db
+
+# Download binary
+ETCD_VER=v3.5.9
+DOWNLOAD_URL=https://storage.googleapis.com/etcd
+
+rm -f /tmp/etcd-${ETCD_VER}-linux-amd64.tar.gz
+rm -rf /tmp/etcd-download-test && mkdir -p /tmp/etcd-download-test
+curl -L ${DOWNLOAD_URL}/${ETCD_VER}/etcd-${ETCD_VER}-linux-amd64.tar.gz -o /tmp/etcd-${ETCD_VER}-linux-amd64.tar.gz
+tar xzvf /tmp/etcd-${ETCD_VER}-linux-amd64.tar.gz -C /tmp/etcd-download-test --strip-components=1
+rm -f /tmp/etcd-${ETCD_VER}-linux-amd64.tar.gz
+
+# start etcd server
+/tmp/etcd-download-test/etcd --data-dir /var/lib/etcd
+
+# snapshot
+/tmp/etcd-download-test/etcdctl snapshot save /tmp/backup.db
+```
+
 ### Trouble Shooting
 * member not found
 ```bash
@@ -49,3 +77,4 @@ echo "${MEMBER_ID}" > /var/lib/kubelet/pods/${POD_ID}/volumes/kubernetes.io~csi/
 ### Reference
 * [etcd](https://github.com/bitnami/charts/tree/master/bitnami/etcd)
 * [loki-etcd](https://www.jianshu.com/p/f9ab6296ff29)
+* [etcd-json-converter](https://github.com/forcemeter/etcd-json-converter)

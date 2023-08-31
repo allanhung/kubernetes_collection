@@ -36,3 +36,10 @@ failed to sync cache: timed out waiting for the condition
 * [external-dns alibabacloud tutorial](https://github.com/kubernetes-sigs/external-dns/blob/master/docs/tutorials/alibabacloud.md)
 * [bitnami external-dns helm chart](https://github.com/bitnami/charts/tree/master/bitnami/external-dns)
 * [Disable external-dns for specific ingresses](https://github.com/kubernetes-sigs/external-dns/issues/1910)
+* [regex-domain-filter](https://github.com/kubernetes-sigs/external-dns/pull/3073)
+
+## Rollback
+```bash
+https://github.com/kubernetes-sigs/external-dns
+cd external-dns && patch -p1 -R < ../3073.patch
+```

@@ -1,0 +1,100 @@
+[16763981.890163] pci 0000:00:1f.0:   bridge window [mem 0xfc000000-0xfc1fffff 64bit pref]                                                                                     [255/9716]
+[16763981.890220] virtio-pci 0000:00:10.0: enabling device (0000 -> 0002)
+[16763981.892779] virtio-pci 0000:00:10.0: virtio_pci: leaving for legacy driver
+[16763981.893855] virtio-pci 0000:00:10.0: irq 123 for MSI/MSI-X
+[16763981.893871] virtio-pci 0000:00:10.0: irq 124 for MSI/MSI-X
+[16763981.893885] virtio-pci 0000:00:10.0: irq 125 for MSI/MSI-X
+[16763981.893904] virtio-pci 0000:00:10.0: irq 126 for MSI/MSI-X
+[16763981.893919] virtio-pci 0000:00:10.0: irq 127 for MSI/MSI-X
+[16763981.893933] virtio-pci 0000:00:10.0: irq 128 for MSI/MSI-X
+[16763981.893951] virtio-pci 0000:00:10.0: irq 129 for MSI/MSI-X
+[16763981.893966] virtio-pci 0000:00:10.0: irq 130 for MSI/MSI-X
+[16763981.893983] virtio-pci 0000:00:10.0: irq 131 for MSI/MSI-X
+[16763981.893999] virtio-pci 0000:00:10.0: irq 132 for MSI/MSI-X
+[16763981.894015] virtio-pci 0000:00:10.0: irq 133 for MSI/MSI-X
+[16763981.894030] virtio-pci 0000:00:10.0: irq 134 for MSI/MSI-X
+[16763981.894046] virtio-pci 0000:00:10.0: irq 135 for MSI/MSI-X
+[16763981.894060] virtio-pci 0000:00:10.0: irq 136 for MSI/MSI-X
+[16763981.894074] virtio-pci 0000:00:10.0: irq 137 for MSI/MSI-X
+[16763981.894088] virtio-pci 0000:00:10.0: irq 138 for MSI/MSI-X
+[16763981.894102] virtio-pci 0000:00:10.0: irq 139 for MSI/MSI-X
+[16763981.896419] virtio-pci 0000:00:10.0: irq 123 for MSI/MSI-X
+[16763981.896433] virtio-pci 0000:00:10.0: irq 124 for MSI/MSI-X
+[16763981.898346] genirq: Flags mismatch irq 0. 00000080 (virtio13) vs. 00015a20 (timer)
+[16763981.899160] CPU: 2 PID: 2757884 Comm: kworker/u24:1 Tainted: G           OE  ------------ T 3.10.0-1160.53.1.el7.x86_64 #1
+[16763981.899162] Hardware name: Alibaba Cloud Alibaba Cloud ECS, BIOS 8f19b21 04/01/2014
+[16763981.899167] Workqueue: kacpi_hotplug acpi_hotplug_work_fn
+[16763981.899169] Call Trace:
+[16763981.899174]  [<ffffffff90583579>] dump_stack+0x19/0x1b
+[16763981.899178]  [<ffffffff8ff5236a>] __setup_irq+0x52a/0x590
+[16763981.899200]  [<ffffffffc0091500>] ? vp_config_changed+0x20/0x20 [virtio_pci]
+[16763981.899203]  [<ffffffff8ff5252c>] request_threaded_irq+0xcc/0x180
+[16763981.899207]  [<ffffffffc0091f9c>] vp_try_to_find_vqs+0x35c/0x3b0 [virtio_pci]
+[16763981.899212]  [<ffffffffc0092083>] vp_find_vqs+0x93/0xb0 [virtio_pci]
+[16763981.899216]  [<ffffffffc00c5919>] virtnet_find_vqs+0x1b9/0x2e0 [virtio_net]
+[16763981.899220]  [<ffffffffc00c6f1d>] init_vqs+0x14d/0x1b0 [virtio_net]
+[16763981.899224]  [<ffffffffc00c754c>] virtnet_probe+0x47c/0x7f7 [virtio_net]
+[16763981.899230]  [<ffffffffc004992f>] virtio_dev_probe+0x1cf/0x2d0 [virtio]
+[16763981.899236]  [<ffffffff902bc095>] driver_probe_device+0xc5/0x3e0
+[16763981.899239]  [<ffffffff902bc3b0>] ? driver_probe_device+0x3e0/0x3e0
+[16763981.899241]  [<ffffffff902bc3f3>] __device_attach+0x43/0x50
+[16763981.899243]  [<ffffffff902b9d15>] bus_for_each_drv+0x75/0xc0
+[16763981.899245]  [<ffffffff902bbed0>] device_attach+0x90/0xb0
+[16763981.899248]  [<ffffffff902bb0f8>] bus_probe_device+0x98/0xd0
+[16763981.899250]  [<ffffffff902b899f>] device_add+0x4ff/0x7c0
+[16763981.899255]  [<ffffffffc0092520>] ? vp_finalize_features+0x40/0x40 [virtio_pci]
+[16763981.899259]  [<ffffffffc0092520>] ? vp_finalize_features+0x40/0x40 [virtio_pci]
+[16763981.899260]  [<ffffffff902b8c7a>] device_register+0x1a/0x20
+[16763981.899265]  [<ffffffffc00493c9>] register_virtio_device+0xb9/0x100 [virtio]
+[16763981.899269]  [<ffffffffc0091a67>] virtio_pci_probe+0xb7/0x140 [virtio_pci]
+[16763981.899273]  [<ffffffff901d726a>] local_pci_probe+0x4a/0xb0
+[16763981.899274]  [<ffffffff901d89b9>] pci_device_probe+0x109/0x160
+[16763981.899280]  [<ffffffff902bc095>] driver_probe_device+0xc5/0x3e0
+[16763981.899282]  [<ffffffff902bc3b0>] ? driver_probe_device+0x3e0/0x3e0
+[16763981.899284]  [<ffffffff902bc3f3>] __device_attach+0x43/0x50
+[16763981.899286]  [<ffffffff902b9d15>] bus_for_each_drv+0x75/0xc0
+[16763981.899288]  [<ffffffff902bbed0>] device_attach+0x90/0xb0
+[16763981.899290]  [<ffffffff901cbdcf>] pci_bus_add_device+0x4f/0xa0
+[16763981.899292]  [<ffffffff901cbe59>] pci_bus_add_devices+0x39/0x80
+[16763981.899295]  [<ffffffff901f4fe9>] enable_slot+0x239/0x4a0
+[16763981.899297]  [<ffffffff901f4208>] ? get_slot_status+0xa8/0x110
+[16763981.899299]  [<ffffffff901f5357>] acpiphp_check_bridge.part.9+0x107/0x140
+[16763981.899301]  [<ffffffff901f55d7>] acpiphp_hotplug_notify+0x177/0x210
+[16763981.899303]  [<ffffffff901f5460>] ? acpiphp_post_dock_fixup+0xd0/0xd0
+[16763981.899305]  [<ffffffff9021b92e>] acpi_device_hotplug+0x3b7/0x41a
+[16763981.899307]  [<ffffffff902149f7>] acpi_hotplug_work_fn+0x1e/0x29
+[16763981.899310]  [<ffffffff8febde8f>] process_one_work+0x17f/0x440
+[16763981.899312]  [<ffffffff8febefa6>] worker_thread+0x126/0x3c0
+[16763981.899315]  [<ffffffff8febee80>] ? manage_workers.isra.26+0x2a0/0x2a0
+[16763981.899317]  [<ffffffff8fec5e61>] kthread+0xd1/0xe0
+[16763981.899319]  [<ffffffff8fec5d90>] ? insert_kthread_work+0x40/0x40
+[16763981.899327]  [<ffffffff90595df7>] ret_from_fork_nospec_begin+0x21/0x21
+[16763981.899330]  [<ffffffff8fec5d90>] ? insert_kthread_work+0x40/0x40
+[16763981.974256] virtio_net: probe of virtio13 failed with error -16
+[16763981.974356] pci 0000:00:1f.0: PCI bridge to [bus 01]
+[16763981.974368] pci 0000:00:1f.0:   bridge window [io  0xc000-0xdfff]
+[16763981.974401] pci 0000:00:1f.0:   bridge window [mem 0xfe200000-0xfe9fffff]
+[16763981.974420] pci 0000:00:1f.0:   bridge window [mem 0xfc000000-0xfc1fffff 64bit pref]
+[16763981.974468] pci 0000:00:1f.0: PCI bridge to [bus 01]
+[16763981.974476] pci 0000:00:1f.0:   bridge window [io  0xc000-0xdfff]
+[16763981.974494] pci 0000:00:1f.0:   bridge window [mem 0xfe200000-0xfe9fffff]
+[16763981.974506] pci 0000:00:1f.0:   bridge window [mem 0xfc000000-0xfc1fffff 64bit pref]
+[16763981.974550] pci 0000:00:1f.0: PCI bridge to [bus 01]
+[16763981.974558] pci 0000:00:1f.0:   bridge window [io  0xc000-0xdfff]
+[16763981.974575] pci 0000:00:1f.0:   bridge window [mem 0xfe200000-0xfe9fffff]
+[16763981.974586] pci 0000:00:1f.0:   bridge window [mem 0xfc000000-0xfc1fffff 64bit pref]
+[16763981.974628] pci 0000:00:1f.0: PCI bridge to [bus 01]
+[16763981.974636] pci 0000:00:1f.0:   bridge window [io  0xc000-0xdfff]
+[16763981.974653] pci 0000:00:1f.0:   bridge window [mem 0xfe200000-0xfe9fffff]
+[16763981.974666] pci 0000:00:1f.0:   bridge window [mem 0xfc000000-0xfc1fffff 64bit pref]
+....
+[16763981.975589] pci 0000:00:1f.0: PCI bridge to [bus 01]
+[16763981.975598] pci 0000:00:1f.0:   bridge window [io  0xc000-0xdfff]
+[16763981.975615] pci 0000:00:1f.0:   bridge window [mem 0xfe200000-0xfe9fffff]
+[16763981.975628] pci 0000:00:1f.0:   bridge window [mem 0xfc000000-0xfc1fffff 64bit pref]
+[16763981.976122] pci_bus 0000:01: Allocating resources
+[16763981.976127] pci 0000:00:1f.0: PCI bridge to [bus 01]
+[16763981.976135] pci 0000:00:1f.0:   bridge window [io  0xc000-0xdfff]
+[16763981.976152] pci 0000:00:1f.0:   bridge window [mem 0xfe200000-0xfe9fffff]
+[16763981.976163] pci 0000:00:1f.0:   bridge window [mem 0xfc000000-0xfc1fffff 64bit pref]
+[16763982.976896] nf_conntrack: falling back to vmalloc.

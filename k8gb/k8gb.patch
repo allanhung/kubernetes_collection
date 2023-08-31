@@ -1,0 +1,99 @@
+diff --git a/controllers/providers/assistant/assistant.go b/controllers/providers/assistant/assistant.go
+index 1471a33..1355461 100644
+--- a/controllers/providers/assistant/assistant.go
++++ b/controllers/providers/assistant/assistant.go
+@@ -26,6 +26,8 @@ import (
+ )
+ 
+ type Assistant interface {
++	// CoreDNSServiceName retrieves CoreDNS Service Name
++	CoreDNSServiceName() (string, error)
+ 	// CoreDNSExposedIPs retrieves list of exposed IP by CoreDNS
+ 	CoreDNSExposedIPs() ([]string, error)
+ 	// GslbIngressExposedIPs retrieves list of IP's exposed by all GSLB ingresses
+diff --git a/controllers/providers/assistant/gslb.go b/controllers/providers/assistant/gslb.go
+index 6797098..688f035 100644
+--- a/controllers/providers/assistant/gslb.go
++++ b/controllers/providers/assistant/gslb.go
+@@ -59,6 +59,42 @@ func NewGslbAssistant(client client.Client, k8gbNamespace string, edgeDNSServers
+ 	}
+ }
+ 
++// CoreDNSServiceName
++func (r *Gslb) CoreDNSServiceName() (string, error) {
++	coreDNSServiceName := ""
++	serviceList := &corev1.ServiceList{}
++	sel, err := labels.Parse(coreDNSServiceLabel)
++	if err != nil {
++		log.Err(err).Msg("Badly formed label selector")
++		return coreDNSServiceName, err
++	}
++	listOption := &client.ListOptions{
++		LabelSelector: sel,
++		Namespace:     r.k8gbNamespace,
++	}
++
++	err = r.client.List(context.TODO(), serviceList, listOption)
++	if err != nil {
++		if errors.IsNotFound(err) {
++			log.Warn().Err(err).Msg("Can't find CoreDNS service")
++		}
++	}
++	if len(serviceList.Items) != 1 {
++		log.Warn().Msg("More than 1 CoreDNS service was found")
++		for _, service := range serviceList.Items {
++			log.Info().
++				Str("serviceName", service.Name).
++				Msg("Found CoreDNS service")
++		}
++		err := coreerrors.New("more than 1 CoreDNS service was found. Check if CoreDNS exposed correctly")
++		return coreDNSServiceName, err
++	}
++	coreDNSService := &serviceList.Items[0]
++	coreDNSServiceName = coreDNSService.Name
++
++	return coreDNSService.Name, nil
++}
++
+ // CoreDNSExposedIPs retrieves list of IP's exposed by CoreDNS
+ func (r *Gslb) CoreDNSExposedIPs() ([]string, error) {
+ 	serviceList := &corev1.ServiceList{}
+diff --git a/controllers/providers/dns/external.go b/controllers/providers/dns/external.go
+index 66673cb..adb0260 100644
+--- a/controllers/providers/dns/external.go
++++ b/controllers/providers/dns/external.go
+@@ -98,6 +98,34 @@ func (p *ExternalDNSProvider) CreateZoneDelegationForExternalDNS(gslb *k8gbv1bet
+ 	if err != nil {
+ 		return err
+ 	}
++	// create coredns a record for ns1.dns
++	var coreDNSServiceName string
++	coreDNSServiceName, err = p.assistant.CoreDNSServiceName()
++	if err != nil {
++		return err
++	}
++	CoreDNSRecord := &externaldns.DNSEndpoint{
++		ObjectMeta: metav1.ObjectMeta{
++			Name:        p.endpointName + "-coredns",
++			Namespace:   p.config.K8gbNamespace,
++			Annotations: map[string]string{"k8gb.absa.oss/dnstype": "local"},
++			Labels:      map[string]string{"k8gb.absa.oss/dnstype": "local"},
++		},
++		Spec: externaldns.DNSEndpointSpec{
++			Endpoints: []*externaldns.Endpoint{
++				{
++					DNSName:    coreDNSServiceName + "." + p.config.K8gbNamespace,
++					RecordTTL:  ttl,
++					RecordType: "A",
++					Targets:    NSServerIPs,
++				},
++			},
++		},
++	}
++	err = p.assistant.SaveDNSEndpoint(p.config.K8gbNamespace, CoreDNSRecord)
++	if err != nil {
++		return err
++	}
+ 	return nil
+ }
+ 

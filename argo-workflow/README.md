@@ -38,6 +38,15 @@ for crd in "clusterworkflowtemplates.argoproj.io" "cronworkflows.argoproj.io" "w
 done
 ```
 
+#### Workflow Archive with Mysql
+
+```
+create database argo;
+CREATE USER 'argo_workflows'@'172.%' IDENTIFIED  BY '<your password>';
+GRANT USAGE ON *.* TO 'argo_workflows'@'172.%';
+GRANT ALL PRIVILEGES ON `argo`.* TO 'argo_workflows'@'172.%';
+```
+
 ### Dashboard
 * [14136](https://grafana.com/grafana/dashboards/14136)
 * [13927](https://grafana.com/grafana/dashboards/13927)

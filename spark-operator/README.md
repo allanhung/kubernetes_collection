@@ -101,4 +101,5 @@ Reference:
 * [using-secrets-as-environment-variables](https://github.com/GoogleCloudPlatform/spark-on-k8s-operator/blob/master/docs/user-guide.md#using-secrets-as-environment-variables)
 * [Updating API version of admissionregistration.k8s.io](https://github.com/GoogleCloudPlatform/spark-on-k8s-operator/pull/1401)
 * [Resolves an error when deploying the webhook](https://github.com/GoogleCloudPlatform/spark-on-k8s-operator/pull/1413)
-
+* [Added permissions for leader election](https://github.com/GoogleCloudPlatform/spark-on-k8s-operator/pull/1647)
+* [Specifying Environment Variables](https://github.com/GoogleCloudPlatform/spark-on-k8s-operator/blob/master/docs/user-guide.md#specifying-environment-variables)

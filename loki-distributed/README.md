@@ -28,8 +28,10 @@ kubectl delete statefulset loki-loki-distributed-querier --cascade=orphan -n log
 * msg="error removing stale clients" err="empty ring"
 * msg="found an existing instance(s) with a problem in the ring, this instance cannot become ready until this problem is resolved. The /ring http endpoint on the distributor (or single binary) provides visibility into the ring." ring=ingester err="instance loki-loki-distributed-ingester-2 past heartbeat timeout"
 ```bash
-etcdctl get "" --prefix --keys-only
-etcdctl del "" --from-key=true
+kubectl scale deploy loki-loki-distributed-distributor --replicas=0
+etcdctl get loki --prefix --keys-only
+etcdctl del loki/distributor
+etcdctl del loki --prefix  --from-key=true
 ```
 * prober detected unhealthy status
 ```bash

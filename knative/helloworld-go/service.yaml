@@ -1,0 +1,15 @@
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: helloworld-go
+  namespace: default
+spec:
+  template:
+    spec:
+      imagePullSecrets:
+      - name: regsecret
+      containers:
+      - image: docker.quid.com/quid/knative-helloword
+        env:
+        - name: TARGET
+          value: "Go Sample v1"

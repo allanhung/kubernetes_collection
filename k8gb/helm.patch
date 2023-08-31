@@ -1,0 +1,113 @@
+--- a/templates/operator.yaml
++++ b/templates/operator.yaml
+@@ -97,7 +97,7 @@
+                   name: infoblox
+                   key: INFOBLOX_WAPI_PASSWORD
+             {{- end }}
+-            {{- if or .Values.route53.enabled .Values.ns1.enabled .Values.rfc2136.enabled }}
++            {{- if or .Values.route53.enabled .Values.ns1.enabled .Values.rfc2136.enabled .Values.extdns.enabled }}
+             - name: EXTDNS_ENABLED
+               value: "true"
+             {{- end }}
+--- a/templates/role.yaml
++++ b/templates/role.yaml
+@@ -33,6 +33,7 @@
+   - externaldns.k8s.io
+   resources:
+   - dnsendpoints
++  - dnsendpoints/status
+   verbs:
+   - '*'
+ - apiGroups:
+--- a/charts/coredns/templates/deployment.yaml
++++ b/charts/coredns/templates/deployment.yaml
+@@ -77,6 +77,10 @@
+       nodeSelector:
+ {{ toYaml .Values.nodeSelector | indent 8 }}
+       {{- end }}
++      {{- if not (empty .Values.image.pullSecrets) }}
++      imagePullSecrets:
++{{ toYaml .Values.image.pullSecrets | indent 8 }}
++      {{- end }}
+       containers:
+       - name: "coredns"
+         image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+--- a/k8gb/values.schema.json
++++ b/k8gb/values.schema.json
+@@ -35,6 +35,9 @@
+                 },
+                 "tracing": {
+                     "$ref": "#/definitions/Tracing"
++                },
++                "extdns": {
++                    "$ref": "#/definitions/Extdns"
+                 }
+             }
+         },
+@@ -248,7 +251,15 @@
+                 "dnsZoneNegTTL": {
+                     "type": "integer",
+                     "minimum": 0
++                },
++                "servicelabel": {
++                    "format": "string",
++                    "minLength": 1
+                 },
++                "servicens": {
++                    "format": "string",
++                    "minLength": 0
++                },
+                 "edgeDNSZone": {
+                     "format": "idn-hostname",
+                     "minLength": 1
+@@ -485,6 +496,19 @@
+                 "enabled"
+             ],
+             "title": "Tracing"
++        },
++        "Extdns": {
++            "type": "object",
++            "additionalProperties": false,
++            "properties": {
++                "enabled": {
++                    "type": "boolean"
++                }
++            },
++            "required": [
++                "enabled"
++            ],
++            "title": "Extdns"
+         }
+     }
+ }
+--- a/k8gb/values.yaml
++++ b/k8gb/values.yaml
+@@ -17,6 +17,8 @@
+   dnsZone: "cloud.example.com"
+   # -- Negative TTL for SOA record
+   dnsZoneNegTTL: 300
++  # -- service label with external ip
++  servicelabel: "app.kubernetes.io/name=coredns"
+   # -- main zone which would contain gslb zone to delegate
+   edgeDNSZone: "example.com" # main zone which would contain gslb zone to delegate
+   # -- host/ip[:port] format is supported here where port defaults to 53
+@@ -153,3 +155,6 @@
+     repository: jaegertracing/all-in-one
+     tag: 1.37.0
+     pullPolicy: Always
++
++extdns:
++  enabled: false
+--- a/k8gb/templates/coredns-cm.yaml
++++ b/k8gb/templates/coredns-cm.yaml
+@@ -17,6 +17,10 @@
+             filter k8gb.absa.oss/dnstype=local
+             negttl {{ .Values.k8gb.dnsZoneNegTTL }}
+             loadbalance weight
++            servicelabel {{ .Values.k8gb.servicelabel | default "app.kubernetes.io/name=coredns" }}
++            {{- with .Values.k8gb.servicens }}
++            servicens {{ . }}
++            {{- end }}
+         }
+     }
+ {{- end }}

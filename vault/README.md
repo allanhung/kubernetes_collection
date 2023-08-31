@@ -42,6 +42,19 @@ vault read auth/my-auth/role/my-app
 curl -X POST --data '{"jwt": "'$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)'", "role": "my-app"}' http://vault:8200/v1/auth/my-auth/login
 ```
 
+### Alicloud secrer engine
+VPATH=$(vault secrets list | grep alicloud | awk {'print $1'})
+vault read ${VPATH}/config
+VROLE=$(vault list ${VPATH}/role | tail -1)
+LEASEID=$(vault read ${VPATH}/creds/${VROLE} |grep lease_id | awk {'print $2'})
+vault lease revoke ${LEASEID}
+
+### Issue
+vault secret engine for alicloud won't be worked for 1.11.5-1.12
+* [vault secret engine for alicloud issue](https://github.com/hashicorp/vault/issues/6226)
+* [vault secret engine for alicloud issue](https://github.com/hashicorp/vault-plugin-auth-alicloud/pull/43)
+* [vault secret engine for alicloud issue](https://github.com/hashicorp/vault/pull/18021)
+
 ### Reference
 * [vault-helm](https://github.com/hashicorp/vault-helm)
 * [process memory](https://github.com/hashicorp/vault/issues/1446)

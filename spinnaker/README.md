@@ -163,6 +163,36 @@ hal config security authn saml edit \
     --service-address-url ${SPINNAKER_API_URL}
 ```
 
+## Custom redis
+```bash
+cat > ~/.hal/default/service-settings/redis.yml << EOF
+overrideBaseUrl: redis://some.redis.url:6379
+skipLifeCycleManagement: true
+EOF
+```
+
+## nodeSelector
+```bash
+kubernetes:
+  deploymentEnvironment:
+    affinity:
+      spin-clouddriver:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: spinnaker
+                operator: In
+                values:
+                - 'enabled'
+    tolerations:
+      spin-clouddriver:
+      - effect: NoSchedule
+        key: spinnaker
+        operator: Equal
+        value: enabled
+```
+
 ## TroubleShooting
 * Log
 ```bash
