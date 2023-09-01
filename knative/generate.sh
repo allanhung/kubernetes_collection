@@ -28,20 +28,35 @@ generate_cm() {
   # helm doesn't allow hyphens in variable names
   VARNAME=$(echo $2 | sed "s/-//")
   COMPNAME=$(echo $3 | sed "s/-//")
+  case $2 in
+    "autoscaler"|"logging"|"observability"|"tracing")
+      COMPLABELS=$2
+      ;;
+    "network")
+      COMPLABELS="networking"
+      ;;
+    "istio")
+      COMPLABELS=$'net-istio\n    networking.knative.dev/ingress-provider: istio'
+      ;;
+    "certmanager")
+      COMPLABELS=$'net-certmanager\n    networking.knative.dev/certificate-provider: cert-manager'
+      ;;
+    *)
+      COMPLABELS="controller"
+      ;;
+  esac
   cat > templates/$4.yaml << EOF
-{{- if .Values.$COMPNAME.config.$VARNAME -}}
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: config-$2
   namespace: knative-serving
   labels:
-    app.kubernetes.io/component: $2
+    app.kubernetes.io/component: $COMPLABELS
     app.kubernetes.io/name: knative-serving
-    app.kubernetes.io/version: v$1
+    app.kubernetes.io/version: "$1"
 data:
   {{- tpl (toYaml .Values.$COMPNAME.config.$VARNAME) . | nindent 2 }}
-{{- end -}}
 EOF
 }
 export -f generate_cm
@@ -86,6 +101,9 @@ grep -e '^kind: ConfigMap' -A 2 sources/net-istio.yaml | grep -e '^  name:'| sor
 grep -e '^kind: ConfigMap' -A 2 sources/cert-manager.yaml | grep -e '^  name:'| sort | uniq | awk -F"config-" {'print $2'} | xargs -I{} bash -c "generate_cm ${KNATIVE_VERSION} {} cert-manager cert-manager-ConfigMap-{}"
 
 yq -i -e 'select(.metadata.name == "webhook") .spec.template.spec.containers[0].livenessProbe.initialDelaySeconds = "{{ .Values.knative.webhook.initialDelaySeconds }}"' templates/Deployment.yaml
+sed -i -e "s#'{{ .Values.knative.webhook.initialDelaySeconds }}'#{{ .Values.knative.webhook.initialDelaySeconds }}#g" templates/Deployment.yaml
+
+yq -i -e 'select(.apiVersion == "autoscaling/v2beta2") .apiVersion = "autoscaling/v2"' templates/HorizontalPodAutoscaler.yaml
 
 yq -i -e 'select(.spec.selector.istio == "ingressgateway") .spec.selector.istio = "{{ .Values.netistio.selector }}"' templates/net-istio-Service.yaml
 yq -i -e 'select(.spec.selector.istio == "ingressgateway") .spec.selector.istio = "{{ .Values.netistio.selector }}"' templates/net-istio-Gateway.yaml
