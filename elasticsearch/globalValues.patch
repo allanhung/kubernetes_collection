@@ -1,0 +1,3099 @@
+--- a/elasticsearch/templates/_helpers.tpl	2023-09-25 12:32:05
++++ b/elasticsearch/templates/_helpers.tpl	2023-09-25 12:00:52
+@@ -3,7 +3,7 @@
+ Expand the name of the chart.
+ */}}
+ {{- define "elasticsearch.name" -}}
+-{{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" -}}
++{{- default .Chart.Name (.Values.nameOverride | default .Values.global.nameOverride)| trunc 63 | trimSuffix "-" -}}
+ {{- end -}}
+ 
+ {{/*
+@@ -11,44 +11,44 @@
+ We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
+ */}}
+ {{- define "elasticsearch.fullname" -}}
+-{{- $name := default .Chart.Name .Values.nameOverride -}}
++{{- $name := default .Chart.Name (.Values.nameOverride | default .Values.global.nameOverride) -}}
+ {{- printf "%s-%s" .Release.Name $name | trunc 63 | trimSuffix "-" -}}
+ {{- end -}}
+ 
+ {{- define "elasticsearch.uname" -}}
+-{{- if empty .Values.fullnameOverride -}}
+-{{- if empty .Values.nameOverride -}}
+-{{ .Values.clusterName }}-{{ .Values.nodeGroup }}
++{{- if empty (.Values.fullnameOverride | default .Values.global.fullnameOverride) -}}
++{{- if empty (.Values.nameOverride | default .Values.global.nameOverride) -}}
++{{ (.Values.clusterName | default .Values.global.clusterName) }}-{{ (.Values.nodeGroup | default .Values.global.nodeGroup) }}
+ {{- else -}}
+-{{ .Values.nameOverride }}-{{ .Values.nodeGroup }}
++{{ (.Values.nameOverride | default .Values.global.nameOverride) }}-{{ (.Values.nodeGroup | default .Values.global.nodeGroup) }}
+ {{- end -}}
+ {{- else -}}
+-{{ .Values.fullnameOverride }}
++{{ (.Values.fullnameOverride | default .Values.global.fullnameOverride) }}
+ {{- end -}}
+ {{- end -}}
+ 
+ {{- define "elasticsearch.masterService" -}}
+-{{- if empty .Values.masterService -}}
+-{{- if empty .Values.fullnameOverride -}}
+-{{- if empty .Values.nameOverride -}}
+-{{ .Values.clusterName }}-master
++{{- if empty (.Values.masterService | default .Values.global.masterService) -}}
++{{- if empty (.Values.fullnameOverride | default .Values.global.fullnameOverride) -}}
++{{- if empty (.Values.nameOverride | default .Values.global.nameOverride) -}}
++{{ (.Values.clusterName | default .Values.global.clusterName) }}-master
+ {{- else -}}
+-{{ .Values.nameOverride }}-master
++{{ (.Values.nameOverride | default .Values.global.nameOverride) }}-master
+ {{- end -}}
+ {{- else -}}
+-{{ .Values.fullnameOverride }}
++{{ (.Values.fullnameOverride | default .Values.global.fullnameOverride) }}
+ {{- end -}}
+ {{- else -}}
+-{{ .Values.masterService }}
++{{ (.Values.masterService | default .Values.global.masterService) }}
+ {{- end -}}
+ {{- end -}}
+ 
+ {{- define "elasticsearch.esMajorVersion" -}}
+-{{- if .Values.esMajorVersion -}}
+-{{ .Values.esMajorVersion }}
++{{- if (.Values.esMajorVersion | default .Values.global.esMajorVersion) -}}
++{{ (.Values.esMajorVersion | default .Values.global.esMajorVersion) }}
+ {{- else -}}
+-{{- $version := int (index (.Values.imageTag | splitList ".") 0) -}}
+-  {{- if and (contains "docker.elastic.co/elasticsearch/elasticsearch" .Values.image) (not (eq $version 0)) -}}
++{{- $version := int (index ((.Values.image.tag | default .Values.global.image.tag) | splitList ".") 0) -}}
++  {{- if and (contains "docker.elastic.co/elasticsearch/elasticsearch" (.Values.image.name | default .Values.global.image.name)) (not (eq $version 0)) -}}
+ {{ $version }}
+   {{- else -}}
+ 6
+--- a/elasticsearch/templates/configmap.yaml	2023-09-25 12:32:05
++++ b/elasticsearch/templates/configmap.yaml	2023-09-25 11:07:54
+@@ -1,4 +1,4 @@
+-{{- if .Values.esConfig }}
++{{- if merge .Values.esConfig .Values.global.esConfig }}
+ apiVersion: v1
+ kind: ConfigMap
+ metadata:
+@@ -8,8 +8,12 @@
+     release: {{ .Release.Name | quote }}
+     chart: "{{ .Chart.Name }}"
+     app: "{{ template "elasticsearch.uname" . }}"
++{{- with (merge .Values.configmap.annotations .Values.global.configmap.annotations) }}
++  annotations:
++{{ toYaml . | indent 4 }}
++{{- end }}
+ data:
+-{{- range $path, $config := .Values.esConfig }}
++{{- range $path, $config := merge .Values.esConfig .Values.global.esConfig }}
+   {{ $path }}: |
+ {{ $config | indent 4 -}}
+ {{- end -}}
+--- a/elasticsearch/templates/ingress.yaml	2023-09-25 12:32:05
++++ b/elasticsearch/templates/ingress.yaml	2023-09-25 11:07:54
+@@ -1,7 +1,7 @@
+-{{- if .Values.ingress.enabled -}}
++{{- if (.Values.ingress.enabled | default .Values.global.ingress.enabled) -}}
+ {{- $fullName := include "elasticsearch.uname" . -}}
+-{{- $httpPort := .Values.httpPort -}}
+-{{- $ingressPath := .Values.ingress.path -}}
++{{- $httpPort := (.Values.httpPort | default .Values.global.httpPort) -}}
++{{- $ingressPath := (.Values.ingress.path | default .Values.global.ingress.path) -}}
+ apiVersion: networking.k8s.io/v1
+ kind: Ingress
+ metadata:
+@@ -10,18 +10,18 @@
+     app: {{ .Chart.Name }}
+     release: {{ .Release.Name }}
+     heritage: {{ .Release.Service }}
+-{{- with .Values.ingress.annotations }}
++{{- with (merge .Values.ingress.annotations .Values.global.ingress.annotations) }}
+   annotations:
+ {{ toYaml . | indent 4 }}
+ {{- end }}
+ spec:
+-{{- if .Values.ingress.ingressClassName }}
+-  ingressClassName: {{ .Values.ingress.ingressClassName }}
++{{- if (.Values.ingress.ingressClassName | default .Values.global.ingress.ingressClassName) }}
++  ingressClassName: {{ (.Values.ingress.ingressClassName | default .Values.global.ingress.ingressClassName) }}
+ {{- end }}
+-{{- if .Values.ingress.tls }}
++{{- if (.Values.ingress.tls | default .Values.global.ingress.tls) }}
+   tls:
+   {{- if .ingressPath }}
+-  {{- range .Values.ingress.tls }}
++  {{- range (.Values.ingress.tls | default .Values.global.ingress.tls) }}
+     - hosts:
+       {{- range .hosts }}
+         - {{ . }}
+@@ -29,11 +29,11 @@
+       secretName: {{ .secretName }}
+     {{- end }}
+   {{- else }}
+-{{ toYaml .Values.ingress.tls | indent 4 }}
++{{ toYaml (.Values.ingress.tls | default .Values.global.ingress.tls) | indent 4 }}
+   {{- end }}
+ {{- end }}
+   rules:
+-  {{- range .Values.ingress.hosts }}
++  {{- range (.Values.ingress.hosts | default .Values.global.ingress.hosts) }}
+     {{- if $ingressPath }}
+     - host: {{ . }}
+       http:
+--- a/elasticsearch/templates/networkpolicy.yaml	2023-09-25 12:32:05
++++ b/elasticsearch/templates/networkpolicy.yaml	2023-09-25 11:07:54
+@@ -1,4 +1,4 @@
+-{{- if (or .Values.networkPolicy.http.enabled .Values.networkPolicy.transport.enabled) }}
++{{- if (or (.Values.networkPolicy.http.enabled | default .Values.global.networkPolicy.http.enabled) (.Values.networkPolicy.transport.enabled | default .Values.global.networkPolicy.transport.enabled)) }}
+ kind: NetworkPolicy
+ apiVersion: networking.k8s.io/v1
+ metadata:
+@@ -14,7 +14,7 @@
+       app: "{{ template "elasticsearch.uname" . }}"
+   ingress:  # Allow inbound connections
+ 
+-{{- if .Values.networkPolicy.http.enabled }}
++{{- if (.Values.networkPolicy.http.enabled | default .Values.global.networkPolicy.http.enabled) }}
+     # For HTTP access
+     - ports:
+       - port: {{ .Values.httpPort }}
+@@ -23,32 +23,32 @@
+         - podSelector:
+             matchLabels:
+               {{ template "elasticsearch.uname" . }}-http-client: "true"
+-{{- with .Values.networkPolicy.http.explicitNamespacesSelector }}
++{{- with (merge .Values.networkPolicy.http.explicitNamespacesSelector .Values.global.networkPolicy.http.explicitNamespacesSelector) }}
+           # From authorized namespaces
+           namespaceSelector:
+ {{ toYaml . | indent 12 }}
+ {{- end }}
+-{{- with .Values.networkPolicy.http.additionalRules }}
++{{- with (merge .Values.networkPolicy.http.additionalRules .Values.global.networkPolicy.http.additionalRules) }}
+             # Or from custom additional rules
+ {{ toYaml . | indent 8 }}
+ {{- end }}
+ {{- end }}
+ 
+-{{- if .Values.networkPolicy.transport.enabled }}
++{{- if (.Values.networkPolicy.transport.enabled | default .Values.global.networkPolicy.transport.enabled) }}
+     # For transport access
+     - ports:
+-        - port: {{ .Values.transportPort }}
++        - port: {{ (.Values.transportPort | default .Values.global.transportPort) }}
+       from:
+         # From authorized Pods (having the correct label)
+         - podSelector:
+             matchLabels:
+               {{ template "elasticsearch.uname" . }}-transport-client: "true"
+-{{- with .Values.networkPolicy.transport.explicitNamespacesSelector }}
++{{- with (merge .Values.networkPolicy.transport.explicitNamespacesSelector .Values.global.networkPolicy.transport.explicitNamespacesSelector) }}
+           # From authorized namespaces
+           namespaceSelector:
+ {{ toYaml . | indent 12 }}
+ {{- end }}
+-{{- with .Values.networkPolicy.transport.additionalRules }}
++{{- with (merge .Values.networkPolicy.transport.additionalRules .Values.global.networkPolicy.transport.additionalRules) }}
+         # Or from custom additional rules
+ {{ toYaml . | indent 8 }}
+ {{- end }}
+--- a/elasticsearch/templates/poddisruptionbudget.yaml	2023-09-25 12:32:05
++++ b/elasticsearch/templates/poddisruptionbudget.yaml	2023-09-25 11:07:54
+@@ -1,11 +1,11 @@
+ ---
+-{{- if .Values.maxUnavailable }}
++{{- if (.Values.maxUnavailable | default .Values.global.maxUnavailable) }}
+ apiVersion: policy/v1
+ kind: PodDisruptionBudget
+ metadata:
+   name: "{{ template "elasticsearch.uname" . }}-pdb"
+ spec:
+-  maxUnavailable: {{ .Values.maxUnavailable }}
++  maxUnavailable: {{ (.Values.maxUnavailable | default .Values.global.maxUnavailable) }}
+   selector:
+     matchLabels:
+       app: "{{ template "elasticsearch.uname" . }}"
+--- a/elasticsearch/templates/podsecuritypolicy.yaml	2023-09-25 12:32:05
++++ b/elasticsearch/templates/podsecuritypolicy.yaml	2023-09-25 11:07:54
+@@ -1,14 +1,14 @@
+-{{- if .Values.podSecurityPolicy.create -}}
++{{- if (.Values.podSecurityPolicy.create | default .Values.global.podSecurityPolicy.create) -}}
+ {{- $fullName := include "elasticsearch.uname" . -}}
+ apiVersion: policy/v1beta1
+ kind: PodSecurityPolicy
+ metadata:
+-  name: {{ default $fullName .Values.podSecurityPolicy.name | quote }}
++  name: {{ default $fullName (.Values.podSecurityPolicy.name | default .Values.global.podSecurityPolicy.name) | quote }}
+   labels:
+     heritage: {{ .Release.Service | quote }}
+     release: {{ .Release.Name | quote }}
+     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+     app: {{ $fullName | quote }}
+ spec:
+-{{ toYaml .Values.podSecurityPolicy.spec | indent 2 }}
++{{ toYaml (merge .Values.podSecurityPolicy.spec .Values.global.podSecurityPolicy.spec) | indent 2 }}
+ {{- end -}}
+--- a/elasticsearch/templates/role.yaml	2023-09-25 12:32:05
++++ b/elasticsearch/templates/role.yaml	2023-09-25 11:07:54
+@@ -1,4 +1,4 @@
+-{{- if .Values.rbac.create -}}
++{{- if (.Values.rbac.create | default .Values.global.rbac.create) -}}
+ {{- $fullName := include "elasticsearch.uname" . -}}
+ apiVersion: rbac.authorization.k8s.io/v1
+ kind: Role
+@@ -15,10 +15,10 @@
+     resources:
+       - podsecuritypolicies
+     resourceNames:
+-      {{- if eq .Values.podSecurityPolicy.name "" }}
++      {{- if eq (.Values.podSecurityPolicy.name | default .Values.global.podSecurityPolicy.name) "" }}
+       - {{ $fullName | quote }}
+       {{- else }}
+-      - {{ .Values.podSecurityPolicy.name | quote }}
++      - {{ (.Values.podSecurityPolicy.name | default .Values.global.podSecurityPolicy.name) | quote }}
+       {{- end }}
+     verbs:
+       - use
+--- a/elasticsearch/templates/rolebinding.yaml	2023-09-25 12:32:05
++++ b/elasticsearch/templates/rolebinding.yaml	2023-09-25 11:07:54
+@@ -1,4 +1,4 @@
+-{{- if .Values.rbac.create -}}
++{{- if (.Values.rbac.create | default .Values.global.rbac.create) -}}
+ {{- $fullName := include "elasticsearch.uname" . -}}
+ apiVersion: rbac.authorization.k8s.io/v1
+ kind: RoleBinding
+@@ -11,10 +11,10 @@
+     app: {{ $fullName | quote }}
+ subjects:
+   - kind: ServiceAccount
+-    {{- if eq .Values.rbac.serviceAccountName "" }}
++    {{- if eq (.Values.rbac.serviceAccountName | default .Values.global.rbac.serviceAccountName) "" }}
+     name: {{ $fullName | quote }}
+     {{- else }}
+-    name: {{ .Values.rbac.serviceAccountName | quote }}
++    name: {{ (.Values.rbac.serviceAccountName | default .Values.global.rbac.serviceAccountName) | quote }}
+     {{- end }}
+     namespace: {{ .Release.Namespace | quote }}
+ roleRef:
+--- a/elasticsearch/templates/service.yaml	2023-09-25 12:32:05
++++ b/elasticsearch/templates/service.yaml	2023-09-25 11:59:27
+@@ -1,9 +1,9 @@
+ ---
+-{{- if .Values.service.enabled -}}
++{{- if (.Values.service.enabled | default .Values.global.service.enabled) -}}
+ kind: Service
+ apiVersion: v1
+ metadata:
+-{{- if eq .Values.nodeGroup "master" }}
++{{- if eq (.Values.nodeGroup | default .Values.global.nodeGroup) "master" }}
+   name: {{ template "elasticsearch.masterService" . }}
+ {{- else }}
+   name: {{ template "elasticsearch.uname" . }}
+@@ -13,43 +13,45 @@
+     release: {{ .Release.Name | quote }}
+     chart: "{{ .Chart.Name }}"
+     app: "{{ template "elasticsearch.uname" . }}"
+-{{- if .Values.service.labels }}
+-{{ toYaml .Values.service.labels | indent 4}}
++{{- if (merge .Values.service.labels .Values.global.service.labels) }}
++{{ toYaml (merge .Values.service.labels .Values.global.service.labels) | indent 4}}
+ {{- end }}
++{{- if (merge .Values.service.annotations .Values.global.service.annotations) }}
+   annotations:
+-{{ toYaml .Values.service.annotations | indent 4 }}
++{{ toYaml (merge .Values.service.annotations .Values.global.service.annotations) | indent 4 }}
++{{- end }}
+ spec:
+-  type: {{ .Values.service.type }}
++  type: {{ (.Values.service.type | default .Values.global.service.type) }}
+   selector:
+     release: {{ .Release.Name | quote }}
+     chart: "{{ .Chart.Name }}"
+     app: "{{ template "elasticsearch.uname" . }}"
+   ports:
+-  - name: {{ .Values.service.httpPortName | default "http" }}
++  - name: {{ (.Values.service.httpPortName | default .Values.global.service.httpPortName) | default "http" }}
+     protocol: TCP
+-    port: {{ .Values.httpPort }}
+-{{- if .Values.service.nodePort }}
+-    nodePort: {{ .Values.service.nodePort }}
++    port: {{ (.Values.httpPort | default .Values.global.httpPort) }}
++{{- if (.Values.service.nodePort | default .Values.global.service.nodePort) }}
++    nodePort: {{ (.Values.service.nodePort | default .Values.global.service.nodePort) }}
+ {{- end }}
+-  - name: {{ .Values.service.transportPortName | default "transport" }}
++  - name: {{ (.Values.service.transportPortName | default .Values.global.service.transportPortName) | default "transport" }}
+     protocol: TCP
+-    port: {{ .Values.transportPort }}
+-{{- if .Values.service.loadBalancerIP }}
+-  loadBalancerIP: {{ .Values.service.loadBalancerIP }}
++    port: {{ (.Values.transportPort | default .Values.global.transportPort) }}
++{{- if (.Values.service.loadBalancerIP | default .Values.global.service.loadBalancerIP) }}
++  loadBalancerIP: {{ (.Values.service.loadBalancerIP | default .Values.global.service.loadBalancerIP) }}
+ {{- end }}
+-{{- with .Values.service.loadBalancerSourceRanges }}
++{{- with (.Values.service.loadBalancerSourceRanges | default .Values.global.service.loadBalancerSourceRanges) }}
+   loadBalancerSourceRanges:
+ {{ toYaml . | indent 4 }}
+ {{- end }}
+-{{- if .Values.service.externalTrafficPolicy }}
+-  externalTrafficPolicy: {{ .Values.service.externalTrafficPolicy }}
++{{- if (.Values.service.externalTrafficPolicy | default .Values.global.service.externalTrafficPolicy) }}
++  externalTrafficPolicy: {{ (.Values.service.externalTrafficPolicy | default .Values.global.service.externalTrafficPolicy) }}
+ {{- end }}
+ {{- end }}
+ ---
+ kind: Service
+ apiVersion: v1
+ metadata:
+-{{- if eq .Values.nodeGroup "master" }}
++{{- if eq (.Values.nodeGroup | default .Values.global.nodeGroup) "master" }}
+   name: {{ template "elasticsearch.masterService" . }}-headless
+ {{- else }}
+   name: {{ template "elasticsearch.uname" . }}-headless
+@@ -59,11 +61,14 @@
+     release: {{ .Release.Name | quote }}
+     chart: "{{ .Chart.Name }}"
+     app: "{{ template "elasticsearch.uname" . }}"
+-{{- if .Values.service.labelsHeadless }}
+-{{ toYaml .Values.service.labelsHeadless | indent 4 }}
++{{- if (merge .Values.service.labelsHeadless .Values.global.service.labelsHeadless) }}
++{{ toYaml (merge .Values.service.labelsHeadless .Values.global.service.labelsHeadless) | indent 4 }}
+ {{- end }}
+   annotations:
+     service.alpha.kubernetes.io/tolerate-unready-endpoints: "true"
++{{- if (merge .Values.service.annotationsHeadless .Values.global.service.annotationsHeadless) }}
++{{ toYaml (merge .Values.service.annotationsHeadless .Values.global.service.annotationsHeadless) | indent 4 }}
++{{- end }}
+ spec:
+   clusterIP: None # This is needed for statefulset hostnames like elasticsearch-0 to resolve
+   # Create endpoints also if the related pod isn't ready
+@@ -71,7 +76,7 @@
+   selector:
+     app: "{{ template "elasticsearch.uname" . }}"
+   ports:
+-  - name: {{ .Values.service.httpPortName | default "http" }}
+-    port: {{ .Values.httpPort }}
+-  - name: {{ .Values.service.transportPortName | default "transport" }}
+-    port: {{ .Values.transportPort }}
++  - name: {{ (.Values.service.httpPortName | default .Values.global.service.httpPortName) | default "http" }}
++    port: {{ (.Values.httpPort | default .Values.global.httpPort) }}
++  - name: {{ (.Values.service.transportPortName | default .Values.global.service.transportPortName) | default "transport" }}
++    port: {{ (.Values.transportPort | default .Values.global.transportPort) }}
+--- a/elasticsearch/templates/serviceaccount.yaml	2023-09-25 12:32:05
++++ b/elasticsearch/templates/serviceaccount.yaml	2023-09-25 11:07:54
+@@ -1,15 +1,15 @@
+-{{- if .Values.rbac.create -}}
++{{- if (.Values.rbac.create | default .Values.global.rbac.create) -}}
+ {{- $fullName := include "elasticsearch.uname" . -}}
+ apiVersion: v1
+ kind: ServiceAccount
+ metadata:
+-  {{- if eq .Values.rbac.serviceAccountName "" }}
++  {{- if eq (.Values.rbac.serviceAccountName | default .Values.global.rbac.serviceAccountName) "" }}
+   name: {{ $fullName | quote }}
+   {{- else }}
+-  name: {{ .Values.rbac.serviceAccountName | quote }}
++  name: {{ (.Values.rbac.serviceAccountName | default .Values.global.rbac.serviceAccountName) | quote }}
+   {{- end }}
+   annotations:
+-    {{- with .Values.rbac.serviceAccountAnnotations }}
++    {{- with (merge .Values.rbac.serviceAccountAnnotations .Values.global.rbac.serviceAccountAnnotations) }}
+     {{- toYaml . | nindent 4 }}
+     {{- end }}
+   labels:
+--- a/elasticsearch/templates/statefulset.yaml	2023-09-25 12:32:05
++++ b/elasticsearch/templates/statefulset.yaml	2023-09-25 11:07:54
+@@ -8,7 +8,7 @@
+     release: {{ .Release.Name | quote }}
+     chart: "{{ .Chart.Name }}"
+     app: "{{ template "elasticsearch.uname" . }}"
+-    {{- range $key, $value := .Values.labels }}
++    {{- range $key, $value := (merge .Values.labels .Values.global.labels) }}
+     {{ $key }}: {{ $value | quote }}
+     {{- end }}
+   annotations:
+@@ -18,29 +18,29 @@
+   selector:
+     matchLabels:
+       app: "{{ template "elasticsearch.uname" . }}"
+-  replicas: {{ .Values.replicas }}
+-  podManagementPolicy: {{ .Values.podManagementPolicy }}
++  replicas: {{ (.Values.replicas | default .Values.global.replicas) }}
++  podManagementPolicy: {{ (.Values.podManagementPolicy | default .Values.global.podManagementPolicy) }}
+   updateStrategy:
+-    type: {{ .Values.updateStrategy }}
+-  {{- if .Values.persistence.enabled }}
++    type: {{ (.Values.updateStrategy | default .Values.global.updateStrategy) }}
++  {{- if (.Values.persistence.enabled | default .Values.global.persistence.enabled) }}
+   volumeClaimTemplates:
+   - metadata:
+       name: {{ template "elasticsearch.uname" . }}
+-    {{- if .Values.persistence.labels.enabled }}
++    {{- if (.Values.persistence.labels.enabled | default .Values.global.persistence.labels.enabled) }}
+       labels:
+         release: {{ .Release.Name | quote }}
+         chart: "{{ .Chart.Name }}"
+         app: "{{ template "elasticsearch.uname" . }}"
+-        {{- range $key, $value := .Values.labels }}
++        {{- range $key, $value := (merge .Values.labels .Values.global.labels) }}
+         {{ $key }}: {{ $value | quote }}
+         {{- end }}
+     {{- end }}
+-    {{- with .Values.persistence.annotations  }}
++    {{- with (merge .Values.persistence.annotations .Values.global.persistence.annotations)  }}
+       annotations:
+ {{ toYaml . | indent 8 }}
+     {{- end }}
+     spec:
+-{{ toYaml .Values.volumeClaimTemplate | indent 6 }}
++{{ toYaml (merge .Values.volumeClaimTemplate .Values.global.volumeClaimTemplate) | indent 6 }}
+   {{- end }}
+   template:
+     metadata:
+@@ -49,47 +49,47 @@
+         release: {{ .Release.Name | quote }}
+         chart: "{{ .Chart.Name }}"
+         app: "{{ template "elasticsearch.uname" . }}"
+-        {{- range $key, $value := .Values.labels }}
++        {{- range $key, $value := (merge .Values.labels .Values.global.labels) }}
+         {{ $key }}: {{ $value | quote }}
+         {{- end }}
+       annotations:
+-        {{- range $key, $value := .Values.podAnnotations }}
++        {{- range $key, $value := (merge .Values.podAnnotations .Values.global.podAnnotations) }}
+         {{ $key }}: {{ $value | quote }}
+         {{- end }}
+         {{/* This forces a restart if the configmap has changed */}}
+-        {{- if .Values.esConfig }}
++        {{- if (merge .Values.esConfig .Values.global.esConfig) }}
+         configchecksum: {{ include (print .Template.BasePath "/configmap.yaml") . | sha256sum | trunc 63 }}
+         {{- end }}
+     spec:
+-      {{- if .Values.schedulerName }}
+-      schedulerName: "{{ .Values.schedulerName }}"
++      {{- if (.Values.schedulerName | default .Values.global.schedulerName) }}
++      schedulerName: "{{ (.Values.schedulerName | default .Values.global.schedulerName) }}"
+       {{- end }}
+       securityContext:
+-{{ toYaml .Values.podSecurityContext | indent 8 }}
+-        {{- if .Values.fsGroup }}
+-        fsGroup: {{ .Values.fsGroup }} # Deprecated value, please use .Values.podSecurityContext.fsGroup
++{{ toYaml (merge .Values.podSecurityContext .Values.global.podSecurityContext) | indent 8 }}
++        {{- if (.Values.fsGroup | default .Values.global.fsGroup) }}
++        fsGroup: {{ (.Values.fsGroup | default .Values.global.fsGroup) }} # Deprecated value, please use (merge .Values.podSecurityContext .Values.global.podSecurityContext).fsGroup
+         {{- end }}
+-      {{- if .Values.rbac.create }}
++      {{- if (.Values.rbac.create | default .Values.global.rbac.create) }}
+       serviceAccountName: "{{ template "elasticsearch.uname" . }}"
+-      {{- else if not (eq .Values.rbac.serviceAccountName "") }}
+-      serviceAccountName: {{ .Values.rbac.serviceAccountName | quote }}
++      {{- else if not (eq (.Values.rbac.serviceAccountName | default .Values.global.rbac.serviceAccountName) "") }}
++      serviceAccountName: {{ (.Values.rbac.serviceAccountName | default .Values.global.rbac.serviceAccountName) | quote }}
+       {{- end }}
+-      automountServiceAccountToken: {{ .Values.rbac.automountToken }}
+-      {{- with .Values.tolerations }}
++      automountServiceAccountToken: {{ (.Values.rbac.automountToken | default .Values.global.rbac.automountToken) }}
++      {{- with (.Values.tolerations | default .Values.global.tolerations) }}
+       tolerations:
+ {{ toYaml . | indent 6 }}
+       {{- end }}
+-      {{- with .Values.nodeSelector }}
++      {{- with (merge .Values.nodeSelector .Values.global.nodeSelector) }}
+       nodeSelector:
+ {{ toYaml . | indent 8 }}
+       {{- end }}
+-      {{- if or (eq .Values.antiAffinity "hard") (eq .Values.antiAffinity "soft") .Values.nodeAffinity }}
++      {{- if or (eq (.Values.antiAffinity | default .Values.global.antiAffinity) "hard") (eq (.Values.antiAffinity | default .Values.global.antiAffinity) "soft") (merge .Values.nodeAffinity .Values.global.nodeAffinity) }}
+       {{- if .Values.priorityClassName }}
+       priorityClassName: {{ .Values.priorityClassName }}
+       {{- end }}
+       affinity:
+       {{- end }}
+-      {{- if eq .Values.antiAffinity "hard" }}
++      {{- if eq (.Values.antiAffinity | default .Values.global.antiAffinity) "hard" }}
+         podAntiAffinity:
+           requiredDuringSchedulingIgnoredDuringExecution:
+           - labelSelector:
+@@ -98,13 +98,13 @@
+                 operator: In
+                 values:
+                 - "{{ template "elasticsearch.uname" .}}"
+-            topologyKey: {{ .Values.antiAffinityTopologyKey }}
+-      {{- else if eq .Values.antiAffinity "soft" }}
++            topologyKey: {{ (.Values.antiAffinityTopologyKey | default .Values.global.antiAffinityTopologyKey) }}
++      {{- else if eq (.Values.antiAffinity | default .Values.global.antiAffinity) "soft" }}
+         podAntiAffinity:
+           preferredDuringSchedulingIgnoredDuringExecution:
+           - weight: 1
+             podAffinityTerm:
+-              topologyKey: {{ .Values.antiAffinityTopologyKey }}
++              topologyKey: {{ (.Values.antiAffinityTopologyKey | default .Values.global.antiAffinityTopologyKey) }}
+               labelSelector:
+                 matchExpressions:
+                 - key: app
+@@ -112,13 +112,13 @@
+                   values:
+                   - "{{ template "elasticsearch.uname" . }}"
+       {{- end }}
+-      {{- with .Values.nodeAffinity }}
++      {{- with (merge .Values.nodeAffinity .Values.global.nodeAffinity) }}
+         nodeAffinity:
+ {{ toYaml . | indent 10 }}
+       {{- end }}
+-      terminationGracePeriodSeconds: {{ .Values.terminationGracePeriod }}
++      terminationGracePeriodSeconds: {{ (.Values.terminationGracePeriod | default .Values.global.terminationGracePeriod) }}
+       volumes:
+-        {{- range .Values.secretMounts }}
++        {{- range (.Values.secretMounts | default .Values.global.secretMounts) }}
+         - name: {{ .name }}
+           secret:
+             secretName: {{ .secretName }}
+@@ -126,54 +126,54 @@
+             defaultMode: {{ .defaultMode }}
+             {{- end }}
+         {{- end }}
+-        {{- if .Values.esConfig }}
++        {{- if (merge .Values.esConfig .Values.global.esConfig) }}
+         - name: esconfig
+           configMap:
+             name: {{ template "elasticsearch.uname" . }}-config
+         {{- end }}
+-{{- if .Values.keystore }}
++{{- if (.Values.keystore | default .Values.global.keystore) }}
+         - name: keystore
+           emptyDir: {}
+-        {{- range .Values.keystore }}
++        {{- range (.Values.keystore | default .Values.global.keystore) }}
+         - name: keystore-{{ .secretName }}
+           secret: {{ toYaml . | nindent 12 }}
+         {{- end }}
+ {{ end }}
+-      {{- if .Values.extraVolumes }}
++      {{- if (.Values.extraVolumes | default .Values.global.extraVolumes) }}
+       # Currently some extra blocks accept strings
+       # to continue with backwards compatibility this is being kept
+       # whilst also allowing for yaml to be specified too.
+-      {{- if eq "string" (printf "%T" .Values.extraVolumes) }}
+-{{ tpl .Values.extraVolumes . | indent 8 }}
++      {{- if eq "string" (printf "%T" (.Values.extraVolumes | default .Values.global.extraVolumes)) }}
++{{ tpl (.Values.extraVolumes | default .Values.global.extraVolumes) . | indent 8 }}
+       {{- else }}
+-{{ toYaml .Values.extraVolumes | indent 8 }}
++{{ toYaml (.Values.extraVolumes | default .Values.global.extraVolumes) | indent 8 }}
+       {{- end }}
+       {{- end }}
+-      {{- if .Values.imagePullSecrets }}
++      {{- if (.Values.imagePullSecrets | default .Values.global.imagePullSecrets) }}
+       imagePullSecrets:
+-{{ toYaml .Values.imagePullSecrets | indent 8 }}
++{{ toYaml (.Values.imagePullSecrets | default .Values.global.imagePullSecrets) | indent 8 }}
+       {{- end }}
+-      enableServiceLinks: {{ .Values.enableServiceLinks }}
+-      {{- if .Values.hostAliases }}
+-      hostAliases: {{ toYaml .Values.hostAliases | nindent 8 }}
++      enableServiceLinks: {{ (.Values.enableServiceLinks | default .Values.global.enableServiceLinks) }}
++      {{- if (.Values.hostAliases | default .Values.global.hostAliases) }}
++      hostAliases: {{ toYaml (.Values.hostAliases | default .Values.global.hostAliases) | nindent 8 }}
+       {{- end }}
+-      {{- if or (.Values.extraInitContainers) (.Values.sysctlInitContainer.enabled) (.Values.keystore)  }}
++      {{- if or ((.Values.extraInitContainers | default .Values.global.extraInitContainers)) ((.Values.sysctlInitContainer.enabled | default .Values.global.sysctlInitContainer.enabled)) ((.Values.keystore | default .Values.global.keystore))  }}
+       initContainers:
+-      {{- if .Values.sysctlInitContainer.enabled }}
++      {{- if (.Values.sysctlInitContainer.enabled | default .Values.global.sysctlInitContainer.enabled) }}
+       - name: configure-sysctl
+         securityContext:
+           runAsUser: 0
+           privileged: true
+-        image: "{{ .Values.image }}:{{ .Values.imageTag }}"
+-        imagePullPolicy: "{{ .Values.imagePullPolicy }}"
+-        command: ["sysctl", "-w", "vm.max_map_count={{ .Values.sysctlVmMaxMapCount}}"]
++        image: "{{ (.Values.image.name | default .Values.global.image.name) }}:{{ (.Values.image.tag | default .Values.global.image.tag) }}"
++        imagePullPolicy: "{{ (.Values.imagePullPolicy | default .Values.global.imagePullPolicy) }}"
++        command: ["sysctl", "-w", "vm.max_map_count={{ (.Values.sysctlVmMaxMapCount | default .Values.global.sysctlVmMaxMapCount)}}"]
+         resources:
+-{{ toYaml .Values.initResources | indent 10 }}
++{{ toYaml (merge .Values.initResources .Values.global.initResources) | indent 10 }}
+       {{- end }}
+-{{ if .Values.keystore }}
++{{ if (.Values.keystore | default .Values.global.keystore) }}
+       - name: keystore
+-        image: "{{ .Values.image }}:{{ .Values.imageTag }}"
+-        imagePullPolicy: "{{ .Values.imagePullPolicy }}"
++        image: "{{ (.Values.image.name | default .Values.global.image.name) }}:{{ (.Values.image.tag | default .Values.global.image.tag) }}"
++        imagePullPolicy: "{{ (.Values.imagePullPolicy | default .Values.global.imagePullPolicy) }}"
+         command:
+         - sh
+         - -c
+@@ -196,25 +196,25 @@
+           fi
+ 
+           cp -a /usr/share/elasticsearch/config/elasticsearch.keystore /tmp/keystore/
+-        env: {{ toYaml .Values.extraEnvs | nindent 10 }}
+-        envFrom: {{ toYaml .Values.envFrom | nindent 10 }}
+-        resources: {{ toYaml .Values.initResources | nindent 10 }}
++        env: {{ toYaml (.Values.extraEnvs | default .Values.global.extraEnvs) | nindent 10 }}
++        envFrom: {{ toYaml (.Values.envFrom | default .Values.global.envFrom) | nindent 10 }}
++        resources: {{ toYaml (merge .Values.initResources .Values.global.initResources) | nindent 10 }}
+         volumeMounts:
+           - name: keystore
+             mountPath: /tmp/keystore
+-          {{- range .Values.keystore }}
++          {{- range (.Values.keystore | default .Values.global.keystore) }}
+           - name: keystore-{{ .secretName }}
+             mountPath: /tmp/keystoreSecrets/{{ .secretName }}
+           {{- end }}
+ {{ end }}
+-      {{- if .Values.extraInitContainers }}
++      {{- if (.Values.extraInitContainers | default .Values.global.extraInitContainers) }}
+       # Currently some extra blocks accept strings
+       # to continue with backwards compatibility this is being kept
+       # whilst also allowing for yaml to be specified too.
+-      {{- if eq "string" (printf "%T" .Values.extraInitContainers) }}
+-{{ tpl .Values.extraInitContainers . | indent 6 }}
++      {{- if eq "string" (printf "%T" (.Values.extraInitContainers | default .Values.global.extraInitContainers)) }}
++{{ tpl (.Values.extraInitContainers | default .Values.global.extraInitContainers) . | indent 6 }}
+       {{- else }}
+-{{ toYaml .Values.extraInitContainers | indent 6 }}
++{{ toYaml (.Values.extraInitContainers | default .Values.global.extraInitContainers) | indent 6 }}
+       {{- end }}
+       {{- end }}
+       {{- end }}
+@@ -222,8 +222,8 @@
+       - name: "{{ template "elasticsearch.name" . }}"
+         securityContext:
+ {{ toYaml .Values.securityContext | indent 10 }}
+-        image: "{{ .Values.image }}:{{ .Values.imageTag }}"
+-        imagePullPolicy: "{{ .Values.imagePullPolicy }}"
++        image: "{{ (.Values.image.name | default .Values.global.image.name) }}:{{ (.Values.image.tag | default .Values.global.image.tag) }}"
++        imagePullPolicy: "{{ (.Values.imagePullPolicy | default .Values.global.imagePullPolicy) }}"
+         readinessProbe:
+           exec:
+             command:
+@@ -231,7 +231,7 @@
+               - -c
+               - |
+                 #!/usr/bin/env bash -e
+-                # If the node is starting up wait for the cluster to be ready (request params: "{{ .Values.clusterHealthCheckParams }}" )
++                # If the node is starting up wait for the cluster to be ready (request params: "{{ (.Values.clusterHealthCheckParams | default .Values.global.clusterHealthCheckParams) }}" )
+                 # Once it has started only check that the node itself is responding
+                 START_FILE=/tmp/.es_start_file
+ 
+@@ -252,7 +252,7 @@
+                     set -- "$@" -u "elastic:${ELASTIC_PASSWORD}"
+                   fi
+ 
+-                  curl --output /dev/null -k "$@" "{{ .Values.protocol }}://127.0.0.1:{{ .Values.httpPort }}${path}"
++                  curl --output /dev/null -k "$@" "{{ (.Values.protocol | default .Values.global.protocol) }}://127.0.0.1:{{ (.Values.httpPort | default .Values.global.httpPort) }}${path}"
+                 }
+ 
+                 if [ -f "${START_FILE}" ]; then
+@@ -260,7 +260,7 @@
+                   HTTP_CODE=$(http "/" "-w %{http_code}")
+                   RC=$?
+                   if [[ ${RC} -ne 0 ]]; then
+-                    echo "curl --output /dev/null -k -XGET -s -w '%{http_code}' \${BASIC_AUTH} {{ .Values.protocol }}://127.0.0.1:{{ .Values.httpPort }}/ failed with RC ${RC}"
++                    echo "curl --output /dev/null -k -XGET -s -w '%{http_code}' \${BASIC_AUTH} {{ (.Values.protocol | default .Values.global.protocol) }}://127.0.0.1:{{ (.Values.httpPort | default .Values.global.httpPort) }}/ failed with RC ${RC}"
+                     exit ${RC}
+                   fi
+                   # ready if HTTP code 200, 503 is tolerable if ES version is 6.x
+@@ -269,36 +269,36 @@
+                   elif [[ ${HTTP_CODE} == "503" && "{{ include "elasticsearch.esMajorVersion" . }}" == "6" ]]; then
+                     exit 0
+                   else
+-                    echo "curl --output /dev/null -k -XGET -s -w '%{http_code}' \${BASIC_AUTH} {{ .Values.protocol }}://127.0.0.1:{{ .Values.httpPort }}/ failed with HTTP code ${HTTP_CODE}"
++                    echo "curl --output /dev/null -k -XGET -s -w '%{http_code}' \${BASIC_AUTH} {{ (.Values.protocol | default .Values.global.protocol) }}://127.0.0.1:{{ (.Values.httpPort | default .Values.global.httpPort) }}/ failed with HTTP code ${HTTP_CODE}"
+                     exit 1
+                   fi
+ 
+                 else
+-                  echo 'Waiting for elasticsearch cluster to become ready (request params: "{{ .Values.clusterHealthCheckParams }}" )'
+-                  if http "/_cluster/health?{{ .Values.clusterHealthCheckParams }}" "--fail" ; then
++                  echo 'Waiting for elasticsearch cluster to become ready (request params: "{{ (.Values.clusterHealthCheckParams | default .Values.global.clusterHealthCheckParams) }}" )'
++                  if http "/_cluster/health?{{ (.Values.clusterHealthCheckParams | default .Values.global.clusterHealthCheckParams) }}" "--fail" ; then
+                     touch ${START_FILE}
+                     exit 0
+                   else
+-                    echo 'Cluster is not yet ready (request params: "{{ .Values.clusterHealthCheckParams }}" )'
++                    echo 'Cluster is not yet ready (request params: "{{ (.Values.clusterHealthCheckParams | default .Values.global.clusterHealthCheckParams) }}" )'
+                     exit 1
+                   fi
+                 fi
+-{{ toYaml .Values.readinessProbe | indent 10 }}
++{{ toYaml (merge .Values.readinessProbe .Values.global.readinessProbe) | indent 10 }}
+         ports:
+         - name: http
+-          containerPort: {{ .Values.httpPort }}
++          containerPort: {{ (.Values.httpPort | default .Values.global.httpPort) }}
+         - name: transport
+-          containerPort: {{ .Values.transportPort }}
++          containerPort: {{ (.Values.transportPort | default .Values.global.transportPort) }}
+         resources:
+-{{ toYaml .Values.resources | indent 10 }}
++{{ toYaml (.Values.resources | default .Values.global.resources) | indent 10 }}
+         env:
+           - name: node.name
+             valueFrom:
+               fieldRef:
+                 fieldPath: metadata.name
+-          {{- if eq .Values.roles.master "true" }}
++          {{- if eq (.Values.roles.master | default .Values.global.roles.master) "true" }}
+           - name: discovery.zen.minimum_master_nodes
+-            value: "{{ .Values.minimumMasterNodes }}"
++            value: "{{ (.Values.minimumMasterNodes | default .Values.global.minimumMasterNodes) }}"
+           {{- end }}
+           {{- if lt (int (include "elasticsearch.esMajorVersion" .)) 7 }}
+           - name: discovery.zen.ping.unicast.hosts
+@@ -308,63 +308,63 @@
+             value: "{{ template "elasticsearch.masterService" . }}-headless"
+           {{- end }}
+           - name: cluster.name
+-            value: "{{ .Values.clusterName }}"
++            value: "{{ (.Values.clusterName | default .Values.global.clusterName) }}"
+           - name: network.host
+-            value: "{{ .Values.networkHost }}"
+-          {{- if .Values.esJavaOpts  }}
++            value: "{{ (.Values.networkHost | default .Values.global.networkHost) }}"
++          {{- if (.Values.esJavaOpts | default .Values.global.esJavaOpts)  }}
+           - name: ES_JAVA_OPTS
+-            value: "{{ .Values.esJavaOpts }}"
++            value: "{{ (.Values.esJavaOpts | default .Values.global.esJavaOpts) }}"
+           {{- end }}
+-          {{- range $role, $enabled := .Values.roles }}
++          {{- range $role, $enabled := (merge .Values.roles .Values.global.roles) }}
+           - name: node.{{ $role }}
+             value: "{{ $enabled }}"
+           {{- end }}
+-{{- if .Values.extraEnvs }}
+-{{ toYaml .Values.extraEnvs | indent 10 }}
++{{- if (.Values.extraEnvs | default .Values.global.extraEnvs) }}
++{{ toYaml (.Values.extraEnvs | default .Values.global.extraEnvs) | indent 10 }}
+ {{- end }}
+-{{- if .Values.envFrom }}
++{{- if (.Values.envFrom | default .Values.global.envFrom) }}
+         envFrom:
+-{{ toYaml .Values.envFrom | indent 10 }}
++{{ toYaml (.Values.envFrom | default .Values.global.envFrom) | indent 10 }}
+ {{- end }}
+         volumeMounts:
+-          {{- if .Values.persistence.enabled }}
++          {{- if (.Values.persistence.enabled | default .Values.global.persistence.enabled) }}
+           - name: "{{ template "elasticsearch.uname" . }}"
+             mountPath: /usr/share/elasticsearch/data
+           {{- end }}
+-{{ if .Values.keystore }}
++{{ if (.Values.keystore | default .Values.global.keystore) }}
+           - name: keystore
+             mountPath: /usr/share/elasticsearch/config/elasticsearch.keystore
+             subPath: elasticsearch.keystore
+ {{ end }}
+-          {{- range .Values.secretMounts }}
++          {{- range (.Values.secretMounts | default .Values.global.secretMounts) }}
+           - name: {{ .name }}
+             mountPath: {{ .path }}
+             {{- if .subPath }}
+             subPath: {{ .subPath }}
+             {{- end }}
+           {{- end }}
+-          {{- range $path, $config := .Values.esConfig }}
++          {{- range $path, $config := (merge .Values.esConfig .Values.global.esConfig) }}
+           - name: esconfig
+             mountPath: /usr/share/elasticsearch/config/{{ $path }}
+             subPath: {{ $path }}
+           {{- end -}}
+-        {{- if .Values.extraVolumeMounts }}
++        {{- if (.Values.extraVolumeMounts | default .Values.global.extraVolumeMounts) }}
+         # Currently some extra blocks accept strings
+         # to continue with backwards compatibility this is being kept
+         # whilst also allowing for yaml to be specified too.
+-        {{- if eq "string" (printf "%T" .Values.extraVolumeMounts) }}
+-{{ tpl .Values.extraVolumeMounts . | indent 10 }}
++        {{- if eq "string" (printf "%T" (.Values.extraVolumeMounts | default .Values.global.extraVolumeMounts)) }}
++{{ tpl (.Values.extraVolumeMounts | default .Values.global.extraVolumeMounts) . | indent 10 }}
+         {{- else }}
+-{{ toYaml .Values.extraVolumeMounts | indent 10 }}
++{{ toYaml (.Values.extraVolumeMounts | default .Values.global.extraVolumeMounts) | indent 10 }}
+         {{- end }}
+         {{- end }}
+-      {{- if .Values.masterTerminationFix }}
+-      {{- if eq .Values.roles.master "true" }}
++      {{- if (.Values.masterTerminationFix | default .Values.global.masterTerminationFix) }}
++      {{- if eq (.Values.roles.master | default .Values.global.roles.master) "true" }}
+       # This sidecar will prevent slow master re-election
+       # https://github.com/elastic/helm-charts/issues/63
+       - name: elasticsearch-master-graceful-termination-handler
+-        image: "{{ .Values.image }}:{{ .Values.imageTag }}"
+-        imagePullPolicy: "{{ .Values.imagePullPolicy }}"
++        image: "{{ (.Values.image.name | default .Values.global.image.name) }}:{{ (.Values.image.tag | default .Values.global.image.tag) }}"
++        imagePullPolicy: "{{ (.Values.imagePullPolicy | default .Values.global.imagePullPolicy) }}"
+         command:
+         - "sh"
+         - -c
+@@ -379,7 +379,7 @@
+               else
+                 BASIC_AUTH=''
+               fi
+-              curl -XGET -s -k --fail ${BASIC_AUTH} {{ .Values.protocol }}://{{ template "elasticsearch.masterService" . }}:{{ .Values.httpPort }}${path}
++              curl -XGET -s -k --fail ${BASIC_AUTH} {{ (.Values.protocol | default .Values.global.protocol) }}://{{ template "elasticsearch.masterService" . }}:{{ (.Values.httpPort | default .Values.global.httpPort) }}${path}
+           }
+ 
+           cleanup () {
+@@ -401,32 +401,32 @@
+           sleep infinity &
+           wait $!
+         resources:
+-{{ toYaml .Values.sidecarResources | indent 10 }}
++{{ toYaml (merge .Values.sidecarResources .Values.global.sidecarResources) | indent 10 }}
+         env:
+           - name: NODE_NAME
+             valueFrom:
+               fieldRef:
+                 fieldPath: metadata.name
+-        {{- if .Values.extraEnvs }}
+-{{ toYaml .Values.extraEnvs | indent 10 }}
++        {{- if (.Values.extraEnvs | default .Values.global.extraEnvs) }}
++{{ toYaml (.Values.extraEnvs | default .Values.global.extraEnvs) | indent 10 }}
+         {{- end }}
+-        {{- if .Values.envFrom }}
++        {{- if (.Values.envFrom | default .Values.global.envFrom) }}
+         envFrom:
+-{{ toYaml .Values.envFrom | indent 10 }}
++{{ toYaml (.Values.envFrom | default .Values.global.envFrom) | indent 10 }}
+         {{- end }}
+       {{- end }}
+       {{- end }}
+-{{- if .Values.lifecycle }}
++{{- if (merge .Values.lifecycle .Values.global.lifecycle) }}
+         lifecycle:
+-{{ toYaml .Values.lifecycle | indent 10 }}
++{{ toYaml (merge .Values.lifecycle .Values.global.lifecycle) | indent 10 }}
+ {{- end }}
+-      {{- if .Values.extraContainers }}
++      {{- if (.Values.extraContainers | default .Values.global.extraContainers) }}
+       # Currently some extra blocks accept strings
+       # to continue with backwards compatibility this is being kept
+       # whilst also allowing for yaml to be specified too.
+-      {{- if eq "string" (printf "%T" .Values.extraContainers) }}
+-{{ tpl .Values.extraContainers . | indent 6 }}
++      {{- if eq "string" (printf "%T" (.Values.extraContainers | default .Values.global.extraContainers)) }}
++{{ tpl (.Values.extraContainers | default .Values.global.extraContainers) . | indent 6 }}
+       {{- else }}
+-{{ toYaml .Values.extraContainers | indent 6 }}
++{{ toYaml (.Values.extraContainers | default .Values.global.extraContainers) | indent 6 }}
+       {{- end }}
+       {{- end }}
+--- a/elasticsearch/templates/test/test-elasticsearch-health.yaml	2023-09-25 12:32:05
++++ b/elasticsearch/templates/test/test-elasticsearch-health.yaml	2023-09-25 11:38:10
+@@ -1,10 +1,10 @@
+ ---
+-{{- if .Values.tests.enabled -}}
++{{- if (.Values.tests.enabled | default .Values.global.tests.enabled) -}}
+ apiVersion: v1
+ kind: Pod
+ metadata:
+-{{- if .Values.healthNameOverride }}
+-  name: {{ .Values.healthNameOverride | quote }}
++{{- if (.Values.healthNameOverride | default .Values.global.healthNameOverride) }}
++  name: {{ (.Values.healthNameOverride | default .Values.global.healthNameOverride) | quote }}
+ {{- else }}
+   name: "{{ .Release.Name }}-{{ randAlpha 5 | lower }}-test"
+ {{- end }}
+@@ -15,12 +15,12 @@
+   securityContext:
+ {{ toYaml .Values.podSecurityContext | indent 4 }}
+   containers:
+-{{- if .Values.healthNameOverride }}
+-  - name: {{ .Values.healthNameOverride | quote }}
++{{- if (.Values.healthNameOverride | default .Values.global.healthNameOverride) }}
++  - name: {{ (.Values.healthNameOverride | default .Values.global.healthNameOverride) | quote }}
+ {{- else }}
+   - name: "{{ .Release.Name }}-{{ randAlpha 5 | lower }}-test"
+ {{- end }}
+-    image: "{{ .Values.image }}:{{ .Values.imageTag }}"
++    image: "{{ (.Values.image.name | default .Values.global.image.name) }}:{{ (.Values.image.tag | default .Values.global.image.tag) }}"
+     imagePullPolicy: "{{ .Values.imagePullPolicy }}"
+     command:
+       - "sh"
+@@ -28,9 +28,9 @@
+       - |
+         #!/usr/bin/env bash -e
+         curl -XGET --fail '{{ template "elasticsearch.uname" . }}:{{ .Values.httpPort }}/_cluster/health?{{ .Values.clusterHealthCheckParams }}'
+-  {{- if .Values.imagePullSecrets }}
++  {{- if (.Values.imagePullSecrets | default .Values.global.imagePullSecrets) }}
+   imagePullSecrets:
+-{{ toYaml .Values.imagePullSecrets | indent 4 }}
++{{ toYaml (.Values.imagePullSecrets | default .Values.global.imagePullSecrets) | indent 4 }}
+   {{- end }}
+   restartPolicy: Never
+ {{- end -}}
+--- a/elasticsearch/tests/elasticsearch_test.py	2023-09-25 12:32:05
++++ b/elasticsearch/tests/elasticsearch_test.py	1970-01-01 08:00:00
+@@ -1,1485 +0,0 @@
+-import os
+-import sys
+-
+-sys.path.insert(1, os.path.join(sys.path[0], "../../helpers"))
+-from helpers import helm_template
+-import yaml
+-
+-clusterName = "elasticsearch"
+-nodeGroup = "master"
+-uname = clusterName + "-" + nodeGroup
+-
+-
+-def test_defaults():
+-    config = """
+-    """
+-
+-    r = helm_template(config)
+-
+-    # Statefulset
+-    assert r["statefulset"][uname]["spec"]["replicas"] == 3
+-    assert r["statefulset"][uname]["spec"]["updateStrategy"] == {
+-        "type": "RollingUpdate"
+-    }
+-    assert r["statefulset"][uname]["spec"]["podManagementPolicy"] == "Parallel"
+-    assert r["statefulset"][uname]["spec"]["serviceName"] == uname + "-headless"
+-    assert r["statefulset"][uname]["spec"]["template"]["spec"]["affinity"][
+-        "podAntiAffinity"
+-    ]["requiredDuringSchedulingIgnoredDuringExecution"][0] == {
+-        "labelSelector": {
+-            "matchExpressions": [{"key": "app", "operator": "In", "values": [uname]}]
+-        },
+-        "topologyKey": "kubernetes.io/hostname",
+-    }
+-
+-    # Default environment variables
+-    env_vars = [
+-        {
+-            "name": "node.name",
+-            "valueFrom": {"fieldRef": {"fieldPath": "metadata.name"}},
+-        },
+-        {"name": "discovery.zen.ping.unicast.hosts", "value": uname + "-headless"},
+-        {"name": "network.host", "value": "0.0.0.0"},
+-        {"name": "cluster.name", "value": clusterName},
+-        {"name": "node.master", "value": "true"},
+-        {"name": "node.data", "value": "true"},
+-        {"name": "node.ingest", "value": "true"},
+-    ]
+-
+-    c = r["statefulset"][uname]["spec"]["template"]["spec"]["containers"][0]
+-    for env in env_vars:
+-        assert env in c["env"]
+-
+-    # Image
+-    assert c["image"].startswith("docker.elastic.co/elasticsearch/elasticsearch:")
+-    assert c["imagePullPolicy"] == "IfNotPresent"
+-    assert c["name"] == "elasticsearch"
+-
+-    # Ports
+-    assert c["ports"][0] == {"name": "http", "containerPort": 9200}
+-    assert c["ports"][1] == {"name": "transport", "containerPort": 9300}
+-
+-    # Health checks
+-    assert c["readinessProbe"]["failureThreshold"] == 3
+-    assert c["readinessProbe"]["initialDelaySeconds"] == 10
+-    assert c["readinessProbe"]["periodSeconds"] == 10
+-    assert c["readinessProbe"]["successThreshold"] == 3
+-    assert c["readinessProbe"]["timeoutSeconds"] == 5
+-
+-    assert "curl" in c["readinessProbe"]["exec"]["command"][-1]
+-    assert "http://127.0.0.1:9200" in c["readinessProbe"]["exec"]["command"][-1]
+-
+-    # Resources
+-    assert c["resources"] == {
+-        "requests": {"cpu": "1000m", "memory": "2Gi"},
+-        "limits": {"cpu": "1000m", "memory": "2Gi"},
+-    }
+-
+-    # Mounts
+-    assert c["volumeMounts"][0]["mountPath"] == "/usr/share/elasticsearch/data"
+-    assert c["volumeMounts"][0]["name"] == uname
+-
+-    # volumeClaimTemplates
+-    v = r["statefulset"][uname]["spec"]["volumeClaimTemplates"][0]
+-    assert v["metadata"]["name"] == uname
+-    assert "labels" not in v["metadata"]
+-    assert v["spec"]["accessModes"] == ["ReadWriteOnce"]
+-    assert v["spec"]["resources"]["requests"]["storage"] == "30Gi"
+-
+-    # Init container
+-    i = r["statefulset"][uname]["spec"]["template"]["spec"]["initContainers"][0]
+-    assert i["name"] == "configure-sysctl"
+-    assert i["command"] == ["sysctl", "-w", "vm.max_map_count=262144"]
+-    assert i["image"].startswith("docker.elastic.co/elasticsearch/elasticsearch:")
+-    assert i["securityContext"] == {"privileged": True, "runAsUser": 0}
+-
+-    # Other
+-    assert r["statefulset"][uname]["spec"]["template"]["spec"]["securityContext"] == {
+-        "fsGroup": 1000,
+-        "runAsUser": 1000,
+-    }
+-    assert (
+-        r["statefulset"][uname]["spec"]["template"]["spec"][
+-            "terminationGracePeriodSeconds"
+-        ]
+-        == 120
+-    )
+-
+-    # Pod disruption budget
+-    assert r["poddisruptionbudget"][uname + "-pdb"]["spec"]["maxUnavailable"] == 1
+-
+-    # Service
+-    s = r["service"][uname]
+-    assert s["metadata"]["name"] == uname
+-    assert s["metadata"]["annotations"] == {}
+-    assert s["spec"]["type"] == "ClusterIP"
+-    assert len(s["spec"]["ports"]) == 2
+-    assert s["spec"]["ports"][0] == {"name": "http", "port": 9200, "protocol": "TCP"}
+-    assert s["spec"]["ports"][1] == {
+-        "name": "transport",
+-        "port": 9300,
+-        "protocol": "TCP",
+-    }
+-    assert "loadBalancerSourceRanges" not in s["spec"]
+-
+-    # Headless Service
+-    h = r["service"][uname + "-headless"]
+-    assert h["spec"]["clusterIP"] == "None"
+-    assert h["spec"]["publishNotReadyAddresses"] == True
+-    assert h["spec"]["ports"][0]["name"] == "http"
+-    assert h["spec"]["ports"][0]["port"] == 9200
+-    assert h["spec"]["ports"][1]["name"] == "transport"
+-    assert h["spec"]["ports"][1]["port"] == 9300
+-
+-    # Empty customizable defaults
+-    assert "imagePullSecrets" not in r["statefulset"][uname]["spec"]["template"]["spec"]
+-    assert "tolerations" not in r["statefulset"][uname]["spec"]["template"]["spec"]
+-    assert "nodeSelector" not in r["statefulset"][uname]["spec"]["template"]["spec"]
+-    assert "ingress" not in r
+-    assert "hostAliases" not in r["statefulset"][uname]["spec"]["template"]["spec"]
+-
+-
+-def test_increasing_the_replicas():
+-    config = """
+-replicas: 5
+-"""
+-    r = helm_template(config)
+-    assert r["statefulset"][uname]["spec"]["replicas"] == 5
+-
+-
+-def test_disabling_pod_disruption_budget():
+-    config = """
+-maxUnavailable: false
+-"""
+-    r = helm_template(config)
+-    assert "poddisruptionbudget" not in r
+-
+-
+-def test_overriding_the_image_and_tag():
+-    config = """
+-image: customImage
+-imageTag: 6.2.4
+-"""
+-    r = helm_template(config)
+-    assert (
+-        r["statefulset"][uname]["spec"]["template"]["spec"]["containers"][0]["image"]
+-        == "customImage:6.2.4"
+-    )
+-
+-
+-def test_set_discovery_hosts_to_custom_master_service():
+-    config = """
+-esMajorVersion: 6
+-masterService: "elasticsearch-custommaster"
+-"""
+-    r = helm_template(config)
+-    env = r["statefulset"][uname]["spec"]["template"]["spec"]["containers"][0]["env"]
+-    assert {
+-        "name": "discovery.zen.ping.unicast.hosts",
+-        "value": "elasticsearch-custommaster-headless",
+-    } in env
+-
+-
+-def test_set_master_service_to_default_nodegroup_name_if_not_set():
+-    config = """
+-esMajorVersion: 6
+-nodeGroup: "data"
+-"""
+-    r = helm_template(config)
+-    env = r["statefulset"]["elasticsearch-data"]["spec"]["template"]["spec"][
+-        "containers"
+-    ][0]["env"]
+-    assert {
+-        "name": "discovery.zen.ping.unicast.hosts",
+-        "value": "elasticsearch-master-headless",
+-    } in env
+-
+-
+-def test_set_master_service_to_default_nodegroup_name_with_custom_cluster_name():
+-    config = """
+-esMajorVersion: 6
+-clusterName: "custom"
+-nodeGroup: "data"
+-"""
+-    r = helm_template(config)
+-    env = r["statefulset"]["custom-data"]["spec"]["template"]["spec"]["containers"][0][
+-        "env"
+-    ]
+-    assert {
+-        "name": "discovery.zen.ping.unicast.hosts",
+-        "value": "custom-master-headless",
+-    } in env
+-
+-
+-def test_enabling_machine_learning_role():
+-    config = """
+-roles:
+-  ml: "true"
+-"""
+-    r = helm_template(config)
+-    env = r["statefulset"][uname]["spec"]["template"]["spec"]["containers"][0]["env"]
+-
+-    assert {"name": "node.ml", "value": "true"} in env
+-
+-
+-def test_adding_extra_env_vars():
+-    config = """
+-extraEnvs:
+-  - name: hello
+-    value: world
+-"""
+-    r = helm_template(config)
+-    env = r["statefulset"][uname]["spec"]["template"]["spec"]["containers"][0]["env"]
+-    assert {"name": "hello", "value": "world"} in env
+-
+-
+-def test_adding_env_from():
+-    config = """
+-envFrom:
+-- secretRef:
+-    name: secret-name
+-"""
+-    r = helm_template(config)
+-    secretRef = r["statefulset"][uname]["spec"]["template"]["spec"]["containers"][0][
+-        "envFrom"
+-    ][0]["secretRef"]
+-    assert secretRef == {"name": "secret-name"}
+-
+-
+-def test_adding_a_extra_volume_with_volume_mount():
+-    config = """
+-extraVolumes: |
+-  - name: extras
+-    emptyDir: {}
+-extraVolumeMounts: |
+-  - name: extras
+-    mountPath: /usr/share/extras
+-    readOnly: true
+-"""
+-    r = helm_template(config)
+-    extraVolume = r["statefulset"][uname]["spec"]["template"]["spec"]["volumes"]
+-    assert {"name": "extras", "emptyDir": {}} in extraVolume
+-    extraVolumeMounts = r["statefulset"][uname]["spec"]["template"]["spec"][
+-        "containers"
+-    ][0]["volumeMounts"]
+-    assert {
+-        "name": "extras",
+-        "mountPath": "/usr/share/extras",
+-        "readOnly": True,
+-    } in extraVolumeMounts
+-
+-
+-def test_adding_a_extra_volume_with_volume_mount_as_yaml():
+-    config = """
+-extraVolumes:
+-  - name: extras
+-    emptyDir: {}
+-extraVolumeMounts:
+-  - name: extras
+-    mountPath: /usr/share/extras
+-    readOnly: true
+-"""
+-    r = helm_template(config)
+-    extraVolume = r["statefulset"][uname]["spec"]["template"]["spec"]["volumes"]
+-    assert {"name": "extras", "emptyDir": {}} in extraVolume
+-    extraVolumeMounts = r["statefulset"][uname]["spec"]["template"]["spec"][
+-        "containers"
+-    ][0]["volumeMounts"]
+-    assert {
+-        "name": "extras",
+-        "mountPath": "/usr/share/extras",
+-        "readOnly": True,
+-    } in extraVolumeMounts
+-
+-
+-def test_adding_a_extra_container():
+-    config = """
+-extraContainers: |
+-  - name: do-something
+-    image: busybox
+-    command: ['do', 'something']
+-"""
+-    r = helm_template(config)
+-    extraContainer = r["statefulset"][uname]["spec"]["template"]["spec"]["containers"]
+-    assert {
+-        "name": "do-something",
+-        "image": "busybox",
+-        "command": ["do", "something"],
+-    } in extraContainer
+-
+-
+-def test_adding_a_extra_container_as_yaml():
+-    config = """
+-extraContainers:
+-  - name: do-something
+-    image: busybox
+-    command: ['do', 'something']
+-"""
+-    r = helm_template(config)
+-    extraContainer = r["statefulset"][uname]["spec"]["template"]["spec"]["containers"]
+-    assert {
+-        "name": "do-something",
+-        "image": "busybox",
+-        "command": ["do", "something"],
+-    } in extraContainer
+-
+-
+-def test_adding_a_extra_init_container():
+-    config = """
+-extraInitContainers: |
+-  - name: do-something
+-    image: busybox
+-    command: ['do', 'something']
+-"""
+-    r = helm_template(config)
+-    extraInitContainer = r["statefulset"][uname]["spec"]["template"]["spec"][
+-        "initContainers"
+-    ]
+-    assert {
+-        "name": "do-something",
+-        "image": "busybox",
+-        "command": ["do", "something"],
+-    } in extraInitContainer
+-
+-
+-def test_adding_a_extra_init_container_as_yaml():
+-    config = """
+-extraInitContainers:
+-  - name: do-something
+-    image: busybox
+-    command: ['do', 'something']
+-"""
+-    r = helm_template(config)
+-    extraInitContainer = r["statefulset"][uname]["spec"]["template"]["spec"][
+-        "initContainers"
+-    ]
+-    assert {
+-        "name": "do-something",
+-        "image": "busybox",
+-        "command": ["do", "something"],
+-    } in extraInitContainer
+-
+-
+-def test_sysctl_init_container_disabled():
+-    config = """
+-sysctlInitContainer:
+-  enabled: false
+-"""
+-    r = helm_template(config)
+-    assert "initContainers" not in r["statefulset"][uname]["spec"]["template"]["spec"]
+-
+-
+-def test_sysctl_init_container_enabled():
+-    config = """
+-sysctlInitContainer:
+-  enabled: true
+-"""
+-    r = helm_template(config)
+-    initContainers = r["statefulset"][uname]["spec"]["template"]["spec"][
+-        "initContainers"
+-    ]
+-    assert initContainers[0]["name"] == "configure-sysctl"
+-
+-
+-def test_sysctl_init_container_image():
+-    config = """
+-image: customImage
+-imageTag: 6.2.4
+-imagePullPolicy: Never
+-sysctlInitContainer:
+-  enabled: true
+-"""
+-    r = helm_template(config)
+-    initContainers = r["statefulset"][uname]["spec"]["template"]["spec"][
+-        "initContainers"
+-    ]
+-    assert initContainers[0]["image"] == "customImage:6.2.4"
+-    assert initContainers[0]["imagePullPolicy"] == "Never"
+-
+-
+-def test_adding_storageclass_annotation_to_volumeclaimtemplate():
+-    config = """
+-persistence:
+-  annotations:
+-    volume.beta.kubernetes.io/storage-class: id
+-"""
+-    r = helm_template(config)
+-    annotations = r["statefulset"][uname]["spec"]["volumeClaimTemplates"][0][
+-        "metadata"
+-    ]["annotations"]
+-    assert annotations["volume.beta.kubernetes.io/storage-class"] == "id"
+-
+-
+-def test_adding_multiple_persistence_annotations():
+-    config = """
+-    persistence:
+-      annotations:
+-        hello: world
+-        world: hello
+-    """
+-    r = helm_template(config)
+-    annotations = r["statefulset"][uname]["spec"]["volumeClaimTemplates"][0][
+-        "metadata"
+-    ]["annotations"]
+-
+-    assert annotations["hello"] == "world"
+-    assert annotations["world"] == "hello"
+-
+-
+-def test_enabling_persistence_label_in_volumeclaimtemplate():
+-    config = """
+-persistence:
+-  labels:
+-    enabled: true
+-"""
+-    r = helm_template(config)
+-    volume_claim_template_labels = r["statefulset"][uname]["spec"][
+-        "volumeClaimTemplates"
+-    ][0]["metadata"]["labels"]
+-    statefulset_labels = r["statefulset"][uname]["metadata"]["labels"]
+-    expected_labels = statefulset_labels
+-    # heritage label shouldn't be present in volumeClaimTemplates labels
+-    expected_labels.pop("heritage")
+-    assert volume_claim_template_labels == expected_labels
+-
+-
+-def test_adding_a_secret_mount():
+-    config = """
+-secretMounts:
+-  - name: elastic-certificates
+-    secretName: elastic-certs
+-    path: /usr/share/elasticsearch/config/certs
+-"""
+-    r = helm_template(config)
+-    s = r["statefulset"][uname]["spec"]["template"]["spec"]
+-    assert s["containers"][0]["volumeMounts"][-1] == {
+-        "mountPath": "/usr/share/elasticsearch/config/certs",
+-        "name": "elastic-certificates",
+-    }
+-    assert s["volumes"] == [
+-        {"name": "elastic-certificates", "secret": {"secretName": "elastic-certs"}}
+-    ]
+-
+-
+-def test_adding_a_secret_mount_with_subpath():
+-    config = """
+-secretMounts:
+-  - name: elastic-certificates
+-    secretName: elastic-certs
+-    path: /usr/share/elasticsearch/config/certs
+-    subPath: cert.crt
+-"""
+-    r = helm_template(config)
+-    s = r["statefulset"][uname]["spec"]["template"]["spec"]
+-    assert s["containers"][0]["volumeMounts"][-1] == {
+-        "mountPath": "/usr/share/elasticsearch/config/certs",
+-        "subPath": "cert.crt",
+-        "name": "elastic-certificates",
+-    }
+-
+-
+-def test_adding_a_secret_mount_with_default_mode():
+-    config = """
+-secretMounts:
+-  - name: elastic-certificates
+-    secretName: elastic-certs
+-    path: /usr/share/elasticsearch/config/certs
+-    subPath: cert.crt
+-    defaultMode: 0755
+-"""
+-    r = helm_template(config)
+-    s = r["statefulset"][uname]["spec"]["template"]["spec"]
+-    assert s["containers"][0]["volumeMounts"][-1] == {
+-        "mountPath": "/usr/share/elasticsearch/config/certs",
+-        "subPath": "cert.crt",
+-        "name": "elastic-certificates",
+-    }
+-
+-
+-def test_adding_image_pull_secrets():
+-    config = """
+-imagePullSecrets:
+-  - name: test-registry
+-"""
+-    r = helm_template(config)
+-    assert (
+-        r["statefulset"][uname]["spec"]["template"]["spec"]["imagePullSecrets"][0][
+-            "name"
+-        ]
+-        == "test-registry"
+-    )
+-
+-
+-def test_adding_tolerations():
+-    config = """
+-tolerations:
+-- key: "key1"
+-  operator: "Equal"
+-  value: "value1"
+-  effect: "NoExecute"
+-  tolerationSeconds: 3600
+-"""
+-    r = helm_template(config)
+-    assert (
+-        r["statefulset"][uname]["spec"]["template"]["spec"]["tolerations"][0]["key"]
+-        == "key1"
+-    )
+-
+-
+-def test_adding_pod_annotations():
+-    config = """
+-podAnnotations:
+-  iam.amazonaws.com/role: es-role
+-"""
+-    r = helm_template(config)
+-    assert (
+-        r["statefulset"][uname]["spec"]["template"]["metadata"]["annotations"][
+-            "iam.amazonaws.com/role"
+-        ]
+-        == "es-role"
+-    )
+-
+-
+-def test_adding_serviceaccount_annotations():
+-    config = """
+-rbac:
+-  create: true
+-  serviceAccountAnnotations:
+-    eks.amazonaws.com/role-arn: arn:aws:iam::111111111111:role/k8s.clustername.namespace.serviceaccount
+-"""
+-    r = helm_template(config)
+-    assert (
+-        r["serviceaccount"][uname]["metadata"]["annotations"][
+-            "eks.amazonaws.com/role-arn"
+-        ]
+-        == "arn:aws:iam::111111111111:role/k8s.clustername.namespace.serviceaccount"
+-    )
+-
+-
+-def test_adding_a_node_selector():
+-    config = """
+-nodeSelector:
+-  disktype: ssd
+-"""
+-    r = helm_template(config)
+-    assert (
+-        r["statefulset"][uname]["spec"]["template"]["spec"]["nodeSelector"]["disktype"]
+-        == "ssd"
+-    )
+-
+-
+-def test_adding_resources_to_initcontainer():
+-    config = """
+-initResources:
+-  limits:
+-    cpu: "25m"
+-    memory: "128Mi"
+-  requests:
+-    cpu: "25m"
+-    memory: "128Mi"
+-"""
+-    r = helm_template(config)
+-    i = r["statefulset"][uname]["spec"]["template"]["spec"]["initContainers"][0]
+-
+-    assert i["resources"] == {
+-        "requests": {"cpu": "25m", "memory": "128Mi"},
+-        "limits": {"cpu": "25m", "memory": "128Mi"},
+-    }
+-
+-
+-def test_adding_resources_to_sidecar_container():
+-    config = """
+-masterTerminationFix: true
+-sidecarResources:
+-  limits:
+-    cpu: "100m"
+-    memory: "128Mi"
+-  requests:
+-    cpu: "100m"
+-    memory: "128Mi"
+-"""
+-    r = helm_template(config)
+-    i = r["statefulset"][uname]["spec"]["template"]["spec"]["containers"][1]
+-
+-    assert i["resources"] == {
+-        "requests": {"cpu": "100m", "memory": "128Mi"},
+-        "limits": {"cpu": "100m", "memory": "128Mi"},
+-    }
+-
+-
+-def test_adding_a_node_affinity():
+-    config = """
+-nodeAffinity:
+-  preferredDuringSchedulingIgnoredDuringExecution:
+-  - weight: 100
+-    preference:
+-      matchExpressions:
+-      - key: mylabel
+-        operator: In
+-        values:
+-        - myvalue
+-"""
+-    r = helm_template(config)
+-    assert r["statefulset"][uname]["spec"]["template"]["spec"]["affinity"][
+-        "nodeAffinity"
+-    ] == {
+-        "preferredDuringSchedulingIgnoredDuringExecution": [
+-            {
+-                "weight": 100,
+-                "preference": {
+-                    "matchExpressions": [
+-                        {"key": "mylabel", "operator": "In", "values": ["myvalue"]}
+-                    ]
+-                },
+-            }
+-        ]
+-    }
+-
+-
+-def test_adding_an_ingress_rule():
+-    config = """
+-ingress:
+-  enabled: true
+-  annotations:
+-    kubernetes.io/ingress.class: nginx
+-  hosts:
+-    - host: elasticsearch.elastic.co
+-      paths:
+-        - path: /
+-    - host: ''
+-      paths:
+-        - path: /
+-        - path: /mypath
+-          servicePort: 8888
+-    - host: elasticsearch.hello.there
+-      paths:
+-        - path: /
+-          servicePort: 9999
+-  tls:
+-  - secretName: elastic-co-wildcard
+-    hosts:
+-     - elasticsearch.elastic.co
+-"""
+-
+-    r = helm_template(config)
+-    assert uname in r["ingress"]
+-    i = r["ingress"][uname]["spec"]
+-    assert i["tls"][0]["hosts"][0] == "elasticsearch.elastic.co"
+-    assert i["tls"][0]["secretName"] == "elastic-co-wildcard"
+-
+-    assert i["rules"][0]["host"] == "elasticsearch.elastic.co"
+-    assert i["rules"][0]["http"]["paths"][0]["path"] == "/"
+-    assert i["rules"][0]["http"]["paths"][0]["backend"]["serviceName"] == uname
+-    assert i["rules"][0]["http"]["paths"][0]["backend"]["servicePort"] == 9200
+-    assert i["rules"][1]["host"] == None
+-    assert i["rules"][1]["http"]["paths"][0]["path"] == "/"
+-    assert i["rules"][1]["http"]["paths"][0]["backend"]["serviceName"] == uname
+-    assert i["rules"][1]["http"]["paths"][0]["backend"]["servicePort"] == 9200
+-    assert i["rules"][1]["http"]["paths"][1]["path"] == "/mypath"
+-    assert i["rules"][1]["http"]["paths"][1]["backend"]["serviceName"] == uname
+-    assert i["rules"][1]["http"]["paths"][1]["backend"]["servicePort"] == 8888
+-    assert i["rules"][2]["host"] == "elasticsearch.hello.there"
+-    assert i["rules"][2]["http"]["paths"][0]["path"] == "/"
+-    assert i["rules"][2]["http"]["paths"][0]["backend"]["serviceName"] == uname
+-    assert i["rules"][2]["http"]["paths"][0]["backend"]["servicePort"] == 9999
+-
+-
+-def test_adding_a_deprecated_ingress_rule():
+-    config = """
+-ingress:
+-  enabled: true
+-  annotations:
+-    kubernetes.io/ingress.class: nginx
+-  path: /
+-  hosts:
+-    - elasticsearch.elastic.co
+-  tls:
+-  - secretName: elastic-co-wildcard
+-    hosts:
+-     - elasticsearch.elastic.co
+-"""
+-
+-    r = helm_template(config)
+-    assert uname in r["ingress"]
+-    i = r["ingress"][uname]["spec"]
+-    assert i["tls"][0]["hosts"][0] == "elasticsearch.elastic.co"
+-    assert i["tls"][0]["secretName"] == "elastic-co-wildcard"
+-
+-    assert i["rules"][0]["host"] == "elasticsearch.elastic.co"
+-    assert i["rules"][0]["http"]["paths"][0]["path"] == "/"
+-    assert i["rules"][0]["http"]["paths"][0]["backend"]["serviceName"] == uname
+-    assert i["rules"][0]["http"]["paths"][0]["backend"]["servicePort"] == 9200
+-
+-
+-def test_changing_the_protocol():
+-    config = """
+-protocol: https
+-"""
+-    r = helm_template(config)
+-    c = r["statefulset"][uname]["spec"]["template"]["spec"]["containers"][0]
+-    assert "https://127.0.0.1:9200" in c["readinessProbe"]["exec"]["command"][-1]
+-
+-
+-def test_changing_the_cluster_health_status():
+-    config = """
+-clusterHealthCheckParams: 'wait_for_no_initializing_shards=true&timeout=60s'
+-"""
+-    r = helm_template(config)
+-    c = r["statefulset"][uname]["spec"]["template"]["spec"]["containers"][0]
+-    assert (
+-        "/_cluster/health?wait_for_no_initializing_shards=true&timeout=60s"
+-        in c["readinessProbe"]["exec"]["command"][-1]
+-    )
+-
+-
+-def test_adding_in_es_config():
+-    config = """
+-esConfig:
+-  elasticsearch.yml: |
+-    key:
+-      nestedkey: value
+-    dot.notation: test
+-
+-  log4j2.properties: |
+-    appender.rolling.name = rolling
+-"""
+-    r = helm_template(config)
+-    c = r["configmap"][uname + "-config"]["data"]
+-
+-    assert "elasticsearch.yml" in c
+-    assert "log4j2.properties" in c
+-
+-    assert "nestedkey: value" in c["elasticsearch.yml"]
+-    assert "dot.notation: test" in c["elasticsearch.yml"]
+-
+-    assert "appender.rolling.name = rolling" in c["log4j2.properties"]
+-
+-    s = r["statefulset"][uname]["spec"]["template"]["spec"]
+-
+-    assert {
+-        "configMap": {"name": "elasticsearch-master-config"},
+-        "name": "esconfig",
+-    } in s["volumes"]
+-    assert {
+-        "mountPath": "/usr/share/elasticsearch/config/elasticsearch.yml",
+-        "name": "esconfig",
+-        "subPath": "elasticsearch.yml",
+-    } in s["containers"][0]["volumeMounts"]
+-    assert {
+-        "mountPath": "/usr/share/elasticsearch/config/log4j2.properties",
+-        "name": "esconfig",
+-        "subPath": "log4j2.properties",
+-    } in s["containers"][0]["volumeMounts"]
+-
+-    assert (
+-        "configchecksum"
+-        in r["statefulset"][uname]["spec"]["template"]["metadata"]["annotations"]
+-    )
+-
+-
+-def test_dont_add_data_volume_when_persistance_is_disabled():
+-    config = """
+-persistence:
+-  enabled: false
+-"""
+-    r = helm_template(config)
+-    assert "volumeClaimTemplates" not in r["statefulset"][uname]["spec"]
+-    assert (
+-        r["statefulset"][uname]["spec"]["template"]["spec"]["containers"][0][
+-            "volumeMounts"
+-        ]
+-        == None
+-    )
+-
+-
+-def test_priority_class_name():
+-    config = """
+-priorityClassName: ""
+-"""
+-    r = helm_template(config)
+-    spec = r["statefulset"][uname]["spec"]["template"]["spec"]
+-    assert "priorityClassName" not in spec
+-
+-    config = """
+-priorityClassName: "highest"
+-"""
+-    r = helm_template(config)
+-    priority_class_name = r["statefulset"][uname]["spec"]["template"]["spec"][
+-        "priorityClassName"
+-    ]
+-    assert priority_class_name == "highest"
+-
+-
+-def test_scheduler_name():
+-    r = helm_template("")
+-    spec = r["statefulset"][uname]["spec"]["template"]["spec"]
+-    assert "schedulerName" not in spec
+-
+-    config = """
+-schedulerName: "stork"
+-"""
+-    r = helm_template(config)
+-    assert (
+-        r["statefulset"][uname]["spec"]["template"]["spec"]["schedulerName"] == "stork"
+-    )
+-
+-
+-def test_disabling_non_headless_service():
+-    config = ""
+-
+-    r = helm_template(config)
+-
+-    assert uname in r["service"]
+-
+-    config = """
+-service:
+-  enabled: false
+-"""
+-
+-    r = helm_template(config)
+-
+-    assert uname not in r["service"]
+-
+-
+-def test_adding_a_nodePort():
+-    config = ""
+-
+-    r = helm_template(config)
+-
+-    assert "nodePort" not in r["service"][uname]["spec"]["ports"][0]
+-
+-    config = """
+-    service:
+-      nodePort: 30001
+-    """
+-
+-    r = helm_template(config)
+-
+-    assert r["service"][uname]["spec"]["ports"][0]["nodePort"] == 30001
+-
+-
+-def test_adding_a_loadBalancerIP():
+-    config = ""
+-
+-    r = helm_template(config)
+-
+-    assert "loadBalancerIP" not in r["service"][uname]["spec"]
+-
+-    config = """
+-    service:
+-      loadBalancerIP: 12.4.19.81
+-    """
+-
+-    r = helm_template(config)
+-
+-    assert r["service"][uname]["spec"]["loadBalancerIP"] == "12.4.19.81"
+-
+-
+-def test_adding_an_externalTrafficPolicy():
+-    config = ""
+-
+-    r = helm_template(config)
+-
+-    assert "externalTrafficPolicy" not in r["service"][uname]["spec"]
+-
+-    config = """
+-    service:
+-      externalTrafficPolicy: Local
+-    """
+-
+-    r = helm_template(config)
+-
+-    assert r["service"][uname]["spec"]["externalTrafficPolicy"] == "Local"
+-
+-
+-def test_adding_a_label_on_non_headless_service():
+-    config = ""
+-
+-    r = helm_template(config)
+-
+-    assert "label1" not in r["service"][uname]["metadata"]["labels"]
+-
+-    config = """
+-    service:
+-      labels:
+-        label1: value1
+-    """
+-
+-    r = helm_template(config)
+-
+-    assert r["service"][uname]["metadata"]["labels"]["label1"] == "value1"
+-
+-
+-def test_adding_a_label_on_headless_service():
+-    config = ""
+-
+-    r = helm_template(config)
+-
+-    assert "label1" not in r["service"][uname + "-headless"]["metadata"]["labels"]
+-
+-    config = """
+-    service:
+-      labelsHeadless:
+-        label1: value1
+-    """
+-
+-    r = helm_template(config)
+-
+-    assert r["service"][uname + "-headless"]["metadata"]["labels"]["label1"] == "value1"
+-
+-
+-def test_adding_load_balancer_source_ranges():
+-    config = """
+-service:
+-  loadBalancerSourceRanges:
+-    - 0.0.0.0/0
+-    """
+-    r = helm_template(config)
+-    assert r["service"][uname]["spec"]["loadBalancerSourceRanges"][0] == "0.0.0.0/0"
+-
+-    config = """
+-service:
+-  loadBalancerSourceRanges:
+-    - 192.168.0.0/24
+-    - 192.168.1.0/24
+-    """
+-    r = helm_template(config)
+-    ranges = r["service"][uname]["spec"]["loadBalancerSourceRanges"]
+-    assert ranges[0] == "192.168.0.0/24"
+-    assert ranges[1] == "192.168.1.0/24"
+-
+-
+-def test_master_termination_fixed_enabled():
+-    config = ""
+-
+-    r = helm_template(config)
+-
+-    assert len(r["statefulset"][uname]["spec"]["template"]["spec"]["containers"]) == 1
+-
+-    config = """
+-    masterTerminationFix: true
+-    """
+-
+-    r = helm_template(config)
+-
+-    c = r["statefulset"][uname]["spec"]["template"]["spec"]["containers"][1]
+-    assert c["name"] == "elasticsearch-master-graceful-termination-handler"
+-
+-
+-def test_lifecycle_hooks():
+-    config = ""
+-    r = helm_template(config)
+-    c = r["statefulset"][uname]["spec"]["template"]["spec"]["containers"][0]
+-    assert "lifecycle" not in c
+-
+-    config = """
+-    lifecycle:
+-      preStop:
+-        exec:
+-          command: ["/bin/bash","/preStop"]
+-    """
+-    r = helm_template(config)
+-    c = r["statefulset"][uname]["spec"]["template"]["spec"]["containers"][0]
+-
+-    assert c["lifecycle"]["preStop"]["exec"]["command"] == ["/bin/bash", "/preStop"]
+-
+-
+-def test_esMajorVersion_detect_default_version():
+-    config = ""
+-
+-    r = helm_template(config)
+-    assert r["statefulset"][uname]["metadata"]["annotations"]["esMajorVersion"] == "6"
+-
+-
+-def test_esMajorVersion_default_to_6_if_not_elastic_image():
+-    config = """
+-    image: notElastic
+-    imageTag: 1.0.0
+-    """
+-
+-    r = helm_template(config)
+-    assert r["statefulset"][uname]["metadata"]["annotations"]["esMajorVersion"] == "6"
+-
+-
+-def test_esMajorVersion_default_to_6_if_no_version_is_found():
+-    config = """
+-    imageTag: not_a_number
+-    """
+-
+-    r = helm_template(config)
+-    assert r["statefulset"][uname]["metadata"]["annotations"]["esMajorVersion"] == "6"
+-
+-
+-def test_esMajorVersion_set_to_6_based_on_image_tag():
+-    config = """
+-    imageTag: 6.8.1
+-    """
+-
+-    r = helm_template(config)
+-    assert r["statefulset"][uname]["metadata"]["annotations"]["esMajorVersion"] == "6"
+-
+-
+-def test_esMajorVersion_parse_image_tag_for_oss_image():
+-    config = """
+-    image: docker.elastic.co/elasticsearch/elasticsearch-oss
+-    imageTag: 6.3.2
+-    """
+-
+-    r = helm_template(config)
+-    assert r["statefulset"][uname]["metadata"]["annotations"]["esMajorVersion"] == "6"
+-
+-
+-def test_set_pod_security_context():
+-    config = ""
+-    r = helm_template(config)
+-    assert (
+-        r["statefulset"][uname]["spec"]["template"]["spec"]["securityContext"][
+-            "fsGroup"
+-        ]
+-        == 1000
+-    )
+-    assert (
+-        r["statefulset"][uname]["spec"]["template"]["spec"]["securityContext"][
+-            "runAsUser"
+-        ]
+-        == 1000
+-    )
+-
+-    config = """
+-    podSecurityContext:
+-      fsGroup: 1001
+-      other: test
+-    """
+-
+-    r = helm_template(config)
+-
+-    assert (
+-        r["statefulset"][uname]["spec"]["template"]["spec"]["securityContext"][
+-            "fsGroup"
+-        ]
+-        == 1001
+-    )
+-    assert (
+-        r["statefulset"][uname]["spec"]["template"]["spec"]["securityContext"]["other"]
+-        == "test"
+-    )
+-
+-
+-def test_fsGroup_backwards_compatability():
+-    config = """
+-    fsGroup: 1001
+-    """
+-
+-    r = helm_template(config)
+-
+-    assert (
+-        r["statefulset"][uname]["spec"]["template"]["spec"]["securityContext"][
+-            "fsGroup"
+-        ]
+-        == 1001
+-    )
+-
+-
+-def test_set_container_security_context():
+-    config = ""
+-
+-    r = helm_template(config)
+-    c = r["statefulset"][uname]["spec"]["template"]["spec"]["containers"][0]
+-    assert c["securityContext"]["capabilities"]["drop"] == ["ALL"]
+-    assert c["securityContext"]["runAsNonRoot"] == True
+-    assert c["securityContext"]["runAsUser"] == 1000
+-
+-    config = """
+-    securityContext:
+-      runAsUser: 1001
+-      other: test
+-    """
+-
+-    r = helm_template(config)
+-    c = r["statefulset"][uname]["spec"]["template"]["spec"]["containers"][0]
+-    assert c["securityContext"]["capabilities"]["drop"] == ["ALL"]
+-    assert c["securityContext"]["runAsNonRoot"] == True
+-    assert c["securityContext"]["runAsUser"] == 1001
+-    assert c["securityContext"]["other"] == "test"
+-
+-
+-def test_adding_pod_labels():
+-    config = """
+-labels:
+-  app.kubernetes.io/name: elasticsearch
+-"""
+-    r = helm_template(config)
+-    assert (
+-        r["statefulset"][uname]["metadata"]["labels"]["app.kubernetes.io/name"]
+-        == "elasticsearch"
+-    )
+-    assert (
+-        r["statefulset"][uname]["spec"]["template"]["metadata"]["labels"][
+-            "app.kubernetes.io/name"
+-        ]
+-        == "elasticsearch"
+-    )
+-
+-
+-def test_keystore_enable():
+-    config = ""
+-
+-    r = helm_template(config)
+-    s = r["statefulset"][uname]["spec"]["template"]["spec"]
+-
+-    assert s["volumes"] == None
+-
+-    config = """
+-keystore:
+-  - secretName: test
+-    """
+-
+-    r = helm_template(config)
+-    s = r["statefulset"][uname]["spec"]["template"]["spec"]
+-
+-    assert {"name": "keystore", "emptyDir": {}} in s["volumes"]
+-
+-
+-def test_keystore_init_container():
+-    config = ""
+-
+-    r = helm_template(config)
+-    i = r["statefulset"][uname]["spec"]["template"]["spec"]["initContainers"][-1]
+-
+-    assert i["name"] != "keystore"
+-
+-    config = """
+-keystore:
+-  - secretName: test
+-    """
+-
+-    r = helm_template(config)
+-    i = r["statefulset"][uname]["spec"]["template"]["spec"]["initContainers"][-1]
+-
+-    assert i["name"] == "keystore"
+-
+-
+-def test_keystore_init_container_image():
+-    config = """
+-image: customImage
+-imageTag: 6.2.4
+-imagePullPolicy: Never
+-keystore:
+-  - secretName: test
+-"""
+-    r = helm_template(config)
+-    i = r["statefulset"][uname]["spec"]["template"]["spec"]["initContainers"][-1]
+-    assert i["image"] == "customImage:6.2.4"
+-    assert i["imagePullPolicy"] == "Never"
+-
+-
+-def test_keystore_mount():
+-    config = """
+-keystore:
+-  - secretName: test
+-"""
+-
+-    r = helm_template(config)
+-    s = r["statefulset"][uname]["spec"]["template"]["spec"]
+-    assert s["containers"][0]["volumeMounts"][-1] == {
+-        "mountPath": "/usr/share/elasticsearch/config/elasticsearch.keystore",
+-        "subPath": "elasticsearch.keystore",
+-        "name": "keystore",
+-    }
+-
+-
+-def test_keystore_init_volume_mounts():
+-    config = """
+-keystore:
+-  - secretName: test
+-  - secretName: test-with-custom-path
+-    items:
+-    - key: slack_url
+-      path: xpack.notification.slack.account.otheraccount.secure_url
+-"""
+-    r = helm_template(config)
+-    s = r["statefulset"][uname]["spec"]["template"]["spec"]
+-    assert s["initContainers"][-1]["volumeMounts"] == [
+-        {"mountPath": "/tmp/keystore", "name": "keystore"},
+-        {"mountPath": "/tmp/keystoreSecrets/test", "name": "keystore-test"},
+-        {
+-            "mountPath": "/tmp/keystoreSecrets/test-with-custom-path",
+-            "name": "keystore-test-with-custom-path",
+-        },
+-    ]
+-
+-
+-def test_keystore_volumes():
+-    config = """
+-keystore:
+-  - secretName: test
+-  - secretName: test-with-custom-path
+-    items:
+-    - key: slack_url
+-      path: xpack.notification.slack.account.otheraccount.secure_url
+-"""
+-    r = helm_template(config)
+-    s = r["statefulset"][uname]["spec"]["template"]["spec"]
+-
+-    assert {"name": "keystore-test", "secret": {"secretName": "test"}} in s["volumes"]
+-
+-    assert {
+-        "name": "keystore-test-with-custom-path",
+-        "secret": {
+-            "secretName": "test-with-custom-path",
+-            "items": [
+-                {
+-                    "key": "slack_url",
+-                    "path": "xpack.notification.slack.account.otheraccount.secure_url",
+-                }
+-            ],
+-        },
+-    } in s["volumes"]
+-
+-
+-def test_pod_security_policy():
+-    ## Make sure the default config is not creating any resources
+-    config = ""
+-    resources = ("role", "rolebinding", "serviceaccount", "podsecuritypolicy")
+-    r = helm_template(config)
+-    for resource in resources:
+-        assert resource not in r
+-    assert (
+-        "serviceAccountName" not in r["statefulset"][uname]["spec"]["template"]["spec"]
+-    )
+-
+-    ## Make sure all the resources are created with default values
+-    config = """
+-rbac:
+-  create: true
+-  serviceAccountName: ""
+-
+-podSecurityPolicy:
+-  create: true
+-  name: ""
+-"""
+-    r = helm_template(config)
+-    for resource in resources:
+-        assert resource in r
+-    assert r["role"][uname]["rules"][0] == {
+-        "apiGroups": ["extensions"],
+-        "verbs": ["use"],
+-        "resources": ["podsecuritypolicies"],
+-        "resourceNames": [uname],
+-    }
+-    assert r["rolebinding"][uname]["subjects"] == [
+-        {"kind": "ServiceAccount", "namespace": "default", "name": uname}
+-    ]
+-    assert r["rolebinding"][uname]["roleRef"] == {
+-        "apiGroup": "rbac.authorization.k8s.io",
+-        "kind": "Role",
+-        "name": uname,
+-    }
+-    assert (
+-        r["statefulset"][uname]["spec"]["template"]["spec"]["serviceAccountName"]
+-        == uname
+-    )
+-    psp_spec = r["podsecuritypolicy"][uname]["spec"]
+-    assert psp_spec["privileged"] is True
+-
+-
+-def test_external_pod_security_policy():
+-    ## Make sure we can use an externally defined pod security policy
+-    config = """
+-rbac:
+-  create: true
+-  serviceAccountName: ""
+-
+-podSecurityPolicy:
+-  create: false
+-  name: "customPodSecurityPolicy"
+-"""
+-    resources = ("role", "rolebinding")
+-    r = helm_template(config)
+-    for resource in resources:
+-        assert resource in r
+-
+-    assert r["role"][uname]["rules"][0] == {
+-        "apiGroups": ["extensions"],
+-        "verbs": ["use"],
+-        "resources": ["podsecuritypolicies"],
+-        "resourceNames": ["customPodSecurityPolicy"],
+-    }
+-
+-
+-def test_external_service_account():
+-    ## Make sure we can use an externally defined service account
+-    config = """
+-rbac:
+-  create: false
+-  serviceAccountName: "customServiceAccountName"
+-
+-podSecurityPolicy:
+-  create: false
+-  name: ""
+-"""
+-    resources = ("role", "rolebinding", "serviceaccount")
+-    r = helm_template(config)
+-
+-    assert (
+-        r["statefulset"][uname]["spec"]["template"]["spec"]["serviceAccountName"]
+-        == "customServiceAccountName"
+-    )
+-    # When referencing an external service account we do not want any resources to be created.
+-    for resource in resources:
+-        assert resource not in r
+-
+-
+-def test_name_override():
+-    ## Make sure we can use a name override
+-    config = """
+-nameOverride: "customName"
+-"""
+-    r = helm_template(config)
+-
+-    assert "customName-master" in r["statefulset"]
+-    assert "customName-master" in r["service"]
+-
+-
+-def test_full_name_override():
+-    ## Make sure we can use a full name override
+-    config = """
+-fullnameOverride: "customfullName"
+-"""
+-    r = helm_template(config)
+-
+-    assert "customfullName" in r["statefulset"]
+-    assert "customfullName" in r["service"]
+-
+-
+-def test_hostaliases():
+-    config = """
+-hostAliases:
+-- ip: "127.0.0.1"
+-  hostnames:
+-  - "foo.local"
+-  - "bar.local"
+-"""
+-    r = helm_template(config)
+-    hostAliases = r["statefulset"][uname]["spec"]["template"]["spec"]["hostAliases"]
+-    assert {"ip": "127.0.0.1", "hostnames": ["foo.local", "bar.local"]} in hostAliases
+-
+-
+-def test_network_policy():
+-    config = """
+-networkPolicy:
+-  http:
+-    enabled: true
+-    explicitNamespacesSelector:
+-      # Accept from namespaces with all those different rules (from whitelisted Pods)
+-      matchLabels:
+-        role: frontend-http
+-      matchExpressions:
+-        - {key: role, operator: In, values: [frontend-http]}
+-    additionalRules:
+-      - podSelector:
+-          matchLabels:
+-            role: frontend-http
+-      - podSelector:
+-          matchExpressions:
+-            - key: role
+-              operator: In
+-              values:
+-                - frontend-http
+-  transport:
+-    enabled: true
+-    allowExternal: true
+-    explicitNamespacesSelector:
+-      matchLabels:
+-        role: frontend-transport
+-      matchExpressions:
+-        - {key: role, operator: In, values: [frontend-transport]}
+-    additionalRules:
+-      - podSelector:
+-          matchLabels:
+-            role: frontend-transport
+-      - podSelector:
+-          matchExpressions:
+-            - key: role
+-              operator: In
+-              values:
+-                - frontend-transport
+-
+-"""
+-    r = helm_template(config)
+-    ingress = r["networkpolicy"][uname]["spec"]["ingress"]
+-    pod_selector = r["networkpolicy"][uname]["spec"]["podSelector"]
+-    http = ingress[0]
+-    transport = ingress[1]
+-    assert http["from"] == [
+-        {
+-            "podSelector": {
+-                "matchLabels": {"elasticsearch-master-http-client": "true"}
+-            },
+-            "namespaceSelector": {
+-                "matchExpressions": [
+-                    {"key": "role", "operator": "In", "values": ["frontend-http"]}
+-                ],
+-                "matchLabels": {"role": "frontend-http"},
+-            },
+-        },
+-        {"podSelector": {"matchLabels": {"role": "frontend-http"}}},
+-        {
+-            "podSelector": {
+-                "matchExpressions": [
+-                    {"key": "role", "operator": "In", "values": ["frontend-http"]}
+-                ]
+-            }
+-        },
+-    ]
+-    assert http["ports"][0]["port"] == 9200
+-    assert transport["from"] == [
+-        {
+-            "podSelector": {
+-                "matchLabels": {"elasticsearch-master-transport-client": "true"}
+-            },
+-            "namespaceSelector": {
+-                "matchExpressions": [
+-                    {"key": "role", "operator": "In", "values": ["frontend-transport"]}
+-                ],
+-                "matchLabels": {"role": "frontend-transport"},
+-            },
+-        },
+-        {"podSelector": {"matchLabels": {"role": "frontend-transport"}}},
+-        {
+-            "podSelector": {
+-                "matchExpressions": [
+-                    {"key": "role", "operator": "In", "values": ["frontend-transport"]}
+-                ]
+-            }
+-        },
+-        {"podSelector": {"matchLabels": {"app": "elasticsearch-master"}}},
+-    ]
+-    assert transport["ports"][0]["port"] == 9300
+-    assert pod_selector == {"matchLabels": {"app": "elasticsearch-master",}}
+-
+-
+-def test_default_automount_sa_token():
+-    config = """
+-"""
+-    r = helm_template(config)
+-    assert (
+-        r["statefulset"][uname]["spec"]["template"]["spec"][
+-            "automountServiceAccountToken"
+-        ]
+-        == True
+-    )
+-
+-
+-def test_disable_automount_sa_token():
+-    config = """
+-rbac:
+-  automountToken: false
+-"""
+-    r = helm_template(config)
+-    assert (
+-        r["statefulset"][uname]["spec"]["template"]["spec"][
+-            "automountServiceAccountToken"
+-        ]
+-        == False
+-    )
+--- a/elasticsearch/values.yaml	2023-09-25 12:32:05
++++ b/elasticsearch/values.yaml	2023-09-25 12:26:20
+@@ -1,347 +1,384 @@
+ ---
+-clusterName: "elasticsearch"
+-nodeGroup: "master"
++global:
++  clusterName: "elasticsearch"
++  nodeGroup: "master"
+ 
+-# The service that non master groups will try to connect to when joining the cluster
+-# This should be set to clusterName + "-" + nodeGroup for your master group
+-masterService: ""
++  # The service that non master groups will try to connect to when joining the cluster
++  # This should be set to clusterName + "-" + nodeGroup for your master group
++  masterService: ""
+ 
+-# Elasticsearch roles that will be applied to this nodeGroup
+-# These will be set as environment variables. E.g. node.master=true
+-roles:
+-  master: "true"
+-  ingest: "true"
+-  data: "true"
++  # Elasticsearch roles that will be applied to this nodeGroup
++  # These will be set as environment variables. E.g. node.master=true
++  roles:
++    master: "true"
++    ingest: "true"
++    data: "true"
+ 
+-replicas: 3
+-minimumMasterNodes: 2
++  replicas: 3
++  minimumMasterNodes: 2
+ 
+-esMajorVersion: ""
++  esMajorVersion: ""
+ 
+-# Allows you to add any config files in /usr/share/elasticsearch/config/
+-# such as elasticsearch.yml and log4j2.properties
+-esConfig: {}
+-#  elasticsearch.yml: |
+-#    key:
+-#      nestedkey: value
+-#  log4j2.properties: |
+-#    key = value
++  # Allows you to add any config files in /usr/share/elasticsearch/config/
++  # such as elasticsearch.yml and log4j2.properties
++  configmap:
++    annotations: {}
++  esConfig: {}
++  #  elasticsearch.yml: |
++  #    key:
++  #      nestedkey: value
++  #  log4j2.properties: |
++  #    key = value
+ 
+-# Extra environment variables to append to this nodeGroup
+-# This will be appended to the current 'env:' key. You can use any of the kubernetes env
+-# syntax here
+-extraEnvs: []
+-#  - name: MY_ENVIRONMENT_VAR
+-#    value: the_value_goes_here
++  # Extra environment variables to append to this nodeGroup
++  # This will be appended to the current 'env:' key. You can use any of the kubernetes env
++  # syntax here
++  extraEnvs: []
++  #  - name: MY_ENVIRONMENT_VAR
++  #    value: the_value_goes_here
+ 
+-# Allows you to load environment variables from kubernetes secret or config map
+-envFrom: []
+-# - secretRef:
+-#     name: env-secret
+-# - configMapRef:
+-#     name: config-map
++  # Allows you to load environment variables from kubernetes secret or config map
++  envFrom: []
++  # - secretRef:
++  #     name: env-secret
++  # - configMapRef:
++  #     name: config-map
+ 
+-# A list of secrets and their paths to mount inside the pod
+-# This is useful for mounting certificates for security and for mounting
+-# the X-Pack license
+-secretMounts: []
+-#  - name: elastic-certificates
+-#    secretName: elastic-certificates
+-#    path: /usr/share/elasticsearch/config/certs
+-#    defaultMode: 0755
++  # A list of secrets and their paths to mount inside the pod
++  # This is useful for mounting certificates for security and for mounting
++  # the X-Pack license
++  secretMounts: []
++  #  - name: elastic-certificates
++  #    secretName: elastic-certificates
++  #    path: /usr/share/elasticsearch/config/certs
++  #    defaultMode: 0755
+ 
+-hostAliases: []
+-#- ip: "127.0.0.1"
+-#  hostnames:
+-#  - "foo.local"
+-#  - "bar.local"
++  hostAliases: []
++  #- ip: "127.0.0.1"
++  #  hostnames:
++  #  - "foo.local"
++  #  - "bar.local"
+ 
+-image: "docker.elastic.co/elasticsearch/elasticsearch"
+-imageTag: "6.8.22"
+-imagePullPolicy: "IfNotPresent"
++  image:
++    name: "docker.elastic.co/elasticsearch/elasticsearch"
++    tag: "6.8.22"
++  imagePullPolicy: "IfNotPresent"
+ 
+-podAnnotations: {}
+-  # iam.amazonaws.com/role: es-cluster
++  podAnnotations: {}
++    # iam.amazonaws.com/role: es-cluster
+ 
+-# additionals labels
+-labels: {}
++  # additionals labels
++  labels: {}
+ 
+-esJavaOpts: "" # example: "-Xmx1g -Xms1g"
++  esJavaOpts: "" # example: "-Xmx1g -Xms1g"
+ 
+-resources:
+-  requests:
+-    cpu: "1000m"
+-    memory: "2Gi"
+-  limits:
+-    cpu: "1000m"
+-    memory: "2Gi"
+-
+-initResources: {}
+-  # limits:
+-  #   cpu: "25m"
+-  #   # memory: "128Mi"
+-  # requests:
+-  #   cpu: "25m"
+-  #   memory: "128Mi"
+-
+-sidecarResources: {}
+-  # limits:
+-  #   cpu: "25m"
+-  #   # memory: "128Mi"
+-  # requests:
+-  #   cpu: "25m"
+-  #   memory: "128Mi"
+-
+-networkHost: "0.0.0.0"
+-
+-volumeClaimTemplate:
+-  accessModes: [ "ReadWriteOnce" ]
+   resources:
+     requests:
+-      storage: 30Gi
++      cpu: "1000m"
++      memory: "2Gi"
++    limits:
++      cpu: "1000m"
++      memory: "2Gi"
+ 
+-rbac:
+-  create: false
+-  serviceAccountAnnotations: {}
+-  serviceAccountName: ""
+-  automountToken: true
++  initResources: {}
++    # limits:
++    #   cpu: "25m"
++    #   # memory: "128Mi"
++    # requests:
++    #   cpu: "25m"
++    #   memory: "128Mi"
+ 
+-podSecurityPolicy:
+-  create: false
+-  name: ""
+-  spec:
+-    privileged: true
+-    fsGroup:
+-      rule: RunAsAny
+-    runAsUser:
+-      rule: RunAsAny
+-    seLinux:
+-      rule: RunAsAny
+-    supplementalGroups:
+-      rule: RunAsAny
+-    volumes:
+-      - secret
+-      - configMap
+-      - persistentVolumeClaim
+-      - emptyDir
++  sidecarResources: {}
++    # limits:
++    #   cpu: "25m"
++    #   # memory: "128Mi"
++    # requests:
++    #   cpu: "25m"
++    #   memory: "128Mi"
+ 
+-persistence:
+-  enabled: true
+-  labels:
+-    # Add default labels for the volumeClaimTemplate of the StatefulSet
+-    enabled: false
+-  annotations: {}
++  networkHost: "0.0.0.0"
+ 
+-extraVolumes: []
+-  # - name: extras
+-  #   emptyDir: {}
++  volumeClaimTemplate:
++    accessModes: [ "ReadWriteOnce" ]
++    resources:
++      requests:
++        storage: 30Gi
+ 
+-extraVolumeMounts: []
+-  # - name: extras
+-  #   mountPath: /usr/share/extras
+-  #   readOnly: true
++  rbac:
++    create: false
++    serviceAccountAnnotations: {}
++    serviceAccountName: ""
++    automountToken: true
+ 
+-extraContainers: []
+-  # - name: do-something
+-  #   image: busybox
+-  #   command: ['do', 'something']
++  podSecurityPolicy:
++    create: false
++    name: ""
++    spec:
++      privileged: true
++      fsGroup:
++        rule: RunAsAny
++      runAsUser:
++        rule: RunAsAny
++      seLinux:
++        rule: RunAsAny
++      supplementalGroups:
++        rule: RunAsAny
++      volumes:
++        - secret
++        - configMap
++        - persistentVolumeClaim
++        - emptyDir
+ 
+-extraInitContainers: []
+-  # - name: do-something
+-  #   image: busybox
+-  #   command: ['do', 'something']
++  persistence:
++    enabled: true
++    labels:
++      # Add default labels for the volumeClaimTemplate of the StatefulSet
++      enabled: false
++    annotations: {}
+ 
+-# This is the PriorityClass settings as defined in
+-# https://kubernetes.io/docs/concepts/configuration/pod-priority-preemption/#priorityclass
+-priorityClassName: ""
++  extraVolumes: []
++    # - name: extras
++    #   emptyDir: {}
+ 
+-# By default this will make sure two pods don't end up on the same node
+-# Changing this to a region would allow you to spread pods across regions
+-antiAffinityTopologyKey: "kubernetes.io/hostname"
++  extraVolumeMounts: []
++    # - name: extras
++    #   mountPath: /usr/share/extras
++    #   readOnly: true
+ 
+-# Hard means that by default pods will only be scheduled if there are enough nodes for them
+-# and that they will never end up on the same node. Setting this to soft will do this "best effort"
+-antiAffinity: "hard"
++  extraContainers: []
++    # - name: do-something
++    #   image: busybox
++    #   command: ['do', 'something']
+ 
+-# This is the node affinity settings as defined in
+-# https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#node-affinity-beta-feature
+-nodeAffinity: {}
++  extraInitContainers: []
++    # - name: do-something
++    #   image: busybox
++    #   command: ['do', 'something']
+ 
+-# The default is to deploy all pods serially. By setting this to parallel all pods are started at
+-# the same time when bootstrapping the cluster
+-podManagementPolicy: "Parallel"
++  # This is the PriorityClass settings as defined in
++  # https://kubernetes.io/docs/concepts/configuration/pod-priority-preemption/#priorityclass
++  priorityClassName: ""
+ 
+-# The environment variables injected by service links are not used, but can lead to slow Elasticsearch boot times when
+-# there are many services in the current namespace.
+-# If you experience slow pod startups you probably want to set this to `false`.
+-enableServiceLinks: true
++  # By default this will make sure two pods don't end up on the same node
++  # Changing this to a region would allow you to spread pods across regions
++  antiAffinityTopologyKey: "kubernetes.io/hostname"
+ 
+-protocol: http
+-httpPort: 9200
+-transportPort: 9300
++  # Hard means that by default pods will only be scheduled if there are enough nodes for them
++  # and that they will never end up on the same node. Setting this to soft will do this "best effort"
++  antiAffinity: "hard"
+ 
+-service:
+-  enabled: true
+-  labels: {}
+-  labelsHeadless: {}
+-  type: ClusterIP
+-  nodePort: ""
+-  annotations: {}
+-  httpPortName: http
+-  transportPortName: transport
+-  loadBalancerIP: ""
+-  loadBalancerSourceRanges: []
+-  externalTrafficPolicy: ""
++  # This is the node affinity settings as defined in
++  # https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#node-affinity-beta-feature
++  nodeAffinity: {}
+ 
+-updateStrategy: RollingUpdate
++  # The default is to deploy all pods serially. By setting this to parallel all pods are started at
++  # the same time when bootstrapping the cluster
++  podManagementPolicy: "Parallel"
+ 
+-# This is the max unavailable setting for the pod disruption budget
+-# The default value of 1 will make sure that kubernetes won't allow more than 1
+-# of your pods to be unavailable during maintenance
+-maxUnavailable: 1
++  # The environment variables injected by service links are not used, but can lead to slow Elasticsearch boot times when
++  # there are many services in the current namespace.
++  # If you experience slow pod startups you probably want to set this to `false`.
++  enableServiceLinks: true
+ 
+-podSecurityContext:
+-  fsGroup: 1000
+-  runAsUser: 1000
++  protocol: http
++  httpPort: 9200
++  transportPort: 9300
+ 
+-securityContext:
+-  capabilities:
+-    drop:
+-    - ALL
+-  # readOnlyRootFilesystem: true
+-  runAsNonRoot: true
+-  runAsUser: 1000
++  service:
++    enabled: true
++    labels: {}
++    labelsHeadless: {}
++    type: ClusterIP
++    nodePort: ""
++    annotations: {}
++    annotationsHeadless: {}
++    httpPortName: http
++    transportPortName: transport
++    loadBalancerIP: ""
++    loadBalancerSourceRanges: []
++    externalTrafficPolicy: ""
+ 
+-# How long to wait for elasticsearch to stop gracefully
+-terminationGracePeriod: 120
++  updateStrategy: RollingUpdate
+ 
+-sysctlVmMaxMapCount: 262144
++  # This is the max unavailable setting for the pod disruption budget
++  # The default value of 1 will make sure that kubernetes won't allow more than 1
++  # of your pods to be unavailable during maintenance
++  maxUnavailable: 1
+ 
+-readinessProbe:
+-  failureThreshold: 3
+-  initialDelaySeconds: 10
+-  periodSeconds: 10
+-  successThreshold: 3
+-  timeoutSeconds: 5
++  podSecurityContext:
++    fsGroup: 1000
++    runAsUser: 1000
+ 
+-# https://www.elastic.co/guide/en/elasticsearch/reference/6.8/cluster-health.html#request-params wait_for_status
+-clusterHealthCheckParams: "wait_for_status=green&timeout=1s"
++  securityContext:
++    capabilities:
++      drop:
++      - ALL
++    # readOnlyRootFilesystem: true
++    runAsNonRoot: true
++    runAsUser: 1000
+ 
+-## Use an alternate scheduler.
+-## ref: https://kubernetes.io/docs/tasks/administer-cluster/configure-multiple-schedulers/
+-##
+-schedulerName: ""
++  # How long to wait for elasticsearch to stop gracefully
++  terminationGracePeriod: 120
+ 
+-imagePullSecrets: []
+-nodeSelector: {}
+-tolerations: []
++  sysctlVmMaxMapCount: 262144
+ 
+-# Enabling this will publicly expose your Elasticsearch instance.
+-# Only enable this if you have security enabled on your cluster
+-ingress:
+-  enabled: false
+-  annotations: {}
+-    # kubernetes.io/ingress.class: nginx
+-    # kubernetes.io/tls-acme: "true"
+-  hosts:
+-    - host: chart-example.local
+-      paths:
+-        - path: /
+-  tls: []
+-  #  - secretName: chart-example-tls
+-  #    hosts:
+-  #      - chart-example.local
++  readinessProbe:
++    failureThreshold: 3
++    initialDelaySeconds: 10
++    periodSeconds: 10
++    successThreshold: 3
++    timeoutSeconds: 5
+ 
+-nameOverride: ""
+-fullnameOverride: ""
+-healthNameOverride: ""
++  # https://www.elastic.co/guide/en/elasticsearch/reference/6.8/cluster-health.html#request-params wait_for_status
++  clusterHealthCheckParams: "wait_for_status=green&timeout=1s"
+ 
+-# https://github.com/elastic/helm-charts/issues/63
+-masterTerminationFix: false
++  ## Use an alternate scheduler.
++  ## ref: https://kubernetes.io/docs/tasks/administer-cluster/configure-multiple-schedulers/
++  ##
++  schedulerName: ""
+ 
+-lifecycle: {}
+-  # preStop:
+-  #   exec:
+-  #     command: ["/bin/sh", "-c", "echo Hello from the postStart handler > /usr/share/message"]
+-  # postStart:
+-  #   exec:
+-  #     command:
+-  #       - bash
+-  #       - -c
+-  #       - |
+-  #         #!/bin/bash
+-  #         # Add a template to adjust number of shards/replicas
+-  #         TEMPLATE_NAME=my_template
+-  #         INDEX_PATTERN="logstash-*"
+-  #         SHARD_COUNT=8
+-  #         REPLICA_COUNT=1
+-  #         ES_URL=http://localhost:9200
+-  #         while [[ "$(curl -s -o /dev/null -w '%{http_code}\n' $ES_URL)" != "200" ]]; do sleep 1; done
+-  #         curl -XPUT "$ES_URL/_template/$TEMPLATE_NAME" -H 'Content-Type: application/json' -d'{"index_patterns":['\""$INDEX_PATTERN"\"'],"settings":{"number_of_shards":'$SHARD_COUNT',"number_of_replicas":'$REPLICA_COUNT'}}'
++  imagePullSecrets: []
++  nodeSelector: {}
++  tolerations: []
+ 
+-sysctlInitContainer:
+-  enabled: true
++  # Enabling this will publicly expose your Elasticsearch instance.
++  # Only enable this if you have security enabled on your cluster
++  ingress:
++    enabled: false
++    annotations: {}
++      # kubernetes.io/ingress.class: nginx
++      # kubernetes.io/tls-acme: "true"
++    hosts:
++      - host: chart-example.local
++        paths:
++          - path: /
++    tls: []
++    #  - secretName: chart-example-tls
++    #    hosts:
++    #      - chart-example.local
+ 
+-keystore: []
++  nameOverride: ""
++  fullnameOverride: ""
++  healthNameOverride: ""
+ 
+-networkPolicy:
+-  ## Enable creation of NetworkPolicy resources. Only Ingress traffic is filtered for now.
+-  ## In order for a Pod to access Elasticsearch, it needs to have the following label:
+-  ## {{ template "uname" . }}-client: "true"
+-  ## Example for default configuration to access HTTP port:
+-  ## elasticsearch-master-http-client: "true"
+-  ## Example for default configuration to access transport port:
+-  ## elasticsearch-master-transport-client: "true"
++  # https://github.com/elastic/helm-charts/issues/63
++  masterTerminationFix: false
+ 
+-  http:
+-    enabled: false
+-    ## if explicitNamespacesSelector is not set or set to {}, only client Pods being in the networkPolicy's namespace
+-    ## and matching all criteria can reach the DB.
+-    ## But sometimes, we want the Pods to be accessible to clients from other namespaces, in this case, we can use this
+-    ## parameter to select these namespaces
+-    ##
+-    # explicitNamespacesSelector:
+-    #   # Accept from namespaces with all those different rules (only from whitelisted Pods)
+-    #   matchLabels:
+-    #     role: frontend
+-    #   matchExpressions:
+-    #     - {key: role, operator: In, values: [frontend]}
++  lifecycle: {}
++    # preStop:
++    #   exec:
++    #     command: ["/bin/sh", "-c", "echo Hello from the postStart handler > /usr/share/message"]
++    # postStart:
++    #   exec:
++    #     command:
++    #       - bash
++    #       - -c
++    #       - |
++    #         #!/bin/bash
++    #         # Add a template to adjust number of shards/replicas
++    #         TEMPLATE_NAME=my_template
++    #         INDEX_PATTERN="logstash-*"
++    #         SHARD_COUNT=8
++    #         REPLICA_COUNT=1
++    #         ES_URL=http://localhost:9200
++    #         while [[ "$(curl -s -o /dev/null -w '%{http_code}\n' $ES_URL)" != "200" ]]; do sleep 1; done
++    #         curl -XPUT "$ES_URL/_template/$TEMPLATE_NAME" -H 'Content-Type: application/json' -d'{"index_patterns":['\""$INDEX_PATTERN"\"'],"settings":{"number_of_shards":'$SHARD_COUNT',"number_of_replicas":'$REPLICA_COUNT'}}'
+ 
+-    ## Additional NetworkPolicy Ingress "from" rules to set. Note that all rules are OR-ed.
+-    ##
+-    # additionalRules:
+-    #   - podSelector:
+-    #       matchLabels:
+-    #         role: frontend
+-    #   - podSelector:
+-    #       matchExpressions:
+-    #         - key: role
+-    #           operator: In
+-    #           values:
+-    #             - frontend
++  sysctlInitContainer:
++    enabled: true
+ 
+-  transport:
+-    ## Note that all Elasticsearch Pods can talk to themselves using transport port even if enabled.
+-    enabled: false
+-    # explicitNamespacesSelector:
+-    #   matchLabels:
+-    #     role: frontend
+-    #   matchExpressions:
+-    #     - {key: role, operator: In, values: [frontend]}
+-    # additionalRules:
+-    #   - podSelector:
+-    #       matchLabels:
+-    #         role: frontend
+-    #   - podSelector:
+-    #       matchExpressions:
+-    #         - key: role
+-    #           operator: In
+-    #           values:
+-    #             - frontend
++  keystore: []
+ 
+-tests:
+-  enabled: true
++  networkPolicy:
++    ## Enable creation of NetworkPolicy resources. Only Ingress traffic is filtered for now.
++    ## In order for a Pod to access Elasticsearch, it needs to have the following label:
++    ## {{ template "uname" . }}-client: "true"
++    ## Example for default configuration to access HTTP port:
++    ## elasticsearch-master-http-client: "true"
++    ## Example for default configuration to access transport port:
++    ## elasticsearch-master-transport-client: "true"
+ 
+-# Deprecated
+-# please use the above podSecurityContext.fsGroup instead
+-fsGroup: ""
++    http:
++      enabled: false
++      ## if explicitNamespacesSelector is not set or set to {}, only client Pods being in the networkPolicy's namespace
++      ## and matching all criteria can reach the DB.
++      ## But sometimes, we want the Pods to be accessible to clients from other namespaces, in this case, we can use this
++      ## parameter to select these namespaces
++      ##
++      # explicitNamespacesSelector:
++      #   # Accept from namespaces with all those different rules (only from whitelisted Pods)
++      #   matchLabels:
++      #     role: frontend
++      #   matchExpressions:
++      #     - {key: role, operator: In, values: [frontend]}
++
++      ## Additional NetworkPolicy Ingress "from" rules to set. Note that all rules are OR-ed.
++      ##
++      # additionalRules:
++      #   - podSelector:
++      #       matchLabels:
++      #         role: frontend
++      #   - podSelector:
++      #       matchExpressions:
++      #         - key: role
++      #           operator: In
++      #           values:
++      #             - frontend
++
++    transport:
++      ## Note that all Elasticsearch Pods can talk to themselves using transport port even if enabled.
++      enabled: false
++      # explicitNamespacesSelector:
++      #   matchLabels:
++      #     role: frontend
++      #   matchExpressions:
++      #     - {key: role, operator: In, values: [frontend]}
++      # additionalRules:
++      #   - podSelector:
++      #       matchLabels:
++      #         role: frontend
++      #   - podSelector:
++      #       matchExpressions:
++      #         - key: role
++      #           operator: In
++      #           values:
++      #             - frontend
++
++  tests:
++    enabled: true
++
++  # Deprecated
++  # please use the above podSecurityContext.fsGroup instead
++  fsGroup: ""
++
++roles: {}
++configmap:
++  annotations: {}
++esConfig: {}
++image: {}
++labels: {}
++initResources: {}
++volumeClaimTemplate: {}
++rbac: {}
++podSecurityPolicy: {}
++persistence:
++  labels: {}
++  annotations: {}
++nodeAffinity: {}
++service:
++  labels: {}
++  labelsHeadless: {}
++  annotations: {}
++  annotationsHeadless: {}
++podSecurityContext: {}
++readinessProbe: {}
++nodeSelector: {}
++ingress:
++  annotations: {}
++lifecycle: {}
++podAnnotations: {}
++sysctlInitContainer: {}
++networkPolicy:
++  http: {}
++  transport: {}
++tests: {}

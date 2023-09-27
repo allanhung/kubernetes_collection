@@ -1,0 +1,4 @@
+tolerations: []
+
+# Node selector for the pod
+nodeSelector: {}

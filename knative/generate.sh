@@ -85,7 +85,7 @@ grep -e '^kind:' sources/serving-core.yaml | grep -v -e 'CustomResourceDefinitio
 
 grep -e '^kind:' sources/net-istio.yaml | grep -v -e 'CustomResourceDefinition\|ConfigMap\|Namespace' | sort | uniq | sed -e 's#"##g' | awk {'print "yq \047select(.kind != null and .kind == \""$2"\")\047 < sources/net-istio.yaml > templates/net-istio-"$2".yaml"'} >> sources/generate_template.sh
 
-grep -e '^kind:' sources/cert-manager.yaml | grep -v -e 'CustomResourceDefinition\|ConfigMap\|Namespace' | sort | uniq | sed -e 's#"##g' | awk {'print "yq \047select(.kind != null and .kind == \""$2"\")\047 < sources/cert-manager.yaml > templates/cert-manager-"$2".yaml"'} >> sources/generate_template.sh
+grep -e '^kind:' sources/cert-manager.yaml | grep -v -e 'CustomResourceDefinition\|ConfigMap\|Namespace\|Certificate\|ClusterIssuer' | sort | uniq | sed -e 's#"##g' | awk {'print "yq \047select(.kind != null and .kind == \""$2"\")\047 < sources/cert-manager.yaml > templates/cert-manager-"$2".yaml"'} >> sources/generate_template.sh
 
 bash -x sources/generate_template.sh
 
@@ -101,9 +101,10 @@ grep -e '^kind: ConfigMap' -A 2 sources/net-istio.yaml | grep -e '^  name:'| sor
 grep -e '^kind: ConfigMap' -A 2 sources/cert-manager.yaml | grep -e '^  name:'| sort | uniq | awk -F"config-" {'print $2'} | xargs -I{} bash -c "generate_cm ${KNATIVE_VERSION} {} cert-manager cert-manager-ConfigMap-{}"
 
 yq -i -e 'select(.metadata.name == "webhook") .spec.template.spec.containers[0].livenessProbe.initialDelaySeconds = "{{ .Values.knative.webhook.initialDelaySeconds }}"' templates/Deployment.yaml
-sed -i -e "s#'{{ .Values.knative.webhook.initialDelaySeconds }}'#{{ .Values.knative.webhook.initialDelaySeconds }}#g" templates/Deployment.yaml
+gsed -i -e "s#'{{ .Values.knative.webhook.initialDelaySeconds }}'#{{ .Values.knative.webhook.initialDelaySeconds }}#g" templates/Deployment.yaml
 
 yq -i -e 'select(.apiVersion == "autoscaling/v2beta2") .apiVersion = "autoscaling/v2"' templates/HorizontalPodAutoscaler.yaml
 
+yq -i -e 'select(.metadata.name == "knative-local-gateway") .spec.ports[1] = {"name": "http8080", "port": 8080, "targetPort": 8081}' templates/net-istio-Service.yaml
 yq -i -e 'select(.spec.selector.istio == "ingressgateway") .spec.selector.istio = "{{ .Values.netistio.selector }}"' templates/net-istio-Service.yaml
 yq -i -e 'select(.spec.selector.istio == "ingressgateway") .spec.selector.istio = "{{ .Values.netistio.selector }}"' templates/net-istio-Gateway.yaml

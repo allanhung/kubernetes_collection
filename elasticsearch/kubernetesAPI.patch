@@ -1,0 +1,60 @@
+--- a/elasticsearch/templates/poddisruptionbudget.yaml
++++ b/elasticsearch/templates/poddisruptionbudget.yaml
+@@ -1,6 +1,6 @@
+ ---
+ {{- if .Values.maxUnavailable }}
+-apiVersion: policy/v1beta1
++apiVersion: policy/v1
+ kind: PodDisruptionBudget
+ metadata:
+   name: "{{ template "elasticsearch.uname" . }}-pdb"
+--- a/elasticsearch/templates/ingress.yaml
++++ b/elasticsearch/templates/ingress.yaml
+@@ -2,7 +2,7 @@
+ {{- $fullName := include "elasticsearch.uname" . -}}
+ {{- $httpPort := .Values.httpPort -}}
+ {{- $ingressPath := .Values.ingress.path -}}
+-apiVersion: networking.k8s.io/v1beta1
++apiVersion: networking.k8s.io/v1
+ kind: Ingress
+ metadata:
+   name: {{ $fullName }}
+@@ -15,6 +15,9 @@
+ {{ toYaml . | indent 4 }}
+ {{- end }}
+ spec:
++{{- if .Values.ingress.ingressClassName }}
++  ingressClassName: {{ .Values.ingress.ingressClassName }}
++{{- end }}
+ {{- if .Values.ingress.tls }}
+   tls:
+   {{- if .ingressPath }}
+@@ -36,18 +39,24 @@
+       http:
+         paths:
+           - path: {{ $ingressPath }}
++            pathType: Prefix
+             backend:
+-              serviceName: {{ $fullName }}
+-              servicePort: {{ $httpPort }}
++              service:
++                name: {{ $fullName }}
++                port:
++                  number: {{ $httpPort }}
+     {{- else }}
+     - host: {{ .host }}
+       http:
+         paths:
+         {{- range .paths }}
+           - path: {{ .path }}
++            pathType: Prefix
+             backend:
+-              serviceName: {{ $fullName }}
+-              servicePort: {{ .servicePort | default $httpPort }}
++              service:
++                name: {{ $fullName }}
++                port:
++                  number: {{ .servicePort | default $httpPort }}
+         {{- end }}
+     {{- end }}
+   {{- end }}

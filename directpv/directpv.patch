@@ -1,0 +1,17 @@
+--- a/templates/DaemonSet.yaml
++++ b/templates/DaemonSet.yaml
+@@ -169,6 +169,14 @@
+               name: socket-dir
+       hostPID: true
+       serviceAccountName: directpv-min-io
++      {{- with .Values.tolerations }}
++      tolerations:
++      {{- toYaml . | nindent 6 }}
++      {{- end }}
++      {{- with .Values.nodeSelector }}
++      nodeSelector:
++        {{- toYaml . | nindent 8 }}
++      {{- end }}
+       volumes:
+         - hostPath:
+             path: /var/lib/kubelet/plugins/directpv-min-io

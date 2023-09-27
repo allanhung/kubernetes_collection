@@ -1,0 +1,11 @@
+version: v1
+nodes:
+    - name: us-east-1.10.21.34.10
+    - name: us-east-1.10.21.34.6
+      drives:
+        - id: 253:16$kmF6xUBJULjA4iGyeBNl9iftSawZeMAidGpDSfWRApg=
+          name: vdb
+          size: 21474836480
+          make: ""
+          fs: xfs
+          select: "yes"

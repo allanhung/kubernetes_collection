@@ -1,0 +1,8 @@
+apiVersion: v2
+name: directpv
+description: A Helm chart for directpv
+type: application
+version: 0.0.3
+appVersion: 4.0.8
+sources:
+- https://github.com/minio/directpv

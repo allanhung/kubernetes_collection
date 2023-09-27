@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: directpvtest
+  name: directpvtest
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: directpvtest
+  template:
+    metadata:
+      labels:
+        app: directpvtest
+    spec:
+      tolerations:
+      - effect: NoSchedule
+        key: nlp
+        operator: Equal
+        value: enabled
+      nodeSelector:
+        nlp: enabled
+      containers:
+      - command:
+        - tail
+        - -f
+        - /dev/null
+        image: quay.io/centos/centos:stream9
+        name: centos
+        volumeMounts:
+        - mountPath: /opt/directpvtest
+          name: directpvtest-data
+      volumes:
+      - name: directpvtest-data
+        persistentVolumeClaim:
+          claimName: directpvtest-data
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: directpvtest-data
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
+  storageClassName: directpv-min-io
