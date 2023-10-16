@@ -26,6 +26,57 @@ env:
   value: "false"
 ```
 
+### 10329 issue Auto refresh doesn't work, but manual hard-refresh does
+```
+annotations:
+  argocd.argoproj.io/refresh: hard
+```
+
+### external dex setup
+argocd values.yaml
+```
+server:
+  config:
+    url: https://argo-cd.exmaple.com
+    oidc.config: |
+      name: dex
+      issuer: https://dex.example.com
+      clientID: [Client ID for argocd ui]
+      cliClientId: [Client ID for argocd cli]
+      clientSecret: [Client Secret for argocd ui]
+      requestedIDTokenClaims:
+        groups:
+          essential: true
+      requestedScopes:
+        - openid
+        - profile
+        - email
+        - groups
+```
+dex values.yaml
+```
+config:
+  issuer: https://dex.example.com
+  connectors:
+  - type: microsoft
+    id: microsoft
+    name: Microsoft
+    config:
+      clientID: [ClientID for idp Provider]
+      clientSecret: [ClientSecret for idp Provider]
+      tenant: [tenant id for idp Provider]
+      redirectURI: https://dex.example.com/callback
+  - id: [Client ID for argocd ui]
+    redirectURIs:
+    - https://argo-cd.example.com/auth/callback
+    name: 'Argocd'
+    secret: [Client Secret for argocd ui]
+  - id: [Client ID for argocd cli]
+    redirectURIs:
+    - http://localhost:8085/auth/callback
+    name: 'ArgocdCli'
+    public: true
+```
 ### Reference
 * [argo helm chart](https://github.com/argoproj/argo-helm)
 * [argo sso](https://github.com/argoproj/argo-workflows/blob/master/docs/argo-server-sso.md)
@@ -33,3 +84,5 @@ env:
 * [couler]((https://github.com/couler-proj/couler)
 * [Automation of Everything](https://www.youtube.com/watch?v=XNXJtxkUKeY)
 * [GPG Issue](https://github.com/argoproj/argo-cd/issues/9888)
+* [repo-cache-expiration](https://github.com/argoproj/argo-cd/issues/4002)
+* [Support for external dex implementation](https://github.com/argoproj/argo-cd/issues/702)
