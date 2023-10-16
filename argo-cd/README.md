@@ -77,6 +77,12 @@ config:
     name: 'ArgocdCli'
     public: true
 ```
+
+### Reload argocd-cm argocd-rbac-cm
+```
+kubectl rollout restart deploy/argo-cd-argocd-server
+```
+
 ### Reference
 * [argo helm chart](https://github.com/argoproj/argo-helm)
 * [argo sso](https://github.com/argoproj/argo-workflows/blob/master/docs/argo-server-sso.md)
